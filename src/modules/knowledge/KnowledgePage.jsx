@@ -1,0 +1,3 @@
+export function KnowledgePage() {
+  return (<div className="flex items-center justify-center min-h-64"><div className="text-center max-w-sm"><div className="w-20 h-20 rounded-2xl flex items-center justify-center text-4xl mx-auto mb-5" style={{background:'var(--primary)18',border:'1px solid var(--primary)33'}}>🧠</div><h2 className="text-xl font-bold text-text-main mb-2">Conhecimento</h2><p className="text-text-muted text-sm mb-5 leading-relaxed">Seu segundo cérebro. Capture notas, conecte ideias e construa uma base de conhecimento.</p><div className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold" style={{background:'var(--primary)18',color:'var(--primary)',border:'1px solid var(--primary)33'}}>Em breve — v3.0</div></div></div>)
+}

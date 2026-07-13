@@ -1,0 +1,639 @@
+{
+  "goals": {
+    "waterDailyMl": 3500,
+    "caloriesDaily": 2500,
+    "workoutsPerWeek": 5
+  },
+  "waterButtons": [
+    { "ml": 150, "label": "☕ 150ml" },
+    { "ml": 200, "label": "🥛 200ml" },
+    { "ml": 300, "label": "💧 300ml" },
+    { "ml": 500, "label": "🍶 500ml" },
+    { "ml": 1000, "label": "🫙 1L" }
+  ],
+  "foodDb": {
+    "ovo": {
+      "kcal": 70,
+      "prot": 6,
+      "carb": 0.5,
+      "fat": 5,
+      "unit": "un",
+      "portion": 1,
+      "icon": "🥚"
+    },
+    "banana": {
+      "kcal": 89,
+      "prot": 1.1,
+      "carb": 23,
+      "fat": 0.3,
+      "unit": "un",
+      "portion": 1,
+      "icon": "🍌"
+    },
+    "pao_integral": {
+      "kcal": 70,
+      "prot": 3,
+      "carb": 13,
+      "fat": 1,
+      "unit": "fatia",
+      "portion": 1,
+      "icon": "🍞"
+    },
+    "carne": {
+      "kcal": 215,
+      "prot": 26,
+      "carb": 0,
+      "fat": 12,
+      "unit": "g",
+      "portion": 100,
+      "icon": "🥩"
+    },
+    "iogurte": {
+      "kcal": 100,
+      "prot": 10,
+      "carb": 12,
+      "fat": 0.5,
+      "unit": "un",
+      "portion": 1,
+      "icon": "🥛"
+    },
+    "queijo": {
+      "kcal": 80,
+      "prot": 5,
+      "carb": 1,
+      "fat": 6,
+      "unit": "fatia",
+      "portion": 1,
+      "icon": "🧀"
+    },
+    "hipercalorico": {
+      "kcal": 375,
+      "prot": 15,
+      "carb": 60,
+      "fat": 8,
+      "unit": "g",
+      "portion": 75,
+      "icon": "🥤"
+    },
+    "arroz": {
+      "kcal": 130,
+      "prot": 2.5,
+      "carb": 28,
+      "fat": 0.3,
+      "unit": "col",
+      "portion": 1,
+      "icon": "🍚"
+    },
+    "feijao": {
+      "kcal": 90,
+      "prot": 6,
+      "carb": 16,
+      "fat": 0.5,
+      "unit": "col",
+      "portion": 1,
+      "icon": "🫘"
+    },
+    "salada": {
+      "kcal": 20,
+      "prot": 1,
+      "carb": 3,
+      "fat": 0.2,
+      "unit": "prato",
+      "portion": 1,
+      "icon": "🥗"
+    },
+    "cappuccino": {
+      "kcal": 60,
+      "prot": 2,
+      "carb": 8,
+      "fat": 2,
+      "unit": "un",
+      "portion": 1,
+      "icon": "☕"
+    },
+    "fruta": {
+      "kcal": 70,
+      "prot": 0.5,
+      "carb": 18,
+      "fat": 0.2,
+      "unit": "un",
+      "portion": 1,
+      "icon": "🍎"
+    },
+    "rucula": {
+      "kcal": 10,
+      "prot": 1,
+      "carb": 1,
+      "fat": 0.1,
+      "unit": "porcao",
+      "portion": 1,
+      "icon": "🥬"
+    },
+    "tomate": {
+      "kcal": 18,
+      "prot": 0.9,
+      "carb": 4,
+      "fat": 0.2,
+      "unit": "un",
+      "portion": 1,
+      "icon": "🍅"
+    },
+    "bombom": {
+      "kcal": 50,
+      "prot": 0.5,
+      "carb": 7,
+      "fat": 2.5,
+      "unit": "un",
+      "portion": 1,
+      "icon": "🍫"
+    }
+  },
+  "habits": [
+    {
+      "id": "h1",
+      "name": "NoB",
+      "type": "quit",
+      "personaId": "horus",
+      "projectId": "proj_snake",
+      "icon": "🚭",
+      "startDate": "2026-06-01",
+      "endDate": null
+    },
+    {
+      "id": "h_nolust",
+      "name": "NoLust",
+      "type": "quit",
+      "personaId": "horus",
+      "projectId": "proj_snake",
+      "icon": "🛡️",
+      "startDate": "2026-07-02",
+      "endDate": null
+    },
+    {
+      "id": "h_nopm",
+      "name": "NoPM",
+      "type": "quit",
+      "personaId": "horus",
+      "projectId": "proj_snake",
+      "icon": "🚫",
+      "startDate": "2026-07-02",
+      "endDate": null
+    },
+    {
+      "id": "h2",
+      "name": "Correr 30 Dias",
+      "type": "build",
+      "goalDays": 30,
+      "personaId": "horus",
+      "projectId": "proj_body",
+      "icon": "🏃‍♂️",
+      "startDate": "2026-07-01",
+      "endDate": "2026-07-31"
+    }
+  ],
+  "meds": [
+    {
+      "id": "md1",
+      "name": "Vitamina D",
+      "time": "Manhã",
+      "icon": "💊"
+    },
+    {
+      "id": "md2",
+      "name": "Ômega 3",
+      "time": "Almoço",
+      "icon": "🐟"
+    }
+  ],
+  "circuits": [
+    {
+      "id": "c1",
+      "name": "SOS Casa",
+      "icon": "🔥",
+      "personaId": "horus",
+      "projectId": "proj_body",
+      "rounds": 4,
+      "movements": [
+        { "name": "Pushups", "reps": 30 },
+        { "name": "Abs Supra", "reps": 30 },
+        { "name": "Abs Infra", "reps": 30 },
+        { "name": "Prancha", "timeSec": 30 }
+      ]
+    }
+  ],
+  "workoutPlan": {
+    "0": null,
+    "1": {
+      "label": "Peito + Tríceps",
+      "exercises": [
+        {
+          "id": "e1",
+          "name": "Flexão",
+          "sets": 3,
+          "reps": "falha",
+          "note": ""
+        },
+        {
+          "id": "e2",
+          "name": "Supino halter no chão",
+          "sets": 4,
+          "reps": "8-12",
+          "note": ""
+        },
+        {
+          "id": "e3",
+          "name": "Crucifixo",
+          "sets": 3,
+          "reps": "12",
+          "note": ""
+        },
+        {
+          "id": "e4",
+          "name": "Tríceps francês",
+          "sets": 4,
+          "reps": "10-12",
+          "note": ""
+        },
+        {
+          "id": "e5",
+          "name": "Tríceps banco",
+          "sets": 3,
+          "reps": "falha",
+          "note": ""
+        }
+      ]
+    },
+    "2": {
+      "label": "Costas + Bíceps",
+      "exercises": [
+        {
+          "id": "e6",
+          "name": "Remada curvada",
+          "sets": 4,
+          "reps": "8-12",
+          "note": ""
+        },
+        {
+          "id": "e7",
+          "name": "Remada unilateral",
+          "sets": 4,
+          "reps": "10",
+          "note": ""
+        },
+        {
+          "id": "e8",
+          "name": "Rosca direta",
+          "sets": 4,
+          "reps": "10-12",
+          "note": ""
+        },
+        {
+          "id": "e9",
+          "name": "Rosca martelo",
+          "sets": 4,
+          "reps": "10-12",
+          "note": ""
+        }
+      ]
+    },
+    "3": {
+      "label": "Ombros + Braços",
+      "exercises": [
+        {
+          "id": "e10",
+          "name": "Desenvolvimento",
+          "sets": 4,
+          "reps": "10",
+          "note": ""
+        },
+        {
+          "id": "e11",
+          "name": "Elevação lateral",
+          "sets": 4,
+          "reps": "15",
+          "note": ""
+        },
+        {
+          "id": "e12",
+          "name": "Rosca direta",
+          "sets": 3,
+          "reps": "10-12",
+          "note": ""
+        },
+        {
+          "id": "e13",
+          "name": "Tríceps francês",
+          "sets": 3,
+          "reps": "10-12",
+          "note": ""
+        }
+      ]
+    },
+    "4": {
+      "label": "Peito + Costas",
+      "exercises": [
+        {
+          "id": "e14",
+          "name": "Supino halter",
+          "sets": 4,
+          "reps": "8-12",
+          "note": ""
+        },
+        {
+          "id": "e15",
+          "name": "Flexão",
+          "sets": 3,
+          "reps": "falha",
+          "note": ""
+        },
+        {
+          "id": "e16",
+          "name": "Remada curvada",
+          "sets": 4,
+          "reps": "8-12",
+          "note": ""
+        },
+        {
+          "id": "e17",
+          "name": "Remada unilateral",
+          "sets": 3,
+          "reps": "10",
+          "note": ""
+        }
+      ]
+    },
+    "5": {
+      "label": "🔥 Braço Pesado",
+      "exercises": [
+        {
+          "id": "e18",
+          "name": "Rosca direta",
+          "sets": 5,
+          "reps": "10-12",
+          "note": ""
+        },
+        {
+          "id": "e19",
+          "name": "Rosca martelo",
+          "sets": 4,
+          "reps": "10-12",
+          "note": ""
+        },
+        {
+          "id": "e20",
+          "name": "Rosca concentrada",
+          "sets": 3,
+          "reps": "12",
+          "note": ""
+        },
+        {
+          "id": "e21",
+          "name": "Tríceps francês",
+          "sets": 5,
+          "reps": "10-12",
+          "note": ""
+        },
+        {
+          "id": "e22",
+          "name": "Tríceps banco",
+          "sets": 4,
+          "reps": "falha",
+          "note": ""
+        }
+      ]
+    },
+    "6": {
+      "label": "Pernas + Core",
+      "exercises": [
+        {
+          "id": "e23",
+          "name": "Agachamento",
+          "sets": 4,
+          "reps": "12",
+          "note": ""
+        },
+        { "id": "e24", "name": "Afundo", "sets": 3, "reps": "12", "note": "" },
+        {
+          "id": "e25",
+          "name": "Terra romeno",
+          "sets": 4,
+          "reps": "10",
+          "note": ""
+        },
+        {
+          "id": "e26",
+          "name": "Panturrilha",
+          "sets": 4,
+          "reps": "20",
+          "note": ""
+        },
+        { "id": "e27", "name": "Prancha", "sets": 3, "reps": "60s", "note": "" }
+      ]
+    }
+  },
+  "mealPlan": [
+    {
+      "id": "m1",
+      "time": "07:00",
+      "label": "Café da Manhã",
+      "icon": "🌅",
+      "items": [
+        {
+          "id": "mi1",
+          "name": "Cappuccino",
+          "foodKey": "cappuccino",
+          "qty": 1,
+          "optional": false
+        },
+        {
+          "id": "mi2",
+          "name": "Banana",
+          "foodKey": "banana",
+          "qty": 1,
+          "optional": false
+        },
+        {
+          "id": "mi3",
+          "name": "2 Ovos",
+          "foodKey": "ovo",
+          "qty": 2,
+          "optional": false
+        }
+      ]
+    },
+    {
+      "id": "m2",
+      "time": "09:00",
+      "label": "Pós Corrida",
+      "icon": "🏃",
+      "items": [
+        {
+          "id": "mi4",
+          "name": "Hipercalórico 75g",
+          "foodKey": "hipercalorico",
+          "qty": 1,
+          "optional": false
+        },
+        {
+          "id": "mi5",
+          "name": "2 Ovos",
+          "foodKey": "ovo",
+          "qty": 2,
+          "optional": true
+        },
+        {
+          "id": "mi6",
+          "name": "Iogurte",
+          "foodKey": "iogurte",
+          "qty": 1,
+          "optional": true
+        }
+      ]
+    },
+    {
+      "id": "m3",
+      "time": "12:00",
+      "label": "Almoço",
+      "icon": "☀️",
+      "items": [
+        {
+          "id": "mi7",
+          "name": "Carne 250g",
+          "foodKey": "carne",
+          "qty": 2.5,
+          "optional": false
+        },
+        {
+          "id": "mi8",
+          "name": "Salada livre",
+          "foodKey": "salada",
+          "qty": 1,
+          "optional": false
+        },
+        {
+          "id": "mi9",
+          "name": "Arroz",
+          "foodKey": "arroz",
+          "qty": 2,
+          "optional": false
+        },
+        {
+          "id": "mi10",
+          "name": "Feijão",
+          "foodKey": "feijao",
+          "qty": 1,
+          "optional": true
+        },
+        {
+          "id": "mi11",
+          "name": "Bombom",
+          "foodKey": "bombom",
+          "qty": 1,
+          "optional": true
+        }
+      ]
+    },
+    {
+      "id": "m4",
+      "time": "15:30",
+      "label": "Lanche",
+      "icon": "🍌",
+      "items": [
+        {
+          "id": "mi12",
+          "name": "Banana",
+          "foodKey": "banana",
+          "qty": 1,
+          "optional": false
+        },
+        {
+          "id": "mi13",
+          "name": "Iogurte",
+          "foodKey": "iogurte",
+          "qty": 1,
+          "optional": true
+        }
+      ]
+    },
+    {
+      "id": "m5",
+      "time": "18:00",
+      "label": "Pré-Janta",
+      "icon": "🌤️",
+      "items": [
+        {
+          "id": "mi14",
+          "name": "Hipercalórico 50g",
+          "foodKey": "hipercalorico",
+          "qty": 0.67,
+          "optional": true
+        }
+      ]
+    },
+    {
+      "id": "m6",
+      "time": "20:00",
+      "label": "Janta",
+      "icon": "🌙",
+      "items": [
+        {
+          "id": "mi15",
+          "name": "4 Fatias Pão Integral",
+          "foodKey": "pao_integral",
+          "qty": 4,
+          "optional": false
+        },
+        {
+          "id": "mi16",
+          "name": "4 Ovos",
+          "foodKey": "ovo",
+          "qty": 4,
+          "optional": false
+        },
+        {
+          "id": "mi17",
+          "name": "Queijo",
+          "foodKey": "queijo",
+          "qty": 2,
+          "optional": false
+        },
+        {
+          "id": "mi18",
+          "name": "Rúcula",
+          "foodKey": "rucula",
+          "qty": 1,
+          "optional": false
+        },
+        {
+          "id": "mi19",
+          "name": "Tomate",
+          "foodKey": "tomate",
+          "qty": 1,
+          "optional": false
+        }
+      ]
+    },
+    {
+      "id": "m7",
+      "time": "22:00",
+      "label": "Ceia",
+      "icon": "🌛",
+      "items": [
+        {
+          "id": "mi20",
+          "name": "Iogurte",
+          "foodKey": "iogurte",
+          "qty": 1,
+          "optional": true
+        },
+        {
+          "id": "mi21",
+          "name": "Fruta",
+          "foodKey": "fruta",
+          "qty": 1,
+          "optional": true
+        }
+      ]
+    }
+  ]
+}

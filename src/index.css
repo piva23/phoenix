@@ -1,0 +1,47 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --bg: #0C0C10;
+    --bg-surface: #17171E;
+    --bg-surface-2: #1D1D26;
+    --bg-pure-white: #FFFFFF;
+    --border: rgba(255,255,255,0.07);
+    --border-strong: rgba(255,255,255,0.12);
+    --text-main: #F0EFF8;
+    --text-muted: #9B9AAB;
+    --text-dim: #6B6A7A;
+    --radius: 12px;
+    --radius-sm: 8px;
+    --radius-lg: 20px;
+    --primary: #8B5CF6;
+    --secondary: #06B6D4;
+    --accent: #EC4899;
+    --glow: rgba(139,92,246,0.3);
+  }
+  body {
+    background-color: var(--bg);
+    color: var(--text-main);
+    font-family: 'Inter', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  * {
+    transition-property: background-color, border-color, color;
+    transition-duration: 200ms;
+    transition-timing-function: ease;
+  }
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 99px; }
+}
+
+@layer utilities {
+  .scrollbar-hide::-webkit-scrollbar { display: none; }
+  .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+  .glow { box-shadow: 0 0 20px var(--glow); }
+  .glass { background: rgba(255,255,255,0.04); backdrop-filter: blur(12px); border: 1px solid var(--border); }
+}
