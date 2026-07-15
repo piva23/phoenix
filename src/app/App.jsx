@@ -1,4 +1,4 @@
-import { BrowserRouter, useRoutes, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { ThemeEffect } from './ThemeEffect';
 import { MainLayout } from '../layouts/MainLayout';
@@ -7,6 +7,10 @@ import { SessionQuickModal } from '../modules/study/components/SessionQuickModal
 import { LockScreen } from '../layouts/LockScreen';
 import { usePersonaScheduler } from '../shared/hooks/usePersonaScheduler';
 import { useQuestionListener } from '../shared/hooks/useQuestionListener';
+
+// Auth Pages and Protection
+import LoginPage from '../modules/auth/LoginPage';
+import ProtectedRoute from '../shared/components/ProtectedRoute';
 
 // Main Pages
 import { DashboardPage } from '../modules/dashboard/DashboardPage';
@@ -60,64 +64,59 @@ import { SettingsPage } from '../modules/settings/SettingsPage';
 //RPG Module
 import { RPGPage } from '../modules/rpg/pages/RPGPage';
 
-const routes = [
-  {
-    path: '/',
-    element: <MainLayout />,
-    children: [
-      // Core
-      { index: true, element: <Navigate to="/dashboard" replace /> },
-      { path: 'dashboard', element: <DashboardPage /> },
-      { path: 'personas', element: <PersonasPage /> },
-      { path: 'calendar', element: <CalendarPage /> },
-      { path: 'inbox', element: <InboxPage /> },
-      { path: 'analytics', element: <AnalyticsPage /> },
-      { path: 'settings', element: <SettingsPage /> },
-      { path: 'rpg', element: <RPGPage /> },
-
-      // Study Module
-      { path: 'study', element: <Navigate to="/study/today" replace /> },
-      { path: 'study/today', element: <StudyTodayPage /> },
-      { path: 'study/overview', element: <StudyOverviewPage /> },
-      { path: 'study/concursos', element: <StudyConcursosPage /> },
-
-      // Hierarquia de Matérias (Geral -> Detalhe -> Subtópico)
-      { path: 'study/subjects', element: <StudySubjectsPage /> },
-      {
-        path: 'study/subjects/:subjectId',
-        element: <StudySubjectDetailPage />,
-      },
-      {
-        path: 'study/subjects/:subjectId/:topicId/:subtopicId',
-        element: <StudySubtopicPage />,
-      },
-
-      // Outras ferramentas de estudo
-      { path: 'study/cycle', element: <StudyCyclePage /> },
-      { path: 'study/session', element: <StudySessionPage /> },
-      { path: 'study/revisions', element: <StudyRevisionsPage /> },
-      { path: 'study/redacao', element: <StudyRedacaoPage /> },
-      { path: 'study/analytics', element: <StudyAnalyticsPage /> },
-      { path: 'study/simulados', element: <StudySimuladosPage /> },
-      { path: 'study/questoes', element: <StudyQuestoesPage /> },
-      { path: 'study/techniques', element: <StudyTechniquesPage /> },
-      { path: 'study/difficulty-map', element: <StudyDifficultyMapPage /> },
-
-      // Outros Módulos
-      { path: 'projects', element: <ProjectsPage /> },
-      { path: 'projects/:id', element: <ProjectDetailPage /> },
-      { path: 'knowledge', element: <KnowledgePage /> },
-      { path: 'knowledge/mental-models', element: <MentalModelsPage /> },
-      { path: 'finance', element: <FinancePage /> },
-      { path: 'health', element: <HealthPage /> },
-      { path: 'relationships', element: <RelationshipsPage /> },
-      { path: 'spiritual', element: <SpiritualPage /> },
-    ],
-  },
-];
-
 function AppRoutes() {
-  return useRoutes(routes);
+  return (
+    <Routes>
+      <Route path="/login" element={<LoginPage />} />
+      
+      {/* Proteção Global envolve o Layout Principal */}
+      <Route element={<ProtectedRoute />}>
+        <Route element={<MainLayout />}>
+          {/* Core */}
+          <Route index element={<Navigate to="/dashboard" replace />} />
+          <Route path="dashboard" element={<DashboardPage />} />
+          <Route path="personas" element={<PersonasPage />} />
+          <Route path="calendar" element={<CalendarPage />} />
+          <Route path="inbox" element={<InboxPage />} />
+          <Route path="analytics" element={<AnalyticsPage />} />
+          <Route path="settings" element={<SettingsPage />} />
+          <Route path="rpg" element={<RPGPage />} />
+
+          {/* Study Module */}
+          <Route path="study" element={<Navigate to="/study/today" replace />} />
+          <Route path="study/today" element={<StudyTodayPage />} />
+          <Route path="study/overview" element={<StudyOverviewPage />} />
+          <Route path="study/concursos" element={<StudyConcursosPage />} />
+
+          {/* Hierarquia de Matérias (Geral -> Detalhe -> Subtópico) */}
+          <Route path="study/subjects" element={<StudySubjectsPage />} />
+          <Route path="study/subjects/:subjectId" element={<StudySubjectDetailPage />} />
+          <Route path="study/subjects/:subjectId/:topicId/:subtopicId" element={<StudySubtopicPage />} />
+
+          {/* Outras ferramentas de estudo */}
+          <Route path="study/cycle" element={<StudyCyclePage />} />
+          <Route path="study/session" element={<StudySessionPage />} />
+          <Route path="study/revisions" element={<StudyRevisionsPage />} />
+          <Route path="study/redacao" element={<StudyRedacaoPage />} />
+          <Route path="study/analytics" element={<StudyAnalyticsPage />} />
+          <Route path="study/simulados" element={<StudySimuladosPage />} />
+          <Route path="study/questoes" element={<StudyQuestoesPage />} />
+          <Route path="study/techniques" element={<StudyTechniquesPage />} />
+          <Route path="study/difficulty-map" element={<StudyDifficultyMapPage />} />
+
+          {/* Outros Módulos */}
+          <Route path="projects" element={<ProjectsPage />} />
+          <Route path="projects/:id" element={<ProjectDetailPage />} />
+          <Route path="knowledge" element={<KnowledgePage />} />
+          <Route path="knowledge/mental-models" element={<MentalModelsPage />} />
+          <Route path="finance" element={<FinancePage />} />
+          <Route path="health" element={<HealthPage />} />
+          <Route path="relationships" element={<RelationshipsPage />} />
+          <Route path="spiritual" element={<SpiritualPage />} />
+        </Route>
+      </Route>
+    </Routes>
+  );
 }
 
 export default function App() {

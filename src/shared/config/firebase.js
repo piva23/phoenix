@@ -2,31 +2,39 @@ import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 
-const firebaseConfig = {
-  apiKey: process.env.REACT_APP_FIREBASE_API_KEY || "dummy-api-key-phoenix",
-  authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN || "phoenix-project-app.firebaseapp.com",
-  projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID || "phoenix-project-app",
-  storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET || "phoenix-project-app.firebasestorage.app",
-  messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID || "502923931226",
-  appId: process.env.REACT_APP_FIREBASE_APP_ID || "1:502923931226:web:8a5a3c4bc6331736faf263",
+console.warn("LEMBRETE: Autorize o domínio atual (ex: localhost) no Firebase Console -> Authentication -> Settings -> Authorized domains");
+
+// Using import.meta.env for configuration as requested, with a process.env fallback to support CRA packaging
+const getEnvVal = (key) => {
+  try {
+    // @ts-ignore
+    const metaEnv = import.meta.env;
+    if (metaEnv && metaEnv[key]) {
+      return metaEnv[key];
+    }
+  } catch (e) {}
+  try {
+    // @ts-ignore
+    const procEnv = process.env;
+    if (procEnv && procEnv[key]) {
+      return procEnv[key];
+    }
+  } catch (e) {}
+  return '';
 };
 
-// Diagnostic log for local debugging
-if (typeof window !== 'undefined') {
-  const isDummy = firebaseConfig.apiKey === "dummy-api-key-phoenix";
-  console.log("🔍 [Phoenix OS] Configuração do Firebase carregada:", {
-    origemKey: isDummy ? "Fictícia / Dummy" : "Ficheiro .env detetado com sucesso",
-    apiKeyParcial: firebaseConfig.apiKey ? `${firebaseConfig.apiKey.substring(0, 6)}...` : "Nenhuma",
-    projectId: firebaseConfig.projectId
-  });
-  if (isDummy) {
-    console.warn("⚠️ [Phoenix OS] Atenção: O Firebase está a usar uma chave fictícia porque a variável 'REACT_APP_FIREBASE_API_KEY' não foi encontrada no .env ou o servidor local não foi reiniciado após criar o .env. Se editou o .env, pare o servidor (Ctrl+C) e execute 'npm run dev' novamente.");
-  }
-}
+const firebaseConfig = {
+  apiKey: getEnvVal('VITE_FIREBASE_API_KEY') || getEnvVal('REACT_APP_FIREBASE_API_KEY'),
+  authDomain: getEnvVal('VITE_FIREBASE_AUTH_DOMAIN') || getEnvVal('REACT_APP_FIREBASE_AUTH_DOMAIN'),
+  projectId: getEnvVal('VITE_FIREBASE_PROJECT_ID') || getEnvVal('REACT_APP_FIREBASE_PROJECT_ID'),
+  storageBucket: getEnvVal('VITE_FIREBASE_STORAGE_BUCKET') || getEnvVal('REACT_APP_FIREBASE_STORAGE_BUCKET'),
+  messagingSenderId: getEnvVal('VITE_FIREBASE_MESSAGING_SENDER_ID') || getEnvVal('REACT_APP_FIREBASE_MESSAGING_SENDER_ID'),
+  appId: getEnvVal('VITE_FIREBASE_APP_ID') || getEnvVal('REACT_APP_FIREBASE_APP_ID')
+};
 
-// Initialize Firebase
 const app = initializeApp(firebaseConfig);
-export const auth = getAuth(app);
-export const googleProvider = new GoogleAuthProvider();
-export const db = getFirestore(app);
-export default app;
+const auth = getAuth(app);
+const db = getFirestore(app);
+const googleProvider = new GoogleAuthProvider();
+
+export { auth, db, googleProvider };

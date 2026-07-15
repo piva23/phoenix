@@ -7,6 +7,10 @@ import { useSecurityStore } from '../../stores/useSecurityStore';
 import { toast } from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 
+import { useAuthStore } from '../../stores/useAuthStore';
+import { db } from '../../shared/config/firebase';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
+
 export function SettingsPage() {
   const { personas, activePersonaId, setActivePersona } = usePersonaStore();
   const { xp, name } = useUserStore();
@@ -14,6 +18,83 @@ export function SettingsPage() {
   
   const { pin, setPin, lock, clearPin } = useSecurityStore();
   const [newPinInput, setNewPinInput] = useState('');
+  const [isSyncing, setIsSyncing] = useState(false);
+  const { user } = useAuthStore();
+
+  const handleCloudBackup = async () => {
+    if (!user) {
+      toast.error('Usuário não autenticado no Firebase.');
+      return;
+    }
+    setIsSyncing(true);
+    const backupId = toast.loading('Preparando backup na nuvem...');
+    try {
+      const data = {};
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith('phoenix-')) {
+          data[key] = localStorage.getItem(key);
+        }
+      }
+
+      const backupRef = doc(db, 'users', user.uid, 'backup', 'latest');
+      await setDoc(backupRef, {
+        data,
+        updatedAt: new Date().toISOString(),
+        email: user.email,
+        uid: user.uid
+      });
+
+      toast.success('Backup enviado para a nuvem com sucesso!', { id: backupId });
+    } catch (error) {
+      console.error('Erro no backup na nuvem:', error);
+      toast.error(`Erro ao fazer backup: ${error.message}`, { id: backupId });
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  const handleCloudRestore = async () => {
+    if (!user) {
+      toast.error('Usuário não autenticado no Firebase.');
+      return;
+    }
+    setIsSyncing(true);
+    const restoreId = toast.loading('Buscando backup na nuvem...');
+    try {
+      const backupRef = doc(db, 'users', user.uid, 'backup', 'latest');
+      const docSnap = await getDoc(backupRef);
+
+      if (!docSnap.exists()) {
+        toast.error('Nenhum backup encontrado na nuvem para este usuário.', { id: restoreId });
+        setIsSyncing(false);
+        return;
+      }
+
+      const backupDoc = docSnap.data();
+      const backupData = backupDoc.data || {};
+
+      const keys = Object.keys(backupData);
+      if (keys.length === 0) {
+        toast.error('O backup encontrado na nuvem está vazio.', { id: restoreId });
+        setIsSyncing(false);
+        return;
+      }
+
+      keys.forEach(key => {
+        localStorage.setItem(key, backupData[key]);
+      });
+
+      toast.success('Sincronização concluída! Recarregando sistema...', { id: restoreId });
+      setTimeout(() => {
+        window.location.reload();
+      }, 1500);
+    } catch (error) {
+      console.error('Erro ao restaurar da nuvem:', error);
+      toast.error(`Erro ao sincronizar: ${error.message}`, { id: restoreId });
+      setIsSyncing(false);
+    }
+  };
 
   // Phoenix Intelligence state persisted in localStorage
   const [intelligence, setIntelligence] = useState(() => {
@@ -158,6 +239,51 @@ export function SettingsPage() {
                 />
               </label>
             </div>
+          </div>
+
+          {/* Card: Sincronização Cloud */}
+          <div id="cloud-sync-panel" className="bg-surface border border-border rounded-3xl p-6 shadow-xl relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-full filter blur-2xl pointer-events-none" />
+            
+            <div className="mb-4">
+              <h3 className="text-sm font-black text-white uppercase tracking-wider flex items-center gap-2">
+                <span>☁️</span> Sincronização Cloud
+              </h3>
+              <p className="text-xs text-text-muted mt-1 leading-relaxed">
+                Salve com segurança seu espaço de trabalho na nuvem do Firebase ou restaure-o em qualquer dispositivo conectado.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+              {/* Button: Upload */}
+              <button
+                onClick={handleCloudBackup}
+                disabled={isSyncing}
+                className="flex flex-col items-center justify-center p-5 rounded-2xl border border-white/5 hover:border-primary/20 bg-white/[0.01] hover:bg-white/[0.02] text-center transition-all group cursor-pointer disabled:opacity-55 disabled:cursor-not-allowed"
+              >
+                <span className="text-3xl mb-2 group-hover:scale-110 transition-transform">📤</span>
+                <span className="text-xs font-black text-white uppercase tracking-wider">Fazer Upload</span>
+                <span className="text-[10px] text-text-dim mt-1">(Backup Nuvem)</span>
+              </button>
+
+              {/* Button: Restore */}
+              <button
+                onClick={handleCloudRestore}
+                disabled={isSyncing}
+                className="flex flex-col items-center justify-center p-5 rounded-2xl border border-white/5 hover:border-primary/20 bg-white/[0.01] hover:bg-white/[0.02] text-center transition-all group cursor-pointer disabled:opacity-55 disabled:cursor-not-allowed"
+              >
+                <span className="text-3xl mb-2 group-hover:scale-110 transition-transform">📥</span>
+                <span className="text-xs font-black text-primary uppercase tracking-wider">Puxar da Nuvem</span>
+                <span className="text-[10px] text-text-dim mt-1">(Restore Nuvem)</span>
+              </button>
+            </div>
+            
+            {user && (
+              <div className="mt-3 pt-3 border-t border-white/5 text-[10px] text-text-dim flex justify-between items-center">
+                <span>Usuário conectado:</span>
+                <span className="font-mono text-white">{user.email}</span>
+              </div>
+            )}
           </div>
 
           {/* Card: Segurança & Bloqueio Geral */}
