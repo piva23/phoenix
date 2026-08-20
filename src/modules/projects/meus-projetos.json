@@ -1,0 +1,172 @@
+[
+  {
+    "id": "proj_ajaa",
+    "nome": "AJ-AA: Preparo TJ-RS",
+    "descricao": "Jornada até a nomeação e posse no TJ-RS.",
+    "icone": "⚖️",
+    "cor": "#10B981",
+    "status": "ativo",
+    "dataInicio": "2026-07-01",
+    "dataFim": "2028-07-01",
+    "objetivos": [
+      {
+        "id": "obj_ajaa_1",
+        "titulo": "Fase Burocrática e Exames",
+        "dataInicio": "2026-07-01",
+        "dataFim": "2027-01-30",
+        "keyResults": [],
+        "tasks": [
+          {
+            "id": "t_ajaa_1",
+            "titulo": "Checkup médico completo e exames laboratoriais",
+            "status": "todo",
+            "prioridade": "alta",
+            "dataInicio": "2026-07-01",
+            "dataFim": "2026-08-30",
+            "milestone": false
+          },
+          {
+            "id": "t_ajaa_2",
+            "titulo": "Atualização de títulos e documentos de posse",
+            "status": "todo",
+            "prioridade": "media",
+            "dataInicio": "2026-09-01",
+            "dataFim": "2026-10-30",
+            "milestone": true
+          }
+        ]
+      },
+      {
+        "id": "obj_ajaa_2",
+        "titulo": "Logística e Mudança",
+        "dataInicio": "2027-02-01",
+        "dataFim": "2028-07-01",
+        "keyResults": [
+          {
+            "id": "kr_ajaa_1",
+            "titulo": "Reserva de Posse (R$ 20k)",
+            "metaAtual": 2000,
+            "metaAlvo": 20000,
+            "tipo": "monetario"
+          }
+        ],
+        "tasks": [
+          {
+            "id": "t_ajaa_3",
+            "titulo": "Pesquisa de custo de vida nas comarcas",
+            "status": "todo",
+            "prioridade": "media",
+            "dataInicio": "2027-02-01",
+            "dataFim": "2027-04-30",
+            "milestone": false
+          },
+          {
+            "id": "t_ajaa_4",
+            "titulo": "Mudança efetiva e instalação",
+            "status": "todo",
+            "prioridade": "critica",
+            "dataInicio": "2028-06-01",
+            "dataFim": "2028-07-01",
+            "milestone": true
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "proj_studyadm",
+    "nome": "Study ADM Master",
+    "descricao": "Estratégia de aprovação em concursos de alto nível.",
+    "icone": "📚",
+    "cor": "#3B82F6",
+    "status": "ativo",
+    "dataInicio": "2026-07-01",
+    "dataFim": "2027-07-01",
+    "objetivos": [
+      {
+        "id": "obj_study_1",
+        "titulo": "Ciclo de Conhecimento Geral",
+        "dataInicio": "2026-07-01",
+        "dataFim": "2026-12-30",
+        "tasks": [
+          {
+            "id": "t_study_1",
+            "titulo": "Finalizar módulo AFO e Orçamento",
+            "status": "doing",
+            "prioridade": "critica",
+            "dataInicio": "2026-07-01",
+            "dataFim": "2026-09-30",
+            "milestone": false
+          },
+          {
+            "id": "t_study_2",
+            "titulo": "Simulado Geral - 100 questões",
+            "status": "todo",
+            "prioridade": "alta",
+            "dataInicio": "2026-12-01",
+            "dataFim": "2026-12-15",
+            "milestone": true
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "proj_snake",
+    "nome": "Projeto Snake (Anti-Vício)",
+    "descricao": "Reconstrução da disciplina e da dopamina.",
+    "icone": "🐍",
+    "cor": "#EF4444",
+    "status": "ativo",
+    "dataInicio": "2026-07-01",
+    "dataFim": "2026-12-31",
+    "objetivos": [
+      {
+        "id": "obj_snake_1",
+        "titulo": "Manutenção da sobriedade",
+        "dataInicio": "2026-07-01",
+        "dataFim": "2026-12-31",
+        "tasks": [
+          {
+            "id": "t_snake_1",
+            "titulo": "Check-in diário - 180 dias",
+            "status": "doing",
+            "prioridade": "critica",
+            "dataInicio": "2026-07-01",
+            "dataFim": "2026-12-31",
+            "milestone": false
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "proj_flame",
+    "nome": "Keep The Flame Burning",
+    "descricao": "Fortalecimento familiar.",
+    "icone": "🔥",
+    "cor": "#F59E0B",
+    "status": "ativo",
+    "dataInicio": "2026-07-01",
+    "dataFim": "2027-07-01",
+    "objetivos": [
+      {
+        "id": "obj_flame_1",
+        "titulo": "Ritual Familiar Semestral",
+        "dataInicio": "2026-07-01",
+        "dataFim": "2027-07-01",
+        "tasks": [
+          {
+            "id": "t_flame_1",
+            "titulo": "Viagem em família - Férias",
+            "status": "todo",
+            "prioridade": "alta",
+            "dataInicio": "2027-01-10",
+            "dataFim": "2027-01-20",
+            "milestone": true
+          }
+        ]
+      }
+    ]
+  }
+]

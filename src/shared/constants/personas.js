@@ -1,0 +1,102 @@
+export const PERSONAS = {
+  horus: {
+    id: 'horus',
+    name: 'Hórus',
+    title: 'Arquiteto do Mundo',
+    icon: '👁',
+    archetype: 'Força Universal',
+    colorPrimary: '#7C3AED',
+    colorSecondary: '#A855F7',
+    colorAccent: '#F59E0B',
+    glow: 'rgba(124,58,237,0.35)',
+    focus: ['espiritualidade', 'reflexão', 'propósito'],
+    dashboardModules: ['spiritual', 'study', 'knowledge'],
+    schedule: { active: false, time: '06:00', notificationText: 'Hora de se conectar com o Hórus!' }
+  },
+  sombra: {
+    id: 'sombra',
+    name: 'Sombra',
+    title: 'Integração de Sombra',
+    icon: '🌘',
+    archetype: 'O Desconhecido',
+    colorPrimary: '#4B5563',
+    colorSecondary: '#1F2937',
+    colorAccent: '#9CA3AF',
+    glow: 'rgba(75,85,99,0.35)',
+    focus: ['auto-conhecimento', 'introspecção', 'cura'],
+    dashboardModules: ['knowledge', 'spiritual', 'analytics'],
+    schedule: { active: false, time: '23:00', notificationText: 'Reflita sobre os seus impulsos e sombra.' }
+  },
+  leotauro: {
+    id: 'leotauro',
+    name: 'Leotauro',
+    title: 'Corpo & Autoestima',
+    icon: '🦁',
+    archetype: 'Guerreiro Físico',
+    colorPrimary: '#DC2626',
+    colorSecondary: '#F97316',
+    colorAccent: '#FCD34D',
+    glow: 'rgba(220,38,38,0.35)',
+    focus: ['treino', 'autoestima', 'força'],
+    dashboardModules: ['health', 'analytics', 'study'],
+    schedule: { active: false, time: '08:00', notificationText: 'Hora de treinar e nutrir o corpo como o Leotauro!' }
+  },
+  maion: {
+    id: 'maion',
+    name: 'Maion',
+    title: 'O Mago Leão',
+    icon: '🔮',
+    archetype: 'Líder de Carreira',
+    colorPrimary: '#0D9488',
+    colorSecondary: '#06B6D4',
+    colorAccent: '#F59E0B',
+    glow: 'rgba(13,148,136,0.35)',
+    focus: ['carreira', 'informação', 'estratégia'],
+    dashboardModules: ['projects', 'finance', 'study'],
+    schedule: { active: false, time: '09:00', notificationText: 'Hora de agir com maestria profissional com Maion!' }
+  },
+  'leao-peixe': {
+    id: 'leao-peixe',
+    name: 'Leão-Peixe',
+    title: 'Liderança & Serenidade Familiar',
+    icon: '🧜‍♂️',
+    archetype: 'O Protetor Sereno',
+    colorPrimary: '#0284C7',
+    colorSecondary: '#06B6D4',
+    colorAccent: '#34D399',
+    glow: 'rgba(2,132,199,0.35)',
+    focus: ['família', 'serenidade', 'liderança'],
+    dashboardModules: ['relationships', 'calendar', 'spiritual'],
+    schedule: { active: false, time: '18:00', notificationText: 'Conecte-se com serenidade e lidere com amor.' }
+  },
+  p: {
+    id: 'p',
+    name: 'P',
+    title: 'Parceira Amorosa',
+    icon: '💖',
+    archetype: 'Reconstrução do Vínculo',
+    colorPrimary: '#EC4899',
+    colorSecondary: '#F43F5E',
+    colorAccent: '#F472B6',
+    glow: 'rgba(236,72,153,0.35)',
+    focus: ['amor', 'vínculo', 'reconstrução'],
+    dashboardModules: ['relationships', 'calendar', 'knowledge'],
+    schedule: { active: false, time: '20:00', notificationText: 'Cultive a relação e reconstrua o vínculo afetivo.' }
+  },
+  duck: {
+    id: 'duck',
+    name: 'Duck',
+    title: 'Processamento de Emoções',
+    icon: '🦆',
+    archetype: 'Medo, Culpa e Vergonha',
+    colorPrimary: '#B45309',
+    colorSecondary: '#D97706',
+    colorAccent: '#FBBF24',
+    glow: 'rgba(180,83,9,0.35)',
+    focus: ['medo', 'culpa', 'vergonha'],
+    dashboardModules: ['spiritual', 'knowledge', 'analytics'],
+    schedule: { active: false, time: '14:00', notificationText: 'Acolha o seu medo, culpa e vergonha sem julgamento.' }
+  }
+};
+
+export const PERSONA_LIST = Object.values(PERSONAS);

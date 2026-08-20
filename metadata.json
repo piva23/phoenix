@@ -1,0 +1,8 @@
+{
+  "name": "Phoenix OS",
+  "description": "An interactive, beautiful workspace dashboard OS containing widgets for habits, calendar, projects, finance, spiritual life, health tracker, and and custom personas.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
