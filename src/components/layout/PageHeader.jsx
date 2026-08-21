@@ -1,15 +1,6 @@
+import React from 'react';
 import clsx from 'clsx';
 
-/**
- * PageHeader — Banner gradiente padronizado para todas as páginas.
- *
- * Props:
- *   icon     — emoji ou ícone (opcional)
- *   title    — título da página (obrigatório)
- *   subtitle — subtítulo descritivo (opcional)
- *   badge    — badge/botão à direita (opcional, renderizado como children)
- *   className — classes extras no container (opcional)
- */
 export function PageHeader({ icon, title, subtitle, badge, children, className }) {
   return (
     <div className={clsx('page-banner p-5 md:p-7 mb-6', className)}>

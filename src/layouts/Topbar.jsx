@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Menu } from 'lucide-react';
 import { useGameStore, calcXPProgress } from '../stores/useGameStore';
@@ -10,6 +11,7 @@ export function Topbar() {
   const xp = useGameStore(s => s.totalXP);
   const name = useGameStore(s => s.name);
   const { toggleSidebar } = useUIStore();
+  const navigate = useNavigate();
   const t = today();
 
   // Streaks da saúde
@@ -57,7 +59,7 @@ export function Topbar() {
           </div>
         </div>
 
-        {/* DIREITA: Streaks + XP */}
+        {/* DIREITA: Streaks + XP + Profile Avatar */}
         <div className="flex items-center gap-4 sm:gap-6">
           {/* Streaks de Saúde */}
           <div className="hidden sm:flex items-center gap-3">
@@ -103,6 +105,15 @@ export function Topbar() {
               <span className="text-primary">{xp}</span> XP
             </div>
           </div>
+
+          {/* Profile Avatar — rightmost */}
+          <button
+            onClick={() => navigate('/settings')}
+            className="flex items-center justify-center w-10 h-10 rounded-xl flex-shrink-0 transition-transform duration-200 hover:scale-105 active:scale-95 ring-2 ring-transparent hover:ring-primary/40 cursor-pointer"
+            style={{ background: 'linear-gradient(135deg, var(--primary), var(--secondary))' }}
+          >
+            <span className="text-sm font-black text-white">{initials}</span>
+          </button>
         </div>
       </div>
     </motion.header>

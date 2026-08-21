@@ -7,7 +7,7 @@
 @layer base {
   :root {
     --bg: #0C0C10;
-    --bg-base: #0C0C10;
+    --bg-base: var(--bg);
     --bg-surface: #17171E;
     --bg-surface-rgb: 23,23,30;
     --bg-surface-2: #1D1D26;

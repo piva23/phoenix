@@ -1079,3 +1079,5 @@ export function StudyQuestoesPage() {
     </StudyLayout>
   );
 }
+
+export default StudyQuestoesPage;

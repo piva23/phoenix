@@ -1849,3 +1849,5 @@ export function StudyConcursosPage() {
     </StudyLayout>
   );
 }
+
+export default StudyConcursosPage;

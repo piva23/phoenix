@@ -1205,3 +1205,5 @@ export function StudyRevisionsPage() {
     </StudyLayout>
   );
 }
+
+export default StudyRevisionsPage;

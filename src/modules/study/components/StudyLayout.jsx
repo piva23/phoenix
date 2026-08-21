@@ -8,11 +8,10 @@ const TABS = [
   { path: '/study/subjects', label: 'Matérias', icon: '📚' },
   { path: '/study/cycle', label: 'Ciclo', icon: '🔄' },
   { path: '/study/revisions', label: 'Revisões', icon: '🔁', badge: true },
-  { path: '/study/redacao', label: 'Redação', icon: '✍️' },
   { path: '/study/questoes', label: 'Questões', icon: '❓' },
+  { path: '/study/simulados', label: 'Simulados', icon: '📝' },
   { path: '/study/techniques', label: 'Técnicas', icon: '🧠' },
   { path: '/study/analytics', label: 'Analytics', icon: '📊' },
-  { path: '/study/simulados', label: 'Simulados', icon: '🎯' },
 ];
 
 export function StudyLayout({ children }) {
@@ -37,13 +36,9 @@ export function StudyLayout({ children }) {
                 clsx(
                   'relative flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-all whitespace-nowrap select-none',
                   isActive
-                    ? 'text-white'
-                    : 'text-text-muted hover:text-text-main hover:bg-white/5',
-                  tab.soon && 'opacity-40 pointer-events-none'
+                    ? 'bg-primary text-white shadow-md shadow-primary/20'
+                    : 'text-text-muted hover:text-text-main hover:bg-white/5'
                 )
-              }
-              style={({ isActive }) =>
-                isActive ? { background: 'var(--primary)' } : {}
               }
             >
               <span>{tab.icon}</span>

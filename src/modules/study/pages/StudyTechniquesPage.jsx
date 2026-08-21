@@ -353,3 +353,5 @@ export function StudyTechniquesPage() {
     </StudyLayout>
   );
 }
+
+export default StudyTechniquesPage;

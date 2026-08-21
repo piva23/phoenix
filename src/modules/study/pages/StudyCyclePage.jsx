@@ -7,6 +7,7 @@ import { useStudyStore } from '../../../stores/useStudyStore';
 import { useSessionStore } from '../../../stores/useSessionStore';
 import { CycleBuilder } from '../components/CycleBuilder';
 import { CycleDetailView } from '../components/CycleDetailView';
+import { WeeklyPlanner } from '../components/WeeklyPlanner';
 import { BarChart, Bar, Cell, ResponsiveContainer } from 'recharts';
 import toast from 'react-hot-toast';
 
@@ -478,6 +479,7 @@ export function StudyCyclePage() {
     deleteCycle,
     setActiveCycle,
     advanceRound,
+    generateWeeklyPlan,
   } = useCycleStore();
   const allSessions = useSessionStore(s => s.sessions);
 
@@ -689,6 +691,37 @@ export function StudyCyclePage() {
               </div>
             )}
 
+            {/* planner semanal — distribuição de blocos por dia */}
+            {activeCycle && activeCycle.items?.length > 0 && (
+              <div className="card-glass p-5 rounded-2xl">
+                {!activeCycle.weeklyPlan || Object.keys(activeCycle.weeklyPlan).length === 0 ? (
+                  <div className="flex flex-col items-center gap-3 py-4">
+                    <span className="text-2xl">📅</span>
+                    <div className="text-center">
+                      <div className="text-sm font-bold" style={{ color: 'var(--text-main)' }}>
+                        Plano semanal não gerado
+                      </div>
+                      <div className="text-[11px] mt-1" style={{ color: 'var(--text-dim)' }}>
+                        Distribua automaticamente os blocos de estudo nos dias da semana
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => {
+                        generateWeeklyPlan(activeCycle.id);
+                        toast.success('Plano semanal gerado!');
+                      }}
+                      className="px-4 py-2 rounded-xl text-sm font-bold text-white"
+                      style={{ background: 'var(--primary)' }}
+                    >
+                      🔄 Gerar Plano Semanal
+                    </button>
+                  </div>
+                ) : (
+                  <WeeklyPlanner cycle={activeCycle} />
+                )}
+              </div>
+            )}
+
             {/* histórico de rodadas do ciclo ativo */}
             {activeCycle && (activeCycle.roundsHistory || []).length > 0 && (
               <RoundsHistoryChart cycle={activeCycle} />
@@ -770,3 +803,5 @@ export function StudyCyclePage() {
     </StudyLayout>
   );
 }
+
+export default StudyCyclePage;

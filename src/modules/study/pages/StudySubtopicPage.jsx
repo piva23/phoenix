@@ -1988,3 +1988,5 @@ export function StudySubtopicPage() {
     </StudyLayout>
   );
 }
+
+export default StudySubtopicPage;

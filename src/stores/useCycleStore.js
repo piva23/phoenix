@@ -199,6 +199,79 @@ export const useCycleStore = create(
         return cycles.find(c => c.id === activeCycleId) || null;
       },
 
+      // ─── PLANNER SEMANAL ─────────────────────────────────────────────────
+
+      setAvailableDays: (cycleId, days) =>
+        set(state => ({
+          cycles: state.cycles.map(c =>
+            c.id !== cycleId ? c : { ...c, availableDays: days }
+          ),
+        })),
+
+      generateWeeklyPlan: (cycleId) =>
+        set(state => ({
+          cycles: state.cycles.map(c => {
+            if (c.id !== cycleId) return c;
+            const days = c.availableDays && c.availableDays.length > 0
+              ? c.availableDays
+              : [1, 2, 3, 4, 5]; // Seg-Sex padrão
+            const items = c.items || [];
+            if (items.length === 0) return c;
+
+            // Enriquecer itens com horas
+            const enriched = items.map(item => ({
+              ...item,
+              hours: item.horasPorRodada || 1,
+            }));
+
+            // Ordenar por horas (maior primeiro)
+            const sorted = [...enriched].sort((a, b) => b.hours - a.hours);
+
+            // Inicializar dias
+            const plan = {};
+            days.forEach(d => { plan[d] = []; });
+            const dayLoad = {};
+            days.forEach(d => { dayLoad[d] = 0; });
+            const MAX_HOURS = 5;
+
+            // Distribuição gulosa: item vai pro dia de menor carga
+            sorted.forEach(item => {
+              const lightest = days.reduce((a, b) => dayLoad[a] <= dayLoad[b] ? a : b);
+              plan[lightest].push({
+                subjectId: item.subjectId,
+                subjectName: item.subjectName || item.subj?.name || '—',
+                hours: item.hours,
+                color: item.subjectColor || '#8B5CF6',
+              });
+              dayLoad[lightest] += item.hours;
+            });
+
+            return { ...c, weeklyPlan: plan };
+          }),
+        })),
+
+      moveBlock: (cycleId, fromDay, toDay, subjectId) =>
+        set(state => ({
+          cycles: state.cycles.map(c => {
+            if (c.id !== cycleId || !c.weeklyPlan) return c;
+            const plan = { ...c.weeklyPlan };
+            const fromBlocks = [...(plan[fromDay] || [])];
+            const toBlocks = [...(plan[toDay] || [])];
+
+            // Encontrar e remover do dia origem
+            const blockIdx = fromBlocks.findIndex(b => b.subjectId === subjectId);
+            if (blockIdx === -1) return c;
+            const [block] = fromBlocks.splice(blockIdx, 1);
+
+            // Adicionar ao dia destino
+            toBlocks.push(block);
+            plan[fromDay] = fromBlocks;
+            plan[toDay] = toBlocks;
+
+            return { ...c, weeklyPlan: plan };
+          }),
+        })),
+
       // Retorna o próximo item a estudar:
       // 1. Primeiro incompleto com menor progresso relativo (% feito vs meta)
       // 2. Se todos completos → sugere avançar rodada

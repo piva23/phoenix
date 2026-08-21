@@ -780,3 +780,5 @@ export function StudyTodayPage() {
     </StudyLayout>
   );
 }
+
+export default StudyTodayPage;

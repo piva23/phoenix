@@ -876,3 +876,5 @@ export function StudySubjectDetailPage() {
     </StudyLayout>
   );
 }
+
+export default StudySubjectDetailPage;

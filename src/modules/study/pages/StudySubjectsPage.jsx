@@ -1074,3 +1074,5 @@ export function StudySubjectsPage() {
     </StudyLayout>
   );
 }
+
+export default StudySubjectsPage;

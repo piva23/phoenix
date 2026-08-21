@@ -284,3 +284,5 @@ export function StudyRedacaoPage() {
     </StudyLayout>
   )
 }
+
+export default StudyRedacaoPage;

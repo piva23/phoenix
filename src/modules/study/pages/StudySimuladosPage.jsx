@@ -1147,3 +1147,5 @@ export function StudySimuladosPage() {
     </StudyLayout>
   );
 }
+
+export default StudySimuladosPage;

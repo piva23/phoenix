@@ -1011,3 +1011,5 @@ export function StudyAnalyticsPage() {
     </StudyLayout>
   );
 }
+
+export default StudyAnalyticsPage;

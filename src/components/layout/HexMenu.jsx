@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { useSessionModalStore } from '../../stores/useSessionModalStore';
 import { useActiveSessionUIStore } from '../../stores/useActiveSessionUIStore';
+import { QuickExpenseModal } from '../../modules/finance/components/QuickExpenseModal';
 
 function fmtTimer(sec) {
   if (sec === null || sec === undefined) return '00:00';
@@ -22,18 +23,16 @@ function fmtTimer(sec) {
 }
 
 /* ═══════════════════════════════════════════════════════
-   HEX MENU — FAB hexagonal + bottom bar mobile
+   ITENS DE NAVEGAÇÃO
    ═══════════════════════════════════════════════════════ */
 
-// Itens principais (BottomBar mobile + menu desktop)
 const MAIN_ITEMS = [
-  { path: '/dashboard', icon: LayoutDashboard, label: 'Home', color: 'text-white hover:bg-white/10 border-white/20' },
+  { path: '/dashboard', icon: LayoutDashboard, label: 'Home', color: 'text-text-main hover:bg-white/10 border-white/20' },
   { path: '/calendar', icon: Calendar, label: 'Calendário', color: 'text-orange-400 hover:bg-orange-500/10 border-orange-500/20' },
   { path: '/study', icon: BookOpen, label: 'Estudo', color: 'text-emerald-400 hover:bg-emerald-500/10 border-emerald-500/20' },
   { path: '/health', icon: Dumbbell, label: 'Saúde', color: 'text-red-400 hover:bg-red-500/10 border-red-500/20' },
 ];
 
-// Itens secundários (drawer "Mais")
 const EXTRA_ITEMS = [
   { path: '/rpg', icon: Swords, label: 'Aventura', color: 'text-purple-400 hover:bg-purple-500/10 border-purple-500/20' },
   { path: '/finance', icon: Wallet, label: 'Finanças', color: 'text-amber-400 hover:bg-amber-500/10 border-amber-500/20' },
@@ -112,13 +111,13 @@ function BottomBar({ onOpenDrawer }) {
 
 function HexFAB({ isOpen, setIsOpen }) {
   const navigate = useNavigate();
-  const openSessionModal = useSessionModalStore(s => s.openModal);
+  const openSessionModal = useSessionModalStore(s => s.openModal || s.openSessionModal);
   const { isSessionActive, timeLeft, totalTime, subjectName, topicName } = useActiveSessionUIStore();
   const progressRatio = totalTime > 0 ? timeLeft / totalTime : 0;
   const clampedRatio = Math.max(0, Math.min(1, progressRatio));
 
   const handleToggle = () => {
-    if (isSessionActive) {
+    if (isSessionActive && openSessionModal) {
       openSessionModal();
     } else {
       setIsOpen(!isOpen);
@@ -127,7 +126,7 @@ function HexFAB({ isOpen, setIsOpen }) {
 
   const desktopMenuItems = [
     ...MAIN_ITEMS.map(i => ({ ...i, action: () => { navigate(i.path); setIsOpen(false); } })),
-    { name: 'Sessão de Estudo', icon: BookOpen, color: 'text-emerald-400 hover:bg-emerald-500/10 border-emerald-500/20', action: () => { openSessionModal(); setIsOpen(false); } },
+    { name: 'Sessão de Estudo', icon: BookOpen, color: 'text-emerald-400 hover:bg-emerald-500/10 border-emerald-500/20', action: () => { if(openSessionModal) openSessionModal(); setIsOpen(false); } },
     ...EXTRA_ITEMS.map(i => ({ ...i, name: i.label, action: () => { navigate(i.path); setIsOpen(false); } })),
   ];
 
@@ -226,9 +225,9 @@ function HexFAB({ isOpen, setIsOpen }) {
    DRAWER — Extra items (shared mobile + desktop)
    ═══════════════════════════════════════════════════════ */
 
-function Drawer({ open, onClose }) {
+function Drawer({ open, onClose, onOpenExpense }) {
   const navigate = useNavigate();
-  const openSessionModal = useSessionModalStore(s => s.openSessionModal || s.openModal);
+  const openSessionModal = useSessionModalStore(s => s.openModal || s.openSessionModal);
 
   return (
     <AnimatePresence>
@@ -246,20 +245,35 @@ function Drawer({ open, onClose }) {
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 220 }}
-            className="fixed bottom-16 left-0 right-0 z-[96] lg:z-[999] card-glass rounded-t-2xl p-4 shadow-2xl border-t border-white/10"
+            className="fixed bottom-16 left-0 right-0 z-[96] lg:z-[999] card-glass rounded-t-2xl p-4 shadow-2xl border-t border-white/10 lg:bottom-1/4 lg:left-auto lg:right-28 lg:w-72 lg:rounded-2xl lg:border"
           >
-            <div className="w-12 h-1.5 bg-white/10 rounded-full mx-auto mb-5 cursor-pointer" onClick={onClose} />
-            <div className="text-xs font-bold text-text-dim uppercase tracking-wider mb-4 px-1 select-none">Mais Módulos</div>
+            <div className="w-12 h-1.5 bg-white/10 rounded-full mx-auto mb-5 cursor-pointer lg:hidden" onClick={onClose} />
+            <div className="text-xs font-bold text-text-dim uppercase tracking-wider mb-4 px-1 select-none flex justify-between items-center">
+              Mais Módulos
+              <span className="hidden lg:block cursor-pointer hover:text-white" onClick={onClose}>✕</span>
+            </div>
 
             {/* Session shortcut */}
             <button
-              onClick={() => { openSessionModal(); onClose(); }}
-              className="w-full flex items-center gap-3 p-3 rounded-xl border border-emerald-500/20 bg-emerald-500/5 hover:bg-emerald-500/10 text-emerald-400 transition-all mb-3"
+              onClick={() => { if(openSessionModal) openSessionModal(); onClose(); }}
+              className="w-full flex items-center gap-3 p-3 rounded-xl border border-emerald-500/20 bg-emerald-500/5 hover:bg-emerald-500/10 text-emerald-400 transition-all mb-2"
             >
               <BookOpen size={20} />
               <div className="text-left">
                 <div className="text-xs font-bold">Sessão de Estudo</div>
                 <div className="text-[10px] text-text-dim">Abrir timer e sessão</div>
+              </div>
+            </button>
+
+            {/* Quick Expense shortcut */}
+            <button
+              onClick={() => { onOpenExpense(); onClose(); }}
+              className="w-full flex items-center gap-3 p-3 rounded-xl border border-amber-500/20 bg-amber-500/5 hover:bg-amber-500/10 text-amber-400 transition-all mb-3"
+            >
+              <Wallet size={20} />
+              <div className="text-left">
+                <div className="text-xs font-bold">Lançar Despesa</div>
+                <div className="text-[10px] text-text-dim">Registrar rápido</div>
               </div>
             </button>
 
@@ -297,6 +311,7 @@ function Drawer({ open, onClose }) {
 export default function HexMenu() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [hexOpen, setHexOpen] = useState(false);
+  const [quickExpenseOpen, setQuickExpenseOpen] = useState(false);
 
   return (
     <>
@@ -307,7 +322,10 @@ export default function HexMenu() {
       <HexFAB isOpen={hexOpen} setIsOpen={setHexOpen} />
 
       {/* Shared Drawer */}
-      <Drawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />
+      <Drawer open={drawerOpen} onClose={() => { setDrawerOpen(false); setHexOpen(false); }} onOpenExpense={() => setQuickExpenseOpen(true)} />
+
+      {/* Quick Expense Modal */}
+      {quickExpenseOpen && <QuickExpenseModal onClose={() => setQuickExpenseOpen(false)} />}
     </>
   );
 }

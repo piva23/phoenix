@@ -797,3 +797,5 @@ export function StudySessionPage() {
     </StudyLayout>
   );
 }
+
+export default StudySessionPage;

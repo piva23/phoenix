@@ -85,3 +85,5 @@ export function RPGPage() {
     </motion.div>
   );
 }
+
+export default RPGPage;

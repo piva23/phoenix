@@ -24,7 +24,6 @@ import { CreditCardsView } from '../views/CreditCardsView';
 import { BudgetTab } from '../components/BudgetTab';
 import { InvestTab } from '../components/InvestTab';
 import { FinanceAnalyticsView } from '../views/FinanceAnalyticsView';
-import { QuickExpenseModal } from '../components/QuickExpenseModal';
 import { useFinanceStore, todayKey, fmtBRL } from '../../../stores/useFinanceStore';
 import { PageHeader } from '../../../components/layout/PageHeader';
 
@@ -39,7 +38,6 @@ const TABS = [
 
 export function FinancePage() {
   const [tab, setTab] = useState('overview');
-  const [quickAddOpen, setQuickAddOpen] = useState(false);
 
   const {
     totalIncome,
@@ -202,7 +200,7 @@ export function FinancePage() {
 
             {/* HERO CARD */}
             <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0B0914] via-[#0E0E16] to-[#120F1E] border border-white/10 p-6 md:p-8 shadow-2xl">
-              <div className="absolute -top-12 -right-12 w-72 h-72 bg-[#8B5CF6]/10 rounded-full filter blur-3xl pointer-events-none" />
+              <div className="absolute -top-12 -right-12 w-72 h-72 bg-primary/10 rounded-full filter blur-3xl pointer-events-none" />
               <div className="absolute -bottom-12 -left-12 w-72 h-72 bg-cyan-500/10 rounded-full filter blur-3xl pointer-events-none" />
 
               <div className="relative z-10 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
@@ -236,7 +234,7 @@ export function FinancePage() {
                   <div className="flex gap-2 w-full sm:w-auto">
                     <button
                       onClick={() => setActiveModal('income')}
-                      className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-4 rounded-2xl bg-gradient-to-r from-[#8B5CF6] to-[#06B6D4] text-xs font-black text-white uppercase tracking-wider hover:opacity-90 active:scale-95 transition-all shadow-lg shadow-purple-500/25 cursor-pointer"
+                      className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-4 rounded-2xl bg-gradient-to-r from-primary to-secondary text-xs font-black text-white uppercase tracking-wider hover:opacity-90 active:scale-95 transition-all shadow-lg shadow-primary/25 cursor-pointer"
                     >
                       <Plus size={14} /> Adicionar Receita
                     </button>
@@ -250,7 +248,7 @@ export function FinancePage() {
               <div className="flex justify-between items-center">
                 <div>
                   <h3 className="text-xs font-black text-[#9B9AAB] uppercase tracking-[0.2em] flex items-center gap-2">
-                    <Target size={14} className="text-[#8B5CF6]" /> Potes / Envelopes de Capital
+                    <Target size={14} className="text-primary" /> Potes / Envelopes de Capital
                   </h3>
                   <p className="text-[10px] text-zinc-500 uppercase tracking-wider mt-0.5">
                     Defina limites, planeje e aloque para cada categoria
@@ -258,7 +256,7 @@ export function FinancePage() {
                 </div>
                 <button
                   onClick={() => setActiveModal('new-pot')}
-                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-purple-500/10 border border-purple-500/20 hover:bg-purple-500/20 text-[10px] font-black text-[#8B5CF6] hover:text-purple-300 uppercase tracking-widest cursor-pointer transition-all duration-300"
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-purple-500/10 border border-purple-500/20 hover:bg-purple-500/20 text-[10px] font-black text-primary hover:text-purple-300 uppercase tracking-widest cursor-pointer transition-all duration-300"
                 >
                   <Plus size={12} /> Criar Pote
                 </button>
@@ -325,7 +323,7 @@ export function FinancePage() {
                           <span className={hasOverspent ? 'text-rose-400' : 'text-zinc-500'}>
                             {hasOverspent ? 'ESTOURO!' : 'Consumido'}
                           </span>
-                          <span className={hasOverspent ? 'text-rose-400' : 'text-[#8B5CF6]'}>{progress}%</span>
+                           <span className={hasOverspent ? 'text-rose-400' : 'text-primary'}>{progress}%</span>
                         </div>
                         <div className="w-full h-2 rounded-full bg-black/40 overflow-hidden border border-white/5 relative">
                           <motion.div
@@ -433,21 +431,6 @@ export function FinancePage() {
         {tab === 'budget' && <BudgetTab />}
         {tab === 'invest' && <InvestTab />}
       </div>
-
-      {/* FAB */}
-      <button
-        onClick={() => setQuickAddOpen(true)}
-        className="fixed bottom-24 lg:bottom-8 right-5 z-30 w-14 h-14 rounded-full flex items-center justify-center text-2xl text-white shadow-xl hover:scale-105 active:scale-95 transition-transform cursor-pointer"
-        style={{
-          background: 'linear-gradient(135deg, #8B5CF6 0%, #6366F1 100%)',
-          boxShadow: '0 8px 30px rgba(139, 92, 246, 0.4)'
-        }}
-        aria-label="Novo lançamento"
-      >
-        <Plus size={24} />
-      </button>
-
-      {quickAddOpen && <QuickExpenseModal onClose={() => setQuickAddOpen(false)} />}
 
       {/* MODALS */}
       <AnimatePresence>
@@ -693,3 +676,5 @@ export function FinancePage() {
     </div>
   );
 }
+
+export default FinancePage;

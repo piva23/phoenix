@@ -1,82 +1,85 @@
+import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { ThemeEffect } from './ThemeEffect';
 import { MainLayout } from '../layouts/MainLayout';
-import { SessionQuickModal } from '../modules/study/components/SessionQuickModal';
+import { SessionQuickModal } from '../shared/components/SessionQuickModal';
 import { LockScreen } from '../layouts/LockScreen';
 import { useQuestionListener } from '../shared/hooks/useQuestionListener';
+import LoadingScreen from '../shared/components/LoadingScreen';
 
-// Auth
+// Auth (não lazy — necessário para proteção de rotas)
 import LoginPage from '../modules/auth/LoginPage';
 import ProtectedRoute from '../shared/components/ProtectedRoute';
 
-// Core
-import { DashboardPage } from '../modules/dashboard/DashboardPage';
-import { CalendarPage } from '../modules/calendar/pages/CalendarPage';
-import { AnalyticsPage } from '../modules/analytics/AnalyticsPage';
-import { SettingsPage } from '../modules/settings/SettingsPage';
-import { RPGPage } from '../modules/rpg/pages/RPGPage';
+// Core — lazy loaded
+const DashboardPage = lazy(() => import('../modules/dashboard/DashboardPage'));
+const CalendarPage = lazy(() => import('../modules/calendar/pages/CalendarPage'));
+const AnalyticsPage = lazy(() => import('../modules/analytics/AnalyticsPage'));
+const SettingsPage = lazy(() => import('../modules/settings/SettingsPage'));
+const RPGPage = lazy(() => import('../modules/rpg/pages/RPGPage'));
 
-// Health
-import { HealthPage } from '../modules/health/pages/HealthPage';
+// Health — lazy loaded
+const HealthPage = lazy(() => import('../modules/health/pages/HealthPage'));
 
-// Finance
-import { FinancePage } from '../modules/finance/pages/FinancePage';
+// Finance — lazy loaded
+const FinancePage = lazy(() => import('../modules/finance/pages/FinancePage'));
 
-// Study
-import { StudyTodayPage } from '../modules/study/pages/StudyTodayPage';
-
-import { StudySubjectsPage } from '../modules/study/pages/StudySubjectsPage';
-import { StudySubjectDetailPage } from '../modules/study/pages/StudySubjectDetailPage';
-import { StudySubtopicPage } from '../modules/study/pages/StudySubtopicPage';
-import { StudySessionPage } from '../modules/study/pages/StudySessionPage';
-import { StudyRevisionsPage } from '../modules/study/pages/StudyRevisionsPage';
-import { StudyCyclePage } from '../modules/study/pages/StudyCyclePage';
-import { StudyConcursosPage } from '../modules/study/pages/StudyConcursosPage';
-import { StudyRedacaoPage } from '../modules/study/pages/StudyRedacaoPage';
-import { StudyAnalyticsPage } from '../modules/study/pages/StudyAnalyticsPage';
-import { StudySimuladosPage } from '../modules/study/pages/StudySimuladosPage';
-import { StudyQuestoesPage } from '../modules/study/pages/StudyQuestoesPage';
-import { StudyTechniquesPage } from '../modules/study/pages/StudyTechniquesPage';
+// Study — lazy loaded (13 rotas)
+const StudyTodayPage = lazy(() => import('../modules/study/pages/StudyTodayPage'));
+const StudySubjectsPage = lazy(() => import('../modules/study/pages/StudySubjectsPage'));
+const StudySubjectDetailPage = lazy(() => import('../modules/study/pages/StudySubjectDetailPage'));
+const StudySubtopicPage = lazy(() => import('../modules/study/pages/StudySubtopicPage'));
+const StudySessionPage = lazy(() => import('../modules/study/pages/StudySessionPage'));
+const StudyRevisionsPage = lazy(() => import('../modules/study/pages/StudyRevisionsPage'));
+const StudyCyclePage = lazy(() => import('../modules/study/pages/StudyCyclePage'));
+const StudyConcursosPage = lazy(() => import('../modules/study/pages/StudyConcursosPage'));
+const StudyRedacaoPage = lazy(() => import('../modules/study/pages/StudyRedacaoPage'));
+const StudyAnalyticsPage = lazy(() => import('../modules/study/pages/StudyAnalyticsPage'));
+const StudySimuladosPage = lazy(() => import('../modules/study/pages/StudySimuladosPage'));
+const StudyQuestoesPage = lazy(() => import('../modules/study/pages/StudyQuestoesPage'));
+const StudyTechniquesPage = lazy(() => import('../modules/study/pages/StudyTechniquesPage'));
 
 
 function AppRoutes() {
   return (
-    <Routes>
-      <Route path="/login" element={<LoginPage />} />
+    <Suspense fallback={<LoadingScreen />}>
+      <Routes>
+        <Route path="/login" element={<LoginPage />} />
 
-      <Route element={<ProtectedRoute />}>
-        <Route element={<MainLayout />}>
-          {/* Core */}
-          <Route index element={<Navigate to="/dashboard" replace />} />
-          <Route path="dashboard" element={<DashboardPage />} />
-          <Route path="calendar" element={<CalendarPage />} />
-          <Route path="rpg" element={<RPGPage />} />
-          <Route path="health" element={<HealthPage />} />
-          <Route path="finance" element={<FinancePage />} />
-          <Route path="analytics" element={<AnalyticsPage />} />
-          <Route path="settings" element={<SettingsPage />} />
+        <Route element={<ProtectedRoute />}>
+          <Route element={<MainLayout />}>
+            {/* Core */}
+            <Route index element={<Navigate to="/dashboard" replace />} />
+            <Route path="dashboard" element={<DashboardPage />} />
+            <Route path="calendar" element={<CalendarPage />} />
+            <Route path="rpg" element={<RPGPage />} />
+            <Route path="health" element={<HealthPage />} />
+            <Route path="finance" element={<FinancePage />} />
+            <Route path="analytics" element={<AnalyticsPage />} />
+            <Route path="settings" element={<SettingsPage />} />
 
-          {/* Study */}
-          <Route path="study" element={<Navigate to="/study/today" replace />} />
-          <Route path="study/today" element={<StudyTodayPage />} />
+            {/* Study */}
+            <Route path="study" element={<Navigate to="/study/today" replace />} />
+            <Route path="study/today" element={<StudyTodayPage />} />
 
-          <Route path="study/concursos" element={<StudyConcursosPage />} />
-          <Route path="study/subjects" element={<StudySubjectsPage />} />
-          <Route path="study/subjects/:subjectId" element={<StudySubjectDetailPage />} />
-          <Route path="study/subjects/:subjectId/:topicId/:subtopicId" element={<StudySubtopicPage />} />
-          <Route path="study/cycle" element={<StudyCyclePage />} />
-          <Route path="study/session" element={<StudySessionPage />} />
-          <Route path="study/revisions" element={<StudyRevisionsPage />} />
-          <Route path="study/redacao" element={<StudyRedacaoPage />} />
-          <Route path="study/analytics" element={<StudyAnalyticsPage />} />
-          <Route path="study/simulados" element={<StudySimuladosPage />} />
-          <Route path="study/questoes" element={<StudyQuestoesPage />} />
-          <Route path="study/techniques" element={<StudyTechniquesPage />} />
+            <Route path="study/concursos" element={<StudyConcursosPage />} />
+            <Route path="study/subjects" element={<StudySubjectsPage />} />
+            <Route path="study/subjects/:subjectId" element={<StudySubjectDetailPage />} />
+            <Route path="study/subjects/:subjectId/:topicId/:subtopicId" element={<StudySubtopicPage />} />
+            <Route path="study/cycle" element={<StudyCyclePage />} />
+            <Route path="study/session" element={<StudySessionPage />} />
+            <Route path="study/revisions" element={<StudyRevisionsPage />} />
+            <Route path="study/redacao" element={<StudyRedacaoPage />} />
+            <Route path="study/analytics" element={<StudyAnalyticsPage />} />
+            <Route path="study/simulados" element={<StudySimuladosPage />} />
+            <Route path="study/questoes" element={<StudyQuestoesPage />} />
+            <Route path="study/techniques" element={<StudyTechniquesPage />} />
 
+          </Route>
         </Route>
-      </Route>
-    </Routes>
+      </Routes>
+    </Suspense>
   );
 }
 
