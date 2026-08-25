@@ -144,29 +144,53 @@ export const ACHIEVEMENT_DEFINITIONS = [
 
 // ── Store ────────────────────────────────────────────────────────────────────
 
-// Função que consolida estado de todos os stores relevantes para checks
+// Função que consolida estado de todos os stores relevantes para checks.
+// NOTA: usa require() (não import) para evitar dependência circular e não
+// puxar todos os stores para o chunk principal (code splitting).
 function buildConsolidatedState() {
   try {
     const gameStore = require('./useGameStore').useGameStore.getState();
     const studyStore = require('./useStudyStore').useStudyStore.getState();
+    const sessionStore = require('./useSessionStore').useSessionStore.getState();
+    const redacaoStore = require('./useRedacaoStore').useRedacaoStore.getState();
+    const concursoStore = require('./useConcursoStore').useConcursoStore.getState();
     const healthStore = require('./useHealthStore').useHealthStore.getState();
     const financeStore = require('./useFinanceStore').useFinanceStore.getState();
     const calendarStore = require('./useCalendarStore').useCalendarStore.getState();
     const personaStore = require('./usePersonaStore').usePersonaStore.getState();
     const cycleStore = require('./useCycleStore').useCycleStore.getState();
 
-    const totalSessions = (studyStore.sessions || []).length;
-    const totalStudyMinutes = (studyStore.sessions || []).reduce((a, s) => a + (s.totalMinutes || 0), 0);
-    const totalQuestions = (studyStore.sessions || []).reduce((a, s) => a + (s.questionsAnswered || 0), 0);
-    const totalWorkouts = (healthStore.workoutLog || []).length;
-    const totalMeals = Object.values(healthStore.mealLog || {}).flat().length;
-    const totalExpenses = (financeStore.transactions || []).filter(t => t.type === 'expense').length;
-    const hasBudget = (financeStore.pots || []).length > 0;
-    const totalCalendarEvents = (calendarStore.manualEvents || []).length;
-    const totalPersonas = (personaStore.personas || []).length;
-    const totalSubjects = (studyStore.subjects || []).length;
-    const totalEssays = (studyStore.redacoes || []).length;
-    const concursosAprovados = (studyStore.concursos || []).filter(c => c.status === 'aprovado').length;
+    // Sessões vivem no useSessionStore (não no useStudyStore)
+    const sessions = sessionStore.sessions || [];
+    const totalSessions = sessions.length;
+    const totalStudyMinutes = sessions.reduce((a, s) => a + (s.totalMinutes || 0), 0);
+    const totalQuestions = sessions.reduce((a, s) => a + (s.questionsAnswered || 0), 0);
+
+    // Logs diários do health são objetos { "YYYY-MM-DD": ... }, não arrays
+    const workoutLog = healthStore.workoutLog || {};
+    const totalWorkouts = Object.values(workoutLog).filter(
+      (day) => day && typeof day === 'object' && Object.keys(day).length > 0
+    ).length;
+    const mealLog = healthStore.mealLog || {};
+    const totalMeals = Object.values(mealLog).reduce(
+      (a, day) => a + (Array.isArray(day) ? day.length : 0), 0
+    );
+
+    // streaks.habits é { habitId: diasConsecutivos } — usa o máximo
+    const habitsMap = healthStore.streaks?.habits || {};
+    const habitValues = Object.values(habitsMap).map((v) => Number(v) || 0);
+    const habitStreak = habitValues.length ? Math.max(...habitValues) : 0;
+
+    // Finance: orçamento real = budgets (ZBB por mês) ou envelopes configurados
+    const hasBudget =
+      Object.keys(financeStore.budgets || {}).length > 0 ||
+      (financeStore.envelopes || []).length > 0;
+    const totalExpenses = (financeStore.transactions || []).filter(
+      (t) => t.type === 'expense'
+    ).length;
+
+    // Personas criadas pelo utilizador (têm createdAt); a lista base não tem
+    const totalPersonas = (personaStore.personas || []).filter((p) => p.createdAt).length;
 
     return {
       // Game store
@@ -174,33 +198,88 @@ function buildConsolidatedState() {
       level: gameStore.level || 1,
       longestStreak: gameStore.longestStreak || 0,
       claimedMissions: (gameStore.missions || []).filter(m => m.status === 'claimed').length,
-      // Study
+      // Study (sessões do useSessionStore)
       totalSessions,
       totalStudyMinutes,
       totalQuestions,
-      totalEssays,
-      concursosPassed: concursosAprovados,
-      completedCycles: (cycleStore.cycles || []).filter(c => c.status === 'concluido').length,
+      totalSubjects: (studyStore.subjects || []).length,
+      totalEssays: (redacaoStore.redacoes || []).length,
+      concursosPassed: (concursoStore.concursos || []).filter(c => c.status === 'aprovado').length,
+      completedCycles: (cycleStore.cycles || []).filter(c => c.status === 'concluido' || c.status === 'concluído').length,
       // Health
       totalWorkouts,
       totalMeals,
-      waterStreak: healthStore.streaks?.water || 0,
-      habitStreak: healthStore.streaks?.habits || 0,
+      waterStreak: Number(healthStore.streaks?.water) || 0,
+      habitStreak,
       // Finance
       totalExpenses,
       hasBudget,
       savingsGoalReached: false, // TODO: implementar quando houver meta de economia
       // Calendar
-      totalCalendarEvents,
+      totalCalendarEvents: (calendarStore.manualEvents || []).length,
       // Personas
       totalPersonas,
-      // Subjects
-      totalSubjects,
     };
   } catch (e) {
+    if (process.env.NODE_ENV !== 'production') {
+      console.warn('[achievements] buildConsolidatedState falhou:', e);
+    }
     return {};
   }
 }
+
+// ── Mapa de progresso: id da conquista → [métrica, alvo] ──────────────────────
+// Usado para barras de progresso nas conquistas bloqueadas.
+export const ACHIEVEMENT_PROGRESS = {
+  a_first_session: ['totalSessions', 1],
+  a_5_sessions: ['totalSessions', 5],
+  a_10_sessions: ['totalSessions', 10],
+  a_25_sessions: ['totalSessions', 25],
+  a_50_sessions: ['totalSessions', 50],
+  a_100_sessions: ['totalSessions', 100],
+  a_10_hours: ['totalStudyMinutes', 600],
+  a_50_hours: ['totalStudyMinutes', 3000],
+  a_100_hours: ['totalStudyMinutes', 6000],
+  a_200_hours: ['totalStudyMinutes', 12000],
+  a_questions_10: ['totalQuestions', 10],
+  a_questions_100: ['totalQuestions', 100],
+  a_first_workout: ['totalWorkouts', 1],
+  a_5_workouts: ['totalWorkouts', 5],
+  a_10_workouts: ['totalWorkouts', 10],
+  a_30_workouts: ['totalWorkouts', 30],
+  a_water_3d: ['waterStreak', 3],
+  a_water_7d: ['waterStreak', 7],
+  a_water_30d: ['waterStreak', 30],
+  a_habit_7d: ['habitStreak', 7],
+  a_habit_30d: ['habitStreak', 30],
+  a_meals_50: ['totalMeals', 50],
+  a_first_expense: ['totalExpenses', 1],
+  a_50_expenses: ['totalExpenses', 50],
+  a_100_expenses: ['totalExpenses', 100],
+  a_level_3: ['level', 3],
+  a_level_5: ['level', 5],
+  a_level_10: ['level', 10],
+  a_level_15: ['level', 15],
+  a_level_20: ['level', 20],
+  a_xp_1000: ['totalXP', 1000],
+  a_xp_5000: ['totalXP', 5000],
+  a_xp_10000: ['totalXP', 10000],
+  a_first_mission: ['claimedMissions', 1],
+  a_10_missions: ['claimedMissions', 10],
+  a_streak_3: ['longestStreak', 3],
+  a_streak_7: ['longestStreak', 7],
+  a_streak_14: ['longestStreak', 14],
+  a_streak_30: ['longestStreak', 30],
+  a_streak_60: ['longestStreak', 60],
+  a_first_cycle: ['completedCycles', 1],
+  a_5_cycles: ['completedCycles', 5],
+  a_first_essay: ['totalEssays', 1],
+  a_10_essays: ['totalEssays', 10],
+  a_concurso_passed: ['concursosPassed', 1],
+  a_first_persona: ['totalPersonas', 1],
+  a_first_subject: ['totalSubjects', 1],
+  a_first_calendar: ['totalCalendarEvents', 1],
+};
 
 export const useAchievementStore = create(
   persist(
@@ -239,6 +318,19 @@ export const useAchievementStore = create(
               recentUnlocks: [...state.recentUnlocks, ...newUnlocks],
             };
           });
+
+          // Concede o XP das conquistas de verdade.
+          // grantAchievementXP NÃO dispara phoenix:xp_dispatched → sem loop.
+          try {
+            const totalRewardXP = newUnlocks.reduce((sum, id) => {
+              const def = ACHIEVEMENT_DEFINITIONS.find((a) => a.id === id);
+              return sum + (def?.xpReward || 0);
+            }, 0);
+            if (totalRewardXP > 0) {
+              const game = require('./useGameStore').useGameStore.getState();
+              if (game.grantAchievementXP) game.grantAchievementXP(totalRewardXP);
+            }
+          } catch (_) {}
 
           // Dispara eventos customizados para cada conquista
           newUnlocks.forEach((id) => {
@@ -288,6 +380,10 @@ export const useAchievementStore = create(
     { name: 'phoenix-achievements' }
   )
 );
+
+// Estado consolidado ao vivo — para barras de progresso na UI.
+// Calculado imperativamente (não reativo); chamar em mount/refresh.
+export const getLiveProgressState = () => buildConsolidatedState();
 
 // ── Auto-check: escuta phoenix:xp_dispatched e verifica conquistas ───────────
 if (typeof window !== 'undefined') {

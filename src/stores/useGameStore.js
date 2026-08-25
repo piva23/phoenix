@@ -353,6 +353,38 @@ export const useGameStore = create(
         try { get().refreshDynamicMissions(); } catch (_) {}
       },
 
+      // ═══ XP DE CONQUISTAS ══════════════════════════════════════════════════
+      // Concede XP de conquistas desbloqueadas SEM disparar phoenix:xp_dispatched
+      // (evita loop infinito com o checkAchievements) e SEM afetar streak/radar.
+      grantAchievementXP: (amount) => {
+        const xp = Number(amount) || 0;
+        if (xp <= 0) return;
+        set((state) => {
+          const newTotalXP = (state.totalXP || 0) + xp;
+          let currentLevel = state.level || 1;
+          let leveledUp = false;
+          let lastLeveledUpTo = state.lastLeveledUpTo;
+          while (newTotalXP >= calcXpForNextLevel(currentLevel)) {
+            currentLevel += 1;
+            leveledUp = true;
+            lastLeveledUpTo = currentLevel;
+          }
+          return {
+            totalXP: newTotalXP,
+            level: currentLevel,
+            showLevelUpModal: leveledUp ? true : state.showLevelUpModal,
+            lastLeveledUpTo,
+            xpLogs: [...state.xpLogs, {
+              id: `xp_${Date.now()}_ach`,
+              action: 'achievement_unlocked',
+              xp,
+              moduleOrigin: 'achievements',
+              timestamp: Date.now(),
+            }],
+          };
+        });
+      },
+
       // ═══ ADDXP (atalho legado — compat useUserStore) ═══════════════════════
       addXP: (amount, attribute) => {
         get().dispatchXP('general', amount, attribute, false);
@@ -456,32 +488,58 @@ export const useGameStore = create(
       // ═══ MISSIONS DINÂMICAS ═══════════════════════════════════════════════
       // Gera novas missões baseadas no comportamento real do utilizador.
       // Chamado após cada dispatchXP e no carregamento do app.
+      // Também remove missões diárias/semanais expiradas (reset diário).
       refreshDynamicMissions: () => {
         const state = get();
-        const { useStudyStore } = require('./useStudyStore');
+        const { useSessionStore } = require('./useSessionStore');
         const { useHealthStore } = require('./useHealthStore');
         const { useFinanceStore } = require('./useFinanceStore');
 
         const today = new Date().toISOString().slice(0, 10);
-        const sessions = useStudyStore.getState().sessions || [];
-        const todaySessions = sessions.filter(s => s.date === today);
+        const weekStart = getWeekStart();
+
+        // ── Reset: remove missões dinâmicas expiradas ────────────────────────
+        // Diárias geradas antes de hoje e semanais de semanas anteriores.
+        const expiredIds = (state.missions || [])
+          .filter((m) => {
+            if (!m.generatedAt) return false; // missões estáticas nunca expiram
+            if (m.type === 'diária') return m.generatedAt < today;
+            if (m.type === 'semanal') return m.generatedAt < weekStart;
+            return false;
+          })
+          .map((m) => m.id);
+        if (expiredIds.length > 0) {
+          set((s) => ({
+            missions: s.missions.filter((m) => !expiredIds.includes(m.id)),
+          }));
+        }
+
+        // ── Estado consolidado do dia/semana (shapes reais dos stores) ──────
+        const sessions = useSessionStore.getState().sessions || [];
+        const todaySessions = sessions.filter((s) => s.date === today);
         const todayStudyMinutes = todaySessions.reduce((a, s) => a + (s.totalMinutes || 0), 0);
-        const todayQuestions = todaySessions.reduce((a, s) => a + (s.questionsAnswered || 0), 0);
 
         const hState = useHealthStore.getState();
         const todayWaterMl = hState.getTodayWaterMl ? hState.getTodayWaterMl() : 0;
-        const todayHabits = (hState.getHabitLogToday ? hState.getHabitLogToday() : []).length;
-        const todayWorkouts = (hState.workoutLog || []).filter(w => w.date === today).length;
+        // habitLog é { "YYYY-MM-DD": { habitId: entrada } }
+        const todayHabits = Object.keys(
+          (hState.habitLog || {})[today] || {}
+        ).length;
+        // workoutLog é { "YYYY-MM-DD": { exerciseId: [entradas] } } — conta dias com treino
+        const workoutLog = hState.workoutLog || {};
+        const activeWorkoutDays = Object.keys(workoutLog).filter(
+          (d) => workoutLog[d] && Object.keys(workoutLog[d]).length > 0
+        );
+        const todayWorkouts = activeWorkoutDays.filter((d) => d === today).length;
 
         const fState = useFinanceStore.getState();
-        const todayTransactions = (fState.transactions || []).filter(t => t.date === today).length;
+        const todayTransactions = (fState.transactions || []).filter((t) => t.date === today).length;
 
         // Weekly
-        const weekStart = getWeekStart();
-        const weekSessions = sessions.filter(s => s.date >= weekStart);
+        const weekSessions = sessions.filter((s) => s.date >= weekStart);
         const weekStudyMinutes = weekSessions.reduce((a, s) => a + (s.totalMinutes || 0), 0);
         const weekQuestions = weekSessions.reduce((a, s) => a + (s.questionsAnswered || 0), 0);
-        const weekWorkouts = (hState.workoutLog || []).filter(w => w.date >= weekStart).length;
+        const weekWorkouts = activeWorkoutDays.filter((d) => d >= weekStart).length;
 
         const consolidated = {
           todayStudyMinutes,
@@ -497,7 +555,9 @@ export const useGameStore = create(
           weekQuestions,
         };
 
-        const newMissions = generateDynamicMissions(consolidated, state.missions || []);
+        // Gera novas missões (após o reset, ids expirados podem regenerar)
+        const currentMissions = get().missions || [];
+        const newMissions = generateDynamicMissions(consolidated, currentMissions);
         if (newMissions.length > 0) {
           set((s) => ({ missions: [...s.missions, ...newMissions] }));
         }

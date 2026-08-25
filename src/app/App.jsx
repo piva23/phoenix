@@ -1,4 +1,4 @@
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { ThemeEffect } from './ThemeEffect';
@@ -8,6 +8,7 @@ import { AchievementToast } from '../shared/components/AchievementToast';
 import { LockScreen } from '../layouts/LockScreen';
 import { useQuestionListener } from '../shared/hooks/useQuestionListener';
 import LoadingScreen from '../shared/components/LoadingScreen';
+import { useGameStore } from '../stores/useGameStore';
 
 // Auth (não lazy — necessário para proteção de rotas)
 import LoginPage from '../modules/auth/LoginPage';
@@ -88,6 +89,12 @@ function AppRoutes() {
 
 export default function App() {
   useQuestionListener();
+
+  // No carregamento: expira missões diárias/semanais vencidas e gera novas
+  // (reset diário de missões mesmo sem dispatchXP).
+  useEffect(() => {
+    try { useGameStore.getState().refreshDynamicMissions(); } catch (_) {}
+  }, []);
 
   return (
     <BrowserRouter>

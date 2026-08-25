@@ -1,5 +1,10 @@
-import React, { useMemo } from 'react';
-import { useAchievementStore, ACHIEVEMENT_DEFINITIONS } from '../../stores/useAchievementStore';
+import React, { useMemo, useState, useEffect } from 'react';
+import {
+  useAchievementStore,
+  ACHIEVEMENT_DEFINITIONS,
+  ACHIEVEMENT_PROGRESS,
+  getLiveProgressState,
+} from '../../stores/useAchievementStore';
 import { PageHeader } from '../../components/layout/PageHeader';
 import { motion } from 'framer-motion';
 
@@ -14,7 +19,16 @@ const CATEGORIES = [
   { id: 'misc', label: 'Misc', icon: '🌟' },
 ];
 
-function AchievementCard({ achievement, isUnlocked, unlockedAt }) {
+// Formata valores de progresso (minutos viram horas quando grande)
+function fmtProgressValue(metric, value) {
+  if (metric === 'totalStudyMinutes') {
+    const h = Math.floor(value / 60);
+    return h > 0 ? `${h}h` : `${value}min`;
+  }
+  return String(value);
+}
+
+function AchievementCard({ achievement, isUnlocked, unlockedAt, liveState }) {
   const fmtDate = (ts) => {
     if (!ts) return '';
     return new Date(ts).toLocaleDateString('pt-PT', {
@@ -23,6 +37,16 @@ function AchievementCard({ achievement, isUnlocked, unlockedAt }) {
       year: 'numeric',
     });
   };
+
+  // Progresso parcial para conquistas bloqueadas com métrica conhecida
+  const progress = useMemo(() => {
+    if (isUnlocked) return null;
+    const [metric, target] = ACHIEVEMENT_PROGRESS[achievement.id] || [];
+    if (!metric || !target || !liveState) return null;
+    const value = Number(liveState[metric]) || 0;
+    const pct = Math.min(100, Math.round((value / target) * 100));
+    return { value, target, pct };
+  }, [achievement.id, isUnlocked, liveState]);
 
   return (
     <motion.div
@@ -67,6 +91,30 @@ function AchievementCard({ achievement, isUnlocked, unlockedAt }) {
         {achievement.description}
       </p>
 
+      {/* Barra de progresso para conquistas bloqueadas */}
+      {progress && (
+        <div className="mt-3">
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-[9px] text-text-dim uppercase tracking-wider font-bold">
+              Progresso
+            </span>
+            <span className="text-[9px] text-text-muted font-mono font-bold">
+              {fmtProgressValue(ACHIEVEMENT_PROGRESS[achievement.id][0], progress.value)}
+              {' / '}
+              {fmtProgressValue(ACHIEVEMENT_PROGRESS[achievement.id][0], progress.target)}
+            </span>
+          </div>
+          <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+            <motion.div
+              className="h-full rounded-full bg-gradient-to-r from-primary to-secondary"
+              initial={{ width: 0 }}
+              animate={{ width: `${progress.pct}%` }}
+              transition={{ duration: 0.6, ease: 'easeOut' }}
+            />
+          </div>
+        </div>
+      )}
+
       {/* XP + data */}
       <div className="mt-3 pt-3 border-t border-white/5 flex items-center justify-between">
         <span className={`text-xs font-black font-mono ${
@@ -91,6 +139,15 @@ function AchievementCard({ achievement, isUnlocked, unlockedAt }) {
 export function AchievementsPage() {
   const { unlocked, getStats } = useAchievementStore();
   const [activeCategory, setActiveCategory] = React.useState('all');
+
+  // Estado consolidado ao vivo para as barras de progresso.
+  // Recalculado no mount e a cada 30s (não é reativo por natureza).
+  const [liveState, setLiveState] = useState(() => getLiveProgressState());
+  useEffect(() => {
+    const refresh = () => setLiveState(getLiveProgressState());
+    const interval = setInterval(refresh, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
   const stats = useMemo(() => getStats(), [unlocked]);
 
@@ -195,6 +252,7 @@ export function AchievementsPage() {
             achievement={achievement}
             isUnlocked={!!unlocked[achievement.id]}
             unlockedAt={unlocked[achievement.id]?.unlockedAt}
+            liveState={liveState}
           />
         ))}
       </div>
