@@ -119,17 +119,6 @@ export function MissionsBoard() {
                   </div>
 
                   <div className="flex items-center gap-2">
-                    {/* Simulator helper button */}
-                    {!isClaimed && (
-                      <button
-                        onClick={() => toggleMissionStatus(mission.id)}
-                        className="p-1 px-2 rounded-lg bg-white/5 hover:bg-white/10 text-[9px] font-bold text-text-muted transition-colors border border-white/5"
-                        title="Alternar status (Simular conclusão)"
-                      >
-                        {isClaimable ? '🔒 Trancar' : '🔓 Concluir'}
-                      </button>
-                    )}
-
                     {isClaimable ? (
                       <motion.button
                         whileHover={{ scale: 1.05 }}

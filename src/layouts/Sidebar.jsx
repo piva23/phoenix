@@ -11,6 +11,7 @@ const MENU_BLOCKS = [
       { path: '/dashboard', label: 'Dashboard', icon: '⬡' },
       { path: '/calendar', label: 'Calendário', icon: '📅' },
       { path: '/rpg', label: 'Aventura', icon: '⚔️' },
+      { path: '/achievements', label: 'Conquistas', icon: '🏆' },
     ],
   },
   {

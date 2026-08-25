@@ -175,7 +175,7 @@ export function FinancePage() {
         )}
 
         {/* Tabs - Glassmorphism Pills */}
-        <div className="flex gap-2 overflow-x-auto scrollbar-hide p-1.5 card-surface">
+        <div className="flex gap-1.5 overflow-x-auto scrollbar-hide p-1.5 card-surface">
           {TABS.map(t => (
             <button
               key={t.id}
@@ -199,7 +199,7 @@ export function FinancePage() {
           <div className="space-y-6">
 
             {/* HERO CARD */}
-            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0B0914] via-[#0E0E16] to-[#120F1E] border border-white/10 p-6 md:p-8 shadow-2xl">
+            <div className="card-glass relative overflow-hidden p-6 md:p-8">
               <div className="absolute -top-12 -right-12 w-72 h-72 bg-primary/10 rounded-full filter blur-3xl pointer-events-none" />
               <div className="absolute -bottom-12 -left-12 w-72 h-72 bg-cyan-500/10 rounded-full filter blur-3xl pointer-events-none" />
 
@@ -223,11 +223,11 @@ export function FinancePage() {
                 </div>
 
                 <div className="flex flex-wrap items-center gap-4 w-full lg:w-auto">
-                  <div className="bg-black/30 border border-white/5 px-5 py-3.5 rounded-2xl min-w-[130px]">
+                  <div className="card-surface px-5 py-3.5 min-w-[130px]">
                     <span className="text-[9px] text-zinc-500 uppercase tracking-widest font-bold block">Receita Total</span>
                     <span className="text-sm font-black text-white font-mono">{fmtBRL(totalIncome)}</span>
                   </div>
-                  <div className="bg-black/30 border border-white/5 px-5 py-3.5 rounded-2xl min-w-[130px]">
+                  <div className="card-surface px-5 py-3.5 min-w-[130px]">
                     <span className="text-[9px] text-zinc-500 uppercase tracking-widest font-bold block">Total Investido</span>
                     <span className="text-sm font-black text-emerald-400 font-mono">{fmtBRL(totalInvested)}</span>
                   </div>
@@ -273,7 +273,7 @@ export function FinancePage() {
                   return (
                     <div
                       key={pot.id}
-                      className="group relative overflow-hidden bg-[#0C0C10]/80 backdrop-blur-xl border border-white/5 rounded-3xl p-5 hover:border-white/10 transition-all duration-300 shadow-xl"
+                      className="group relative overflow-hidden card-glass p-5 hover:border-white/10 transition-all duration-300"
                     >
                       <div
                         className="absolute top-0 left-0 right-0 h-[4px]"
@@ -305,7 +305,7 @@ export function FinancePage() {
                         </button>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-2 mb-4 bg-black/35 p-3 rounded-2xl border border-white/[0.02]">
+                      <div className="grid grid-cols-2 gap-2 mb-4 card-surface p-3">
                         <div>
                           <span className="text-[8px] text-zinc-500 uppercase tracking-widest font-bold block">Alocado</span>
                           <span className="text-xs font-black text-white font-mono">{fmtBRL(potAllocated)}</span>

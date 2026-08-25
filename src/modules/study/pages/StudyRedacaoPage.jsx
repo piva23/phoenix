@@ -51,7 +51,7 @@ function PartesCustomModal({ onClose }) {
 
 export function StudyRedacaoPage() {
   const { themes, redacoes, partesTemplate, addRedacao, updateRedacao, deleteRedacao, sortearTema, addTheme, deleteTheme, updateAnotacao } = useRedacaoStore()
-  const { logXP, addXP } = useGameStore()
+  const { dispatchXP } = useGameStore()
   const activePersonaId = usePersonaStore(s => s.activePersonaId)
 
   const [view, setView] = useState('list')
@@ -88,8 +88,7 @@ export function StudyRedacaoPage() {
     const totalWords = Object.values(activeRedacao.partes).reduce((a, t) => a + countWords(t), 0)
     updateRedacao(activeRedacao.id, { status: 'concluida', wordCount: totalWords })
     const xp = XP_RULES.REDACAO_CREATED.xp
-    logXP({ action: 'REDACAO_CREATED', xp, moduleOrigin: 'study', personaId: activePersonaId, radarAxis: 'conhecimento' })
-    addXP(xp)
+    dispatchXP('study', xp, 'sabedoria', false, 'conhecimento')
     toast.success(`Redação concluída! +${xp} XP`)
     setView('list')
   }

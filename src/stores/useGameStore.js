@@ -30,6 +30,16 @@ export const RADAR_AXES = [
   'conhecimento', 'disciplina', 'foco', 'consistencia', 'velocidade', 'retencao',
 ];
 
+// Mapeamento padrão atributo → eixo do radar (usado quando dispatchXP não
+// recebe um radarAxis explícito)
+export const ATTRIBUTE_TO_RADAR = {
+  forca: 'velocidade',
+  foco: 'foco',
+  sabedoria: 'conhecimento',
+  disciplina: 'disciplina',
+  consistencia: 'consistencia',
+};
+
 // ── XP Rules (referência central) ────────────────────────────────────────────
 export const XP_RULES = {
   STUDY_MINUTE:       { xp: 1,   attribute: 'foco',        radarAxis: 'conhecimento',  label: '+1 XP por minuto de estudo' },
@@ -98,6 +108,89 @@ const DEFAULT_MISSIONS = [
   { id: 'm-4', title: 'Conquistador do Olimpo', type: 'épica', req: 'Alcançar a marca de 30 dias livres de um mau hábito', xpReward: 1000, status: 'locked' },
 ];
 
+// ── Missões Dinâmicas — templates geradas automaticamente ────────────────────
+const DAILY_MISSION_TEMPLATES = [
+  { id: 'dm_study_1h', title: 'Foco de Uma Hora', req: 'Estude por pelo menos 60 minutos hoje', xpReward: 40, type: 'diária',
+    check: (s) => s.todayStudyMinutes >= 60 },
+  { id: 'dm_study_2h', title: 'Maratonista do Conhecimento', req: 'Estude por pelo menos 120 minutos hoje', xpReward: 80, type: 'diária',
+    check: (s) => s.todayStudyMinutes >= 120 },
+  { id: 'dm_water', title: 'Hidratação Total', req: 'Beba pelo menos 2L de água hoje', xpReward: 25, type: 'diária',
+    check: (s) => s.todayWaterMl >= 2000 },
+  { id: 'dm_habit', title: 'Hábito do Dia', req: 'Complete pelo menos 1 hábito registrado hoje', xpReward: 30, type: 'diária',
+    check: (s) => s.todayHabitsCompleted >= 1 },
+  { id: 'dm_session', title: 'Sessão Completa', req: 'Inicie e finalize 1 sessão de estudo', xpReward: 35, type: 'diária',
+    check: (s) => s.todaySessions >= 1 },
+  { id: 'dm_expense', title: 'Registro Financeiro', req: 'Registre pelo menos 1 despesa ou receita', xpReward: 15, type: 'diária',
+    check: (s) => s.todayTransactions >= 1 },
+  { id: 'dm_50min', title: 'Sprint de Foco', req: 'Complete 50 minutos de estudo', xpReward: 30, type: 'diária',
+    check: (s) => s.todayStudyMinutes >= 50 },
+  { id: 'dm_no_skip', title: 'Sem Pular', req: 'Mantenha o streak — não pule nenhum dia', xpReward: 50, type: 'diária',
+    check: (s) => s.currentStreak >= 2 },
+];
+
+const WEEKLY_MISSION_TEMPLATES = [
+  { id: 'wm_5_sessions', title: 'Cinco Sessões', req: 'Complete 5 sessões de estudo esta semana', xpReward: 100, type: 'semanal',
+    check: (s) => s.weekSessions >= 5 },
+  { id: 'wm_3_workouts', title: 'Três Treinos', req: 'Registre 3 treinos esta semana', xpReward: 120, type: 'semanal',
+    check: (s) => s.weekWorkouts >= 3 },
+  { id: 'wm_10_hours', title: 'Dez Horas de Estudo', req: 'Acumule 10 horas de estudo esta semana', xpReward: 200, type: 'semanal',
+    check: (s) => s.weekStudyMinutes >= 600 },
+  { id: 'wm_streak', title: 'Streak de 7', req: 'Mantenha streak de 7 dias', xpReward: 150, type: 'semanal',
+    check: (s) => s.longestStreak >= 7 },
+  { id: 'wm_30_questions', title: 'Atirador', req: 'Responda 30 questões esta semana', xpReward: 80, type: 'semanal',
+    check: (s) => s.weekQuestions >= 30 },
+];
+
+// Gera missões dinâmicas baseadas no estado atual
+function generateDynamicMissions(state, existingMissions) {
+  const today = new Date().toISOString().slice(0, 10);
+  const weekStart = getWeekStart();
+  const existingIds = new Set(existingMissions.map(m => m.id));
+
+  const newMissions = [];
+
+  // Missões diárias
+  DAILY_MISSION_TEMPLATES.forEach(template => {
+    if (existingIds.has(template.id)) return;
+    if (template.check(state)) {
+      newMissions.push({
+        id: template.id,
+        title: template.title,
+        req: template.req,
+        xpReward: template.xpReward,
+        type: template.type,
+        status: 'claimable',
+        generatedAt: today,
+      });
+    }
+  });
+
+  // Missões semanais
+  WEEKLY_MISSION_TEMPLATES.forEach(template => {
+    if (existingIds.has(template.id)) return;
+    if (template.check(state)) {
+      newMissions.push({
+        id: template.id,
+        title: template.title,
+        req: template.req,
+        xpReward: template.xpReward,
+        type: template.type,
+        status: 'claimable',
+        generatedAt: weekStart,
+      });
+    }
+  });
+
+  return newMissions;
+}
+
+function getWeekStart() {
+  const d = new Date();
+  const day = d.getDay();
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+  return new Date(d.setDate(diff)).toISOString().slice(0, 10);
+}
+
 const DEFAULT_RPG_BADGES = [
   { id: 'b-estudioso', title: 'Estudioso de Ferro', description: 'Complete 10 sessões de estudo focadas', icon: '🛡️', unlocked: true, unlockedAt: Date.now() - 86400000 },
   { id: 'b-leotauro', title: 'Corpo de Leotauro', description: 'Mantenha o registro de musculação por 2 semanas seguidas', icon: '🦁', unlocked: false, unlockedAt: null },
@@ -161,7 +254,9 @@ export const useGameStore = create(
       ...INITIAL_STATE,
 
       // ═══ XP DISPATCH (função mestre) ═══════════════════════════════════════
-      dispatchXP: (moduleName, actionTier, attributeId, isGoBeyond = false) => {
+      // radarAxis (opcional): eixo explícito do radar. Se ausente, deriva do
+      // attributeId via ATTRIBUTE_TO_RADAR.
+      dispatchXP: (moduleName, actionTier, attributeId, isGoBeyond = false, radarAxis = null) => {
         let baseXP = 0;
 
         if (typeof actionTier === 'number') {
@@ -183,6 +278,12 @@ export const useGameStore = create(
         if (isGoBeyond) baseXP = Math.floor(baseXP * 1.5);
         if (baseXP <= 0) return;
 
+        // Resolve eixo do radar
+        const resolvedRadarAxis =
+          (radarAxis && RADAR_AXES.includes(radarAxis))
+            ? radarAxis
+            : ATTRIBUTE_TO_RADAR[attributeId] || null;
+
         if (typeof window !== 'undefined') {
           window.dispatchEvent(new CustomEvent('phoenix:xp_dispatched', {
             detail: { xpAmount: baseXP, attributeId, isGoBeyond, moduleName },
@@ -194,6 +295,12 @@ export const useGameStore = create(
           const updatedAttributes = { ...state.attributes };
           if (attributeId && updatedAttributes[attributeId] !== undefined) {
             updatedAttributes[attributeId] += baseXP;
+          }
+
+          // Atualiza radar junto com o dispatch (fonte única de progresso)
+          const updatedRadar = { ...state.radar };
+          if (resolvedRadarAxis) {
+            updatedRadar[resolvedRadarAxis] = (updatedRadar[resolvedRadarAxis] || 0) + baseXP;
           }
 
           let currentLevel = state.level || 1;
@@ -231,6 +338,7 @@ export const useGameStore = create(
             totalXP: newTotalXP,
             level: currentLevel,
             attributes: updatedAttributes,
+            radar: updatedRadar,
             xpLogs: [...state.xpLogs, { id: `xp_${Date.now()}`, action: moduleName, xp: baseXP, attributeId, moduleOrigin: moduleName, timestamp: Date.now() }],
             showLevelUpModal: leveledUp ? true : state.showLevelUpModal,
             lastLeveledUpTo,
@@ -240,6 +348,9 @@ export const useGameStore = create(
             badges: newBadges,
           };
         });
+
+        // Após cada XP, verifica missões dinâmicas
+        try { get().refreshDynamicMissions(); } catch (_) {}
       },
 
       // ═══ ADDXP (atalho legado — compat useUserStore) ═══════════════════════
@@ -248,6 +359,8 @@ export const useGameStore = create(
       },
 
       // ═══ LOGXP (compat useXPStore — aceita moduleOrigin, personaId) ═══════
+      // NOTA: apenas registra no histórico. O radar/level/atributos são
+      // atualizados exclusivamente por dispatchXP (fonte única de verdade).
       logXP: ({ action, xp, module: mod, moduleOrigin, personaId, radarAxis }) => {
         const modKey = mod || moduleOrigin || 'general';
         set((state) => ({
@@ -261,10 +374,6 @@ export const useGameStore = create(
             radarAxis: radarAxis || 'disciplina',
             timestamp: Date.now(),
           }],
-          radar: {
-            ...state.radar,
-            [radarAxis || 'disciplina']: (state.radar[radarAxis || 'disciplina'] || 0) + xp,
-          },
         }));
       },
 
@@ -343,6 +452,56 @@ export const useGameStore = create(
           return { ...m, status: nextStatus };
         }),
       })),
+
+      // ═══ MISSIONS DINÂMICAS ═══════════════════════════════════════════════
+      // Gera novas missões baseadas no comportamento real do utilizador.
+      // Chamado após cada dispatchXP e no carregamento do app.
+      refreshDynamicMissions: () => {
+        const state = get();
+        const { useStudyStore } = require('./useStudyStore');
+        const { useHealthStore } = require('./useHealthStore');
+        const { useFinanceStore } = require('./useFinanceStore');
+
+        const today = new Date().toISOString().slice(0, 10);
+        const sessions = useStudyStore.getState().sessions || [];
+        const todaySessions = sessions.filter(s => s.date === today);
+        const todayStudyMinutes = todaySessions.reduce((a, s) => a + (s.totalMinutes || 0), 0);
+        const todayQuestions = todaySessions.reduce((a, s) => a + (s.questionsAnswered || 0), 0);
+
+        const hState = useHealthStore.getState();
+        const todayWaterMl = hState.getTodayWaterMl ? hState.getTodayWaterMl() : 0;
+        const todayHabits = (hState.getHabitLogToday ? hState.getHabitLogToday() : []).length;
+        const todayWorkouts = (hState.workoutLog || []).filter(w => w.date === today).length;
+
+        const fState = useFinanceStore.getState();
+        const todayTransactions = (fState.transactions || []).filter(t => t.date === today).length;
+
+        // Weekly
+        const weekStart = getWeekStart();
+        const weekSessions = sessions.filter(s => s.date >= weekStart);
+        const weekStudyMinutes = weekSessions.reduce((a, s) => a + (s.totalMinutes || 0), 0);
+        const weekQuestions = weekSessions.reduce((a, s) => a + (s.questionsAnswered || 0), 0);
+        const weekWorkouts = (hState.workoutLog || []).filter(w => w.date >= weekStart).length;
+
+        const consolidated = {
+          todayStudyMinutes,
+          todayWaterMl,
+          todayHabitsCompleted: todayHabits,
+          todaySessions: todaySessions.length,
+          todayTransactions,
+          currentStreak: state.currentStreak || 0,
+          longestStreak: state.longestStreak || 0,
+          weekSessions: weekSessions.length,
+          weekWorkouts,
+          weekStudyMinutes,
+          weekQuestions,
+        };
+
+        const newMissions = generateDynamicMissions(consolidated, state.missions || []);
+        if (newMissions.length > 0) {
+          set((s) => ({ missions: [...s.missions, ...newMissions] }));
+        }
+      },
 
       resetAllRPG: () => set({
         missions: [...DEFAULT_MISSIONS],

@@ -172,7 +172,7 @@ export function TodayHealthView() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         
         {/* ── CARD A: HIDRATAÇÃO (ÁGUA 1-CLICK) ─────────────────────────────── */}
-        <div className="bg-[#0C0C10]/90 backdrop-blur-xl border border-white/10 rounded-3xl p-6 shadow-2xl relative overflow-hidden flex flex-col justify-between">
+        <div className="card-glass p-6 relative overflow-hidden flex flex-col justify-between">
           <div className="absolute top-0 right-0 w-32 h-32 bg-sky-500/10 rounded-full filter blur-3xl pointer-events-none" />
 
           <div>
@@ -230,7 +230,7 @@ export function TodayHealthView() {
         </div>
 
         {/* ── CARD B: HÁBITOS & SOBRIEDADE ─────────────────────────────────── */}
-        <div className="bg-[#0C0C10]/90 backdrop-blur-xl border border-white/10 rounded-3xl p-6 shadow-2xl relative overflow-hidden flex flex-col justify-between">
+        <div className="card-glass p-6 relative overflow-hidden flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-black text-white uppercase tracking-widest flex items-center gap-2">
@@ -368,7 +368,7 @@ export function TodayHealthView() {
         </div>
 
         {/* ── CARD C: DIETA & MACROS DO DIA (DONUT CHART + LOGS RÁPIDOS) ────── */}
-        <div className="bg-[#0C0C10]/90 backdrop-blur-xl border border-white/10 rounded-3xl p-6 shadow-2xl relative overflow-hidden">
+        <div className="card-glass p-6 relative overflow-hidden">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-black text-white uppercase tracking-widest flex items-center gap-2">
               <span className="p-1.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-xl">
@@ -504,7 +504,7 @@ export function TodayHealthView() {
         </div>
 
         {/* ── CARD D: TREINO DO DIA (A FORJA) ───────────────────────────────── */}
-        <div className="bg-[#0C0C10]/90 backdrop-blur-xl border border-white/10 rounded-3xl p-6 shadow-2xl relative overflow-hidden flex flex-col justify-between min-h-[400px]">
+        <div className="card-glass p-6 relative overflow-hidden flex flex-col justify-between min-h-[400px]">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-black text-white uppercase tracking-widest flex items-center gap-2">
               <span className="p-1.5 bg-amber-500/10 border border-amber-500/20 text-amber-400 rounded-xl">

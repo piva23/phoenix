@@ -1,6 +1,6 @@
 import React from 'react';
 import { usePersonaStore } from '../../../stores/usePersonaStore';
-import { useGameStore } from '../../../stores/useGameStore';
+import { useGameStore, calcLevelProgress } from '../../../stores/useGameStore';
 import { motion } from 'framer-motion';
 import {
   Radar,
@@ -11,38 +11,14 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 
-// Function to calculate level based on cumulative XP:
-// Level 1: 0 - 99 XP
-// Level 2: 100 - 399 XP
-// Level 3: 400 - 899 XP
-// Level 4: 900 - 1599 XP
-// Formula: Threshold for level L is 100 * (L-1)^2. Level is sqrt(xp/100) + 1.
-export function calculateLevelAndProgress(xp) {
-  const currentXP = xp || 0;
-  const level = Math.floor(Math.sqrt(currentXP / 100)) + 1;
-  const xpCurrentLevelBase = 100 * Math.pow(level - 1, 2);
-  const xpNextLevelThreshold = 100 * Math.pow(level, 2);
-
-  const xpInCurrentLevel = currentXP - xpCurrentLevelBase;
-  const xpNeededForNext = xpNextLevelThreshold - xpCurrentLevelBase;
-  const percent = Math.min(100, Math.max(0, (xpInCurrentLevel / xpNeededForNext) * 100));
-
-  return {
-    level,
-    xpInCurrentLevel,
-    xpNeededForNext,
-    percent,
-    totalXPNeeded: xpNextLevelThreshold,
-  };
-}
-
 export function AvatarEvolution() {
   const getActivePersona = usePersonaStore((s) => s.getActivePersona);
   const persona = getActivePersona();
+  const totalXP = useGameStore((s) => s.totalXP);
   const radarXP = useGameStore((s) => s.radar) || {};
 
-  const xp = persona?.xp || 0;
-  const { level, xpInCurrentLevel, xpNeededForNext, percent } = calculateLevelAndProgress(xp);
+  // Usar a fórmula unificada do store
+  const { level, currentXP, neededXP, progress } = calcLevelProgress(totalXP || 0);
 
   // Dynamic attributes mapping the 6 requested RPG axes
   const data = [
@@ -91,7 +67,7 @@ export function AvatarEvolution() {
                 Progresso de Experiência
               </span>
               <span className="text-xs font-mono font-bold text-primary">
-                {Math.round(xpInCurrentLevel)} / {xpNeededForNext} XP
+                {Math.round(currentXP)} / {neededXP} XP
               </span>
             </div>
 
@@ -99,7 +75,7 @@ export function AvatarEvolution() {
               <motion.div
                 className="h-full rounded-full bg-gradient-to-r from-primary via-purple-500 to-secondary"
                 initial={{ width: 0 }}
-                animate={{ width: `${percent}%` }}
+                animate={{ width: `${progress}%` }}
                 transition={{ type: 'spring', stiffness: 80, damping: 15 }}
                 style={{ boxShadow: '0 0 10px rgba(var(--primary-rgb), 0.5)' }}
               />
@@ -113,7 +89,7 @@ export function AvatarEvolution() {
 
           <div className="p-4 bg-white/[0.01] border border-dashed border-white/5 rounded-2xl text-[11px] leading-relaxed text-text-dim">
             <span className="font-bold text-text-main block mb-1">🎮 Regra de Evolução:</span>
-            Cada missão reivindicada adiciona XP à sua Persona ativa. Conforme você acumula XP, seu nível sobe exponencialmente baseado na fórmula <code className="text-secondary font-mono">100 * nível²</code>. Atributos do Radar sobem a cada novo nível!
+            Cada sessão, treino e hábito real gera XP automaticamente. Conforme você acumula XP, seu nível sobe pela fórmula <code className="text-secondary font-mono">100 + 50L + 25L²</code> e o Radar de Atributos evolui com suas ações reais.
           </div>
         </div>
 

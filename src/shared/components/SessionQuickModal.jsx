@@ -298,7 +298,7 @@ export function SessionQuickModal() {
   const subjects = useStudyStore(s => s.subjects);
   const updateSubtopic = useStudyStore(s => s.updateSubtopic);
   const addSession = useSessionStore(s => s.addSession);
-  const { logXP, addXP } = useGameStore();
+  const { dispatchXP } = useGameStore();
   const activePersonaId = usePersonaStore(s => s.activePersonaId);
   const addPersonaXP = usePersonaStore(s => s.addPersonaXP);
   const { getActiveCycle, addMinutesToItem } = useCycleStore();
@@ -538,14 +538,7 @@ export function SessionQuickModal() {
     };
 
     addSession(session);
-    logXP({
-      action: 'SESSION_COMPLETED',
-      xp: xpEarned,
-      moduleOrigin: 'study',
-      personaId: activePersonaId,
-      radarAxis: 'conhecimento',
-    });
-    addXP(xpEarned);
+    dispatchXP('study', xpEarned, 'foco', false, 'conhecimento');
     if (activePersonaId) addPersonaXP(activePersonaId, xpEarned);
 
     // atualiza subtópico com dados metodológicos

@@ -1596,7 +1596,7 @@ function ConcursoDetailView({ concurso, onBack, onAprovado, onChangeStatus }) {
 // ==========================================
 export function StudyConcursosPage() {
   const { concursos, deleteConcurso, updateConcurso } = useConcursoStore();
-  const { logXP, addXP } = useGameStore();
+  const { dispatchXP } = useGameStore();
   const activePersonaId = usePersonaStore(s => s.activePersonaId);
 
   const [formOpen, setFormOpen] = useState(false);
@@ -1610,14 +1610,7 @@ export function StudyConcursosPage() {
       resultado: { ...c.resultado, aprovado: true },
     });
     const xp = XP_RULES.CONCURSO_APROVADO.xp;
-    logXP({
-      action: 'CONCURSO_APROVADO',
-      xp,
-      moduleOrigin: 'study',
-      personaId: activePersonaId,
-      radarAxis: 'disciplina',
-    });
-    addXP(xp);
+    dispatchXP('study', xp, 'disciplina', false, 'disciplina');
     toast.success(`🏆 APROVADO! +${xp} XP — Parabéns!`, {
       duration: 6000,
       icon: '🔥',

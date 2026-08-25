@@ -3,7 +3,7 @@ import { useGameStore } from '../../../stores/useGameStore';
 import { motion } from 'framer-motion';
 
 export function BadgesGallery() {
-  const { badges, toggleBadge } = useGameStore();
+  const badges = useGameStore((s) => s.badges);
 
   const fmtDate = (timestamp) => {
     if (!timestamp) return '';
@@ -36,11 +36,7 @@ export function BadgesGallery() {
             <motion.div
               key={badge.id}
               whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => {
-                toggleBadge(badge.id);
-              }}
-              className={`flex flex-col items-center text-center p-4 rounded-2xl border transition-all duration-300 cursor-pointer relative overflow-hidden ${
+              className={`flex flex-col items-center text-center p-4 rounded-2xl border transition-all duration-300 relative overflow-hidden ${
                 isUnlocked
                   ? 'bg-gradient-to-b from-amber-500/[0.04] to-transparent border-amber-500/30 shadow-lg shadow-amber-500/5'
                   : 'bg-white/[0.01] border-white/5 opacity-50'
@@ -93,12 +89,6 @@ export function BadgesGallery() {
             </motion.div>
           );
         })}
-      </div>
-
-      <div className="mt-4 text-center">
-        <span className="inline-block text-[10px] text-text-dim bg-white/[0.02] border border-white/5 px-3 py-1 rounded-full">
-          💡 <span className="font-bold">Dica do Desenvolvedor:</span> Clique em qualquer medalha para simular seu desbloqueio / bloqueio instantâneo!
-        </span>
       </div>
     </div>
   );

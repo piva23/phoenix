@@ -20,11 +20,11 @@ export const fmtMonthLabel = (key) => {
 const todayStr = () => new Date().toISOString().split('T')[0]
 
 // Credita XP sem criar dependência circular forte
-function grantXP({ action, xp, radarAxis = 'financas', personaId = null }) {
+// Usa dispatchXP (fonte única): atualiza totalXP/level/atributos/radar de uma vez
+function grantXP({ action, xp, radarAxis = 'disciplina', personaId = null }) {
   try {
     const { useGameStore } = require('./useGameStore')
-    useGameStore.getState().logXP({ action, xp, moduleOrigin: 'finance', personaId, radarAxis })
-    useGameStore.getState().addXP(xp)
+    useGameStore.getState().dispatchXP('finance', xp, 'disciplina', false, radarAxis)
   } catch (_) {}
   if (personaId) {
     try {

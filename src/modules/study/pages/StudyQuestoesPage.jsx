@@ -307,7 +307,7 @@ function PracticeMode({ questions, onExit }) {
   const answerQuestion = useQuestionsStore(s => s.answerQuestion);
   const updateSubtopic = useStudyStore(s => s.updateSubtopic);
   const subjects = useStudyStore(s => s.subjects);
-  const { logXP, addXP } = useGameStore();
+  const { dispatchXP } = useGameStore();
   const activePersonaId = usePersonaStore(s => s.activePersonaId);
   const addPersonaXP = usePersonaStore(s => s.addPersonaXP);
 
@@ -384,14 +384,7 @@ function PracticeMode({ questions, onExit }) {
     const correct = results.filter(r => r.correct).length;
     const xpEarned = correct * (XP_RULES.QUESTION_CORRECT?.xp || 2);
     if (xpEarned > 0) {
-      logXP({
-        action: 'QUESTIONS_PRACTICE',
-        xp: xpEarned,
-        moduleOrigin: 'study',
-        personaId: activePersonaId,
-        radarAxis: 'conhecimento',
-      });
-      addXP(xpEarned);
+      dispatchXP('study', xpEarned, 'sabedoria', false, 'conhecimento');
       if (activePersonaId) addPersonaXP(activePersonaId, xpEarned);
     }
     onExit({ total: results.length, correct, xpEarned });

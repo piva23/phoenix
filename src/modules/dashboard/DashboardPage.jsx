@@ -1,7 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { usePersonaStore } from '../../stores/usePersonaStore';
-import { useGameStore } from '../../stores/useGameStore';
+import { useGameStore, calcLevelProgress } from '../../stores/useGameStore';
 import { useVisionStore } from '../../stores/useVisionStore';
+import { PageHeader } from '../../components/layout/PageHeader';
 import { TimelineFeed } from './widgets/TimelineFeed';
 import { WeatherWidget } from './widgets/WeatherWidget';
 import { HabitsWeekGrid } from './widgets/HabitsWeekGrid';
@@ -53,23 +54,16 @@ export function DashboardPage() {
     <div className="page-container space-y-6 select-none">
 
       {/* ── 1. HEADER — Frase Diária de Visão ─────────────────────────────── */}
-      <div className="card-glass p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div className="space-y-1.5 flex-1">
-          <div className="flex items-center gap-2">
-            <span className="text-lg">👁️</span>
-            <span className="text-[10px] font-bold uppercase tracking-widest px-2.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
-              Frase do Dia
-            </span>
-          </div>
-          <h1 className="text-xl md:text-2xl font-black text-text-main tracking-tight leading-snug">
-            Olá, {firstName}. {activePersona?.greeting || 'Sintonize a sua lente diária.'}
-          </h1>
-          <p className="text-sm text-text-muted max-w-2xl font-medium leading-relaxed italic">
-            "{dailyQuote}"
-          </p>
-        </div>
-
-        {/* Date & Settings Trigger */}
+      <PageHeader
+        icon="👁️"
+        title={`Olá, ${firstName}.`}
+        subtitle={activePersona?.greeting || 'Sintonize a sua lente diária.'}
+        badge={
+          <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
+            Frase do Dia
+          </span>
+        }
+      >
         <div className="flex items-center gap-3 self-stretch md:self-auto justify-between md:justify-end">
           <div className="text-right">
             <div className="text-xs font-semibold text-text-main">{dateStr}</div>
@@ -83,7 +77,12 @@ export function DashboardPage() {
             ⚙️
           </button>
         </div>
-      </div>
+      </PageHeader>
+
+      {/* Frase de Visão */}
+      <p className="text-sm text-text-muted max-w-2xl font-medium leading-relaxed italic px-1">
+        "{dailyQuote}"
+      </p>
 
       {/* ── 2. VISION BOARD ────────────────────────────────────────────────── */}
       <VisionBoardWidget />
