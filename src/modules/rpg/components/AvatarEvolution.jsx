@@ -96,7 +96,7 @@ export function AvatarEvolution() {
                 axisLine={false}
               />
               <Radar
-                name={ Felipe }
+                name={`Felipe`}
                 dataKey="A"
                 stroke="var(--primary)"
                 fill="var(--primary)"
