@@ -6,7 +6,7 @@ import { FcGoogle } from 'react-icons/fc';
 import toast, { Toaster } from 'react-hot-toast';
 
 export default function LoginPage() {
-  const { user, loginWithGoogle, loading } = useAuthStore();
+  const { user, loginWithGoogle, loginOffline, loading, isFirebaseConfigured } = useAuthStore();
   const navigate = useNavigate();
   const [authError, setAuthError] = useState(null);
 
@@ -24,27 +24,37 @@ export default function LoginPage() {
       console.error(err);
       let errMsg = 'Erro na autenticação com o Google. Verifique o console.';
       if (err.code === 'auth/popup-blocked') {
-        errMsg = 'O popup do Google foi bloqueado pelo seu navegador.';
+        errMsg = 'O popup do Google foi bloqueado pelo seu navegador. Permita popups para este site.';
       } else if (err.code === 'auth/network-request-failed') {
         errMsg = 'Erro de rede. Verifique sua conexão com a internet.';
+      } else if (err.code === 'auth/invalid-continue-uri') {
+        errMsg = 'Domínio não autorizado no Firebase. Verifique as configurações de Authentication → Authorized domains.';
+      } else if (err.code === 'auth/configuration-not-found') {
+        errMsg = 'Firebase não configurado. Verifique as variáveis de ambiente no Vercel.';
       }
       setAuthError(errMsg);
       toast.error(errMsg);
     }
   };
 
+  const handleOffline = () => {
+    loginOffline();
+    toast.success('Entrando em modo offline...');
+    navigate('/', { replace: true });
+  };
+
   return (
-    <div 
-      id="phoenix-login-page" 
+    <div
+      id="phoenix-login-page"
       className="min-h-screen w-full flex items-center justify-center font-sans select-none relative overflow-hidden bg-[#0C0C10]"
     >
       <Toaster position="top-right" />
-      
+
       {/* Decorative ambient background glows */}
       <div className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full bg-[#8B5CF6] opacity-10 blur-[128px] pointer-events-none"></div>
       <div className="absolute bottom-1/4 right-1/4 w-96 h-96 rounded-full bg-[#06B6D4] opacity-10 blur-[128px] pointer-events-none"></div>
-      
-      <motion.div 
+
+      <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, ease: 'easeOut' }}
@@ -62,21 +72,28 @@ export default function LoginPage() {
         >
           🜁
         </motion.div>
-        
+
         <h1 className="text-2xl font-bold tracking-tight text-[#F0EFF8] text-center mb-1">
           Phoenix OS
         </h1>
         <p className="text-sm text-[#9B9AAB] text-center mb-8">
-          Acesse seu espaço de trabalho integrado v3.0 Pro
+          Seu espaço de trabalho integrado v5.0
         </p>
 
         {authError && (
-          <div className="w-full mb-6 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-xs text-center">
+          <div className="w-full mb-6 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-xs text-center leading-relaxed">
             {authError}
           </div>
         )}
 
-        {/* Central Sign In button */}
+        {/* Firebase not configured warning */}
+        {!isFirebaseConfigured && (
+          <div className="w-full mb-6 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs text-center leading-relaxed">
+            ⚠️ Firebase não configurado. Configure as variáveis de ambiente para habilitar login e sincronização na nuvem.
+          </div>
+        )}
+
+        {/* Google Sign In button */}
         <motion.button
           onClick={handleLogin}
           whileHover={{ scale: 1.02 }}
@@ -92,13 +109,24 @@ export default function LoginPage() {
               <span>Entrar com Google</span>
             </>
           )}
-          
+
           <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-[#8B5CF6] to-[#06B6D4] opacity-0 group-hover:opacity-5 transition-opacity duration-300 pointer-events-none"></div>
+        </motion.button>
+
+        {/* Offline mode button */}
+        <motion.button
+          onClick={handleOffline}
+          whileHover={{ scale: 1.01 }}
+          whileTap={{ scale: 0.99 }}
+          className="w-full mt-3 py-3 px-6 rounded-xl font-medium flex items-center justify-center gap-2 text-[#9B9AAB] hover:text-[#F0EFF8] bg-transparent hover:bg-white/[0.03] border border-white/[0.04] hover:border-white/[0.08] transition-all text-sm"
+          disabled={loading}
+        >
+          <span>Continuar offline</span>
         </motion.button>
 
         <div className="mt-8 text-center">
           <p className="text-[10px] uppercase tracking-widest text-[#6B6A7A]">
-            Powered by Firebase Auth
+            {isFirebaseConfigured ? 'Powered by Firebase Auth' : 'Modo offline disponível'}
           </p>
         </div>
       </motion.div>

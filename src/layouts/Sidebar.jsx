@@ -1,7 +1,8 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useUIStore } from '../stores/useUIStore';
-import { useGameStore } from '../stores/useGameStore';
+import { useAuthStore } from '../stores/useAuthStore';
+import { LogOut } from 'lucide-react';
 import clsx from 'clsx';
 
 const MENU_BLOCKS = [
@@ -33,11 +34,20 @@ const MENU_BLOCKS = [
 
 export function Sidebar() {
   const { sidebarOpen, toggleSidebar } = useUIStore();
-  const name = useGameStore(s => s.name);
+  const { user, logout, getDisplayName, getInitials, getPhotoURL } = useAuthStore();
   const navigate = useNavigate();
   const w = sidebarOpen ? 260 : 80;
-  const firstName = (name || 'Felipe').split(' ')[0];
-  const initials = firstName.charAt(0).toUpperCase();
+  const displayName = getDisplayName();
+  const initials = getInitials();
+  const photoURL = getPhotoURL();
+  const firstName = displayName.split(' ')[0];
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate('/login', { replace: true });
+    } catch (_) {}
+  };
 
   return (
     <motion.aside
@@ -176,16 +186,16 @@ export function Sidebar() {
 
       {/* ── USER FOOTER ───────────────────────────────────────────────────── */}
       <div
-        className="flex-shrink-0 border-t p-3"
+        className="flex-shrink-0 border-t p-3 space-y-2"
         style={{ borderColor: 'var(--nav-border)' }}
       >
+        {/* User Info */}
         <button
           onClick={() => navigate('/settings')}
           className={clsx(
             'flex items-center gap-3 w-full rounded-xl py-2.5 transition-all duration-200 group cursor-pointer',
             sidebarOpen ? 'px-3 justify-start' : 'px-0 justify-center'
           )}
-          style={{ '--tw-ring-color': 'rgba(var(--nav-active-rgb), 0.3)' }}
           onMouseEnter={(e) => {
             e.currentTarget.style.background = 'var(--nav-hover)';
           }}
@@ -193,12 +203,21 @@ export function Sidebar() {
             e.currentTarget.style.background = 'transparent';
           }}
         >
-          <div
-            className="w-9 h-9 rounded-xl flex items-center justify-center text-sm font-black text-white flex-shrink-0 transition-shadow duration-300 group-hover:shadow-[0_0_16px_rgba(16,185,129,0.3)]"
-            style={{ background: 'linear-gradient(135deg, #10B981, #06B6D4)' }}
-          >
-            {initials}
-          </div>
+          {photoURL ? (
+            <img
+              src={photoURL}
+              alt={displayName}
+              className="w-9 h-9 rounded-xl object-cover flex-shrink-0"
+              style={{ border: '2px solid rgba(16,185,129,0.3)' }}
+            />
+          ) : (
+            <div
+              className="w-9 h-9 rounded-xl flex items-center justify-center text-sm font-black text-white flex-shrink-0 transition-shadow duration-300 group-hover:shadow-[0_0_16px_rgba(16,185,129,0.3)]"
+              style={{ background: 'linear-gradient(135deg, #10B981, #06B6D4)' }}
+            >
+              {initials}
+            </div>
+          )}
           <AnimatePresence>
             {sidebarOpen && (
               <motion.div
@@ -206,15 +225,49 @@ export function Sidebar() {
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -4 }}
                 transition={{ duration: 0.15 }}
-                className="text-left overflow-hidden"
+                className="text-left overflow-hidden flex-1 min-w-0"
               >
-                <div className="text-xs font-bold whitespace-nowrap" style={{ color: 'var(--text-main)' }}>
+                <div className="text-xs font-bold whitespace-nowrap truncate" style={{ color: 'var(--text-main)' }}>
                   {firstName}
                 </div>
-                <div className="text-[10px] whitespace-nowrap" style={{ color: 'var(--text-dim)' }}>
-                  Ver perfil →
+                <div className="text-[10px] whitespace-nowrap truncate" style={{ color: 'var(--text-dim)' }}>
+                  {user?.email ? (sidebarOpen ? user.email : 'Ver perfil') : 'Ver perfil →'}
                 </div>
               </motion.div>
+            )}
+          </AnimatePresence>
+        </button>
+
+        {/* Logout Button */}
+        <button
+          onClick={handleLogout}
+          className={clsx(
+            'flex items-center gap-3 w-full rounded-xl py-2.5 transition-all duration-200 cursor-pointer',
+            sidebarOpen ? 'px-3 justify-start' : 'px-0 justify-center'
+          )}
+          style={{ color: 'var(--text-dim)' }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = 'rgba(239, 68, 68, 0.08)';
+            e.currentTarget.style.color = '#EF4444';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = 'transparent';
+            e.currentTarget.style.color = 'var(--text-dim)';
+          }}
+          title="Sair da conta"
+        >
+          <LogOut size={18} className="flex-shrink-0" />
+          <AnimatePresence>
+            {sidebarOpen && (
+              <motion.span
+                initial={{ opacity: 0, x: -4 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -4 }}
+                transition={{ duration: 0.15 }}
+                className="text-xs font-medium whitespace-nowrap"
+              >
+                Sair
+              </motion.span>
             )}
           </AnimatePresence>
         </button>

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { usePersonaStore } from '../../stores/usePersonaStore';
 import { useGameStore, calcXPProgress } from '../../stores/useGameStore';
 import { exportData, importData } from '../../shared/utils/DataManagement';
@@ -9,6 +10,7 @@ import { PageHeader } from '../../components/layout/PageHeader';
 import { useAuthStore } from '../../stores/useAuthStore';
 import { db } from '../../shared/config/firebase';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { LogOut, Cloud, CloudOff, Shield, AlertTriangle, Download, Upload } from 'lucide-react';
 
 // ── Shared card wrapper ─────────────────────────────────────────────────────
 function Card({ children, className = '' }) {
@@ -53,7 +55,7 @@ const cardVariant = {
 // ═════════════════════════════════════════════════════════════════════════════
 export function SettingsPage() {
   // ── Stores ──────────────────────────────────────────────────────────────
-  const { user, loginWithGoogle } = useAuthStore();
+  const { user, loginWithGoogle, logout, isFirebaseConfigured } = useAuthStore();
   const xp = useGameStore((s) => s.totalXP);
   const gameName = useGameStore((s) => s.name);
   const xpData = calcXPProgress(xp);
@@ -62,6 +64,8 @@ export function SettingsPage() {
   const activePersona = getActivePersona();
 
   const { pin, setPin, lock, clearPin } = useSecurityStore();
+
+  const navigate = useNavigate();
 
   // ── Local state ─────────────────────────────────────────────────────────
   const [newPinInput, setNewPinInput] = useState('');
@@ -72,6 +76,7 @@ export function SettingsPage() {
   // ── Derived values ──────────────────────────────────────────────────────
   const canCloudSync = !!user && !!db;
   const displayName = gameName || user?.displayName || 'Estudante';
+  const isOfflineUser = user?.uid === 'offline-user';
 
   // ── Helpers ─────────────────────────────────────────────────────────────
   const getInitials = (name) => {
@@ -178,6 +183,16 @@ export function SettingsPage() {
     setTimeout(() => window.location.reload(), 1200);
   };
 
+  const handleLogout = async () => {
+    try {
+      await logout();
+      toast.success('Sair da conta com sucesso!');
+      navigate('/login', { replace: true });
+    } catch (error) {
+      toast.error('Erro ao sair da conta.');
+    }
+  };
+
   // ════════════════════════════════════════════════════════════════════════════
   // RENDER
   // ════════════════════════════════════════════════════════════════════════════
@@ -198,32 +213,66 @@ export function SettingsPage() {
         {/* ── 1. Profile Card ──────────────────────────────────────────────── */}
         <motion.div variants={cardVariant}>
           <Card>
-            <CardHeader icon="👤" title="Perfil" />
+            <div className="flex items-center justify-between mb-4">
+              <CardHeader icon="👤" title="Perfil" />
+              {/* Firebase Status */}
+              <div className="flex items-center gap-1.5 text-[10px] font-mono">
+                {isFirebaseConfigured ? (
+                  <>
+                    <Cloud size={12} className="text-emerald-400" />
+                    <span className="text-emerald-400">Online</span>
+                  </>
+                ) : (
+                  <>
+                    <CloudOff size={12} className="text-amber-400" />
+                    <span className="text-amber-400">Offline</span>
+                  </>
+                )}
+              </div>
+            </div>
 
             {user ? (
-              <div className="flex items-center gap-4">
-                {/* Avatar */}
-                {user.photoURL ? (
-                  <img
-                    src={user.photoURL}
-                    alt={displayName}
-                    className="w-14 h-14 rounded-full object-cover border-2 border-white/10"
-                  />
-                ) : (
-                  <div className="w-14 h-14 rounded-full bg-gradient-to-br from-primary to-purple-500 flex items-center justify-center text-lg font-black text-white flex-shrink-0">
-                    {getInitials(displayName)}
-                  </div>
-                )}
-
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-bold text-white truncate">{displayName}</p>
-                  <p className="text-xs text-text-dim truncate">{user.email}</p>
-                  {activePersona && (
-                    <p className="text-xs text-text-muted mt-0.5">
-                      Persona: <span className="text-white font-semibold">{activePersona.icon} {activePersona.name}</span>
-                    </p>
+              <div className="space-y-4">
+                <div className="flex items-center gap-4">
+                  {/* Avatar */}
+                  {user.photoURL ? (
+                    <img
+                      src={user.photoURL}
+                      alt={displayName}
+                      className="w-16 h-16 rounded-2xl object-cover border-2 border-white/10"
+                    />
+                  ) : (
+                    <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-purple-500 flex items-center justify-center text-xl font-black text-white flex-shrink-0">
+                      {getInitials(displayName)}
+                    </div>
                   )}
+
+                  <div className="min-w-0 flex-1">
+                    <p className="text-base font-bold text-white truncate">{displayName}</p>
+                    <p className="text-xs text-text-dim truncate">{user.email || 'Sem email'}</p>
+                    {activePersona && (
+                      <p className="text-xs text-text-muted mt-1">
+                        Persona: <span className="text-white font-semibold">{activePersona.icon} {activePersona.name}</span>
+                      </p>
+                    )}
+                    {isOfflineUser && (
+                      <p className="text-xs text-amber-400 mt-1 font-medium">
+                        ⚠️ Modo offline — dados locais apenas
+                      </p>
+                    )}
+                  </div>
                 </div>
+
+                {/* Logout Button */}
+                {!isOfflineUser && (
+                  <button
+                    onClick={handleLogout}
+                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/10 transition-colors"
+                  >
+                    <LogOut size={14} />
+                    Sair da conta
+                  </button>
+                )}
               </div>
             ) : (
               <div className="flex flex-col items-center text-center py-2 gap-3">
@@ -277,14 +326,14 @@ export function SettingsPage() {
                 onClick={handleExport}
                 className="flex flex-col items-center gap-1.5 p-4 rounded-xl border border-white/5 hover:border-primary/20 bg-white/[0.01] hover:bg-white/[0.02] transition-all group"
               >
-                <span className="text-2xl group-hover:scale-110 transition-transform">📥</span>
+                <Download size={24} className="text-white group-hover:text-primary group-hover:scale-110 transition-all" />
                 <span className="text-xs font-bold text-white">Exportar</span>
                 <span className="text-[10px] text-text-dim">Backup JSON</span>
               </button>
 
               {/* Import */}
               <label className="flex flex-col items-center gap-1.5 p-4 rounded-xl border border-white/5 hover:border-primary/20 bg-white/[0.01] hover:bg-white/[0.02] transition-all group cursor-pointer">
-                <span className="text-2xl group-hover:scale-110 transition-transform">📤</span>
+                <Upload size={24} className="text-primary group-hover:scale-110 transition-all" />
                 <span className="text-xs font-bold text-primary">Importar</span>
                 <span className="text-[10px] text-text-dim">Restaurar JSON</span>
                 <input
@@ -315,7 +364,7 @@ export function SettingsPage() {
                     disabled={isSyncing}
                     className="flex flex-col items-center gap-1.5 p-4 rounded-xl border border-white/5 hover:border-primary/20 bg-white/[0.01] hover:bg-white/[0.02] transition-all group disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <span className="text-2xl group-hover:scale-110 transition-transform">📤</span>
+                    <Upload size={24} className="text-white group-hover:text-primary group-hover:scale-110 transition-all" />
                     <span className="text-xs font-bold text-white">Upload</span>
                     <span className="text-[10px] text-text-dim">Backup Nuvem</span>
                   </button>
@@ -325,7 +374,7 @@ export function SettingsPage() {
                     disabled={isSyncing}
                     className="flex flex-col items-center gap-1.5 p-4 rounded-xl border border-white/5 hover:border-primary/20 bg-white/[0.01] hover:bg-white/[0.02] transition-all group disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <span className="text-2xl group-hover:scale-110 transition-transform">📥</span>
+                    <Download size={24} className="text-primary group-hover:scale-110 transition-all" />
                     <span className="text-xs font-bold text-primary">Download</span>
                     <span className="text-[10px] text-text-dim">Restore Nuvem</span>
                   </button>
@@ -338,10 +387,22 @@ export function SettingsPage() {
               </>
             ) : (
               <div className="flex flex-col items-center text-center py-4 gap-2">
-                <span className="text-2xl opacity-40">☁️</span>
+                <CloudOff size={24} className="text-white/20" />
                 <p className="text-xs text-text-dim">
-                  {user ? 'Firebase não configurado — modo offline' : 'Faça login para usar sincronização na nuvem'}
+                  {!isFirebaseConfigured
+                    ? 'Firebase não configurado — modo offline'
+                    : !user
+                    ? 'Faça login para usar sincronização na nuvem'
+                    : 'Faça login para usar sincronização na nuvem'}
                 </p>
+                {isFirebaseConfigured && !user && (
+                  <button
+                    onClick={() => loginWithGoogle()}
+                    className="mt-2 px-4 py-2 text-xs font-bold bg-primary text-black rounded-xl hover:opacity-90 transition-opacity"
+                  >
+                    Entrar com Google
+                  </button>
+                )}
               </div>
             )}
           </Card>
@@ -359,6 +420,7 @@ export function SettingsPage() {
             {pin ? (
               <div className="p-4 rounded-xl bg-emerald-500/[0.04] border border-emerald-500/15 space-y-3">
                 <div className="flex items-center gap-2 text-xs font-bold text-emerald-400">
+                  <Shield size={14} />
                   <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
                   Proteção por PIN Ativa
                 </div>
@@ -416,9 +478,10 @@ export function SettingsPage() {
 
             <button
               onClick={() => { setConfirmText(''); setShowClearAllModal(true); }}
-              className="w-full py-3 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-400 text-xs font-black uppercase tracking-wider rounded-xl transition-colors"
+              className="w-full flex items-center justify-center gap-2 py-3 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-400 text-xs font-black uppercase tracking-wider rounded-xl transition-colors"
             >
-              🗑️ Apagar Todos os Dados
+              <AlertTriangle size={14} />
+              Apagar Todos os Dados
             </button>
           </Card>
         </motion.div>
@@ -430,7 +493,9 @@ export function SettingsPage() {
               <span className="text-xl">⚡</span>
               <div>
                 <h4 className="text-xs font-black text-white uppercase">Phoenix OS v5.0.0-alpha</h4>
-                <p className="text-[10px] text-text-dim">Ambiente de Operação Local</p>
+                <p className="text-[10px] text-text-dim">
+                  {isFirebaseConfigured ? 'Modo Online' : 'Ambiente de Operação Local'}
+                </p>
               </div>
             </div>
             <div className="text-[10px] text-text-dim font-mono bg-black/40 px-3 py-1.5 rounded-xl border border-white/5">
