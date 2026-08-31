@@ -2,12 +2,28 @@
 <html lang="pt-BR">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#8B5CF6" />
+    <meta name="description" content="Phoenix OS — Estudos, Finanças e Saúde" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Phoenix" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="application-name" content="Phoenix OS" />
+    <meta name="msapplication-TileColor" content="#8B5CF6" />
+    <meta name="msapplication-TileImage" content="%PUBLIC_URL%/icon.svg" />
     <title>Phoenix OS</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🜁</text></svg>" />
+    <link rel="icon" type="image/svg+xml" href="%PUBLIC_URL%/icon.svg" />
+    <link rel="apple-touch-icon" href="%PUBLIC_URL%/icon.svg" />
     <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+    <style>
+      /* Prevent FOUC */
+      html { background: #0C0C10; }
+      body { margin: 0; }
+    </style>
   </head>
   <body>
+    <noscript>Ative o JavaScript para usar o Phoenix OS.</noscript>
     <div id="root"></div>
   </body>
 </html>

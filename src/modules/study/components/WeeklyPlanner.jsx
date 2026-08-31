@@ -366,21 +366,7 @@ export function WeeklyPlanner({ cycle }) {
         })}
       </div>
 
-      {/* ── LEGENDA ────────────────────────────────────────────────────────── */}
-      <div className="flex flex-wrap gap-3 px-1">
-        {(cycle?.items || []).slice(0, 8).map((item, idx) => {
-          const subj = subjects.find(s => s.id === item.subjectId);
-          const color = subj?.color || item.subjectColor || '#8B5CF6';
-          return (
-            <div key={idx} className="flex items-center gap-1.5">
-              <div className="w-2 h-2 rounded-full shrink-0" style={{ background: color }} />
-              <span className="text-[9px] text-text-dim">
-                {subj?.name || item.subjectName || '—'}
-              </span>
-            </div>
-          );
-        })}
-      </div>
+
     </div>
   );
 }

@@ -12,20 +12,31 @@ export const useStudyStore = create(
     (set, get) => ({
       subjects: [],
 
-      addSubject: data =>
-        set(state => ({
-          subjects: [
-            ...state.subjects,
-            {
-              ...data,
-              id: data.id || uid('subj'),
-              // preserva topics quando passados (ex: importação do edital)
-              // só força [] se não vier nada
-              topics: Array.isArray(data.topics) ? data.topics : [],
-              createdAt: data.createdAt || Date.now(),
-            },
-          ],
-        })),
+      findSubjectByName: name => {
+        const lower = name.toLowerCase().trim();
+        return get().subjects.find(s => s.name.toLowerCase().trim() === lower) || null;
+      },
+
+      addSubject: data => {
+        const existing = get().findSubjectByName(data.name);
+        if (existing) return existing.id;
+        let newId = null;
+        set(state => {
+          newId = data.id || uid('subj');
+          return {
+            subjects: [
+              ...state.subjects,
+              {
+                ...data,
+                id: newId,
+                topics: Array.isArray(data.topics) ? data.topics : [],
+                createdAt: data.createdAt || Date.now(),
+              },
+            ],
+          };
+        });
+        return newId;
+      },
 
       updateSubject: (id, data) =>
         set(state => ({
@@ -131,10 +142,8 @@ export const useStudyStore = create(
                               summary: '',
                               mindMapImage: null,
                               links: [],
-                              flashcards: [],
-                              gaps: [],
-                              insecurities: [],
-                              feynmanNotes: [],
+                               flashcards: [],
+                               feynmanNotes: [],
                               anchors: [],
                               loci: [],
                               connections: [],
@@ -268,7 +277,91 @@ export const useStudyStore = create(
           ?.topics.find(t => t.id === topicId)
           ?.subtopics.find(ss => ss.id === subtopicId);
       },
+
+      updateSubtopicStats: (subjectId, topicId, subtopicId, { qC, qA, mins = 0 }) =>
+        set(state => {
+          const subtopic = state.subjects
+            .find(s => s.id === subjectId)
+            ?.topics.find(t => t.id === topicId)
+            ?.subtopics.find(ss => ss.id === subtopicId);
+          if (!subtopic) return {};
+
+          const stats = subtopic.stats || {
+            totalMinutes: 0,
+            questionsAnswered: 0,
+            questionsCorrect: 0,
+            lastStudied: null,
+          };
+
+          const d = new Date();
+          const todayStr = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().split('T')[0];
+
+          const newStats = {
+            totalMinutes: stats.totalMinutes + mins,
+            questionsAnswered: stats.questionsAnswered + qA,
+            questionsCorrect: stats.questionsCorrect + qC,
+            lastStudied: todayStr,
+          };
+
+          return {
+            subjects: state.subjects.map(s =>
+              s.id !== subjectId
+                ? s
+                : {
+                    ...s,
+                    topics: s.topics.map(t =>
+                      t.id !== topicId
+                        ? t
+                        : {
+                            ...t,
+                            subtopics: t.subtopics.map(ss =>
+                              ss.id !== subtopicId
+                                ? ss
+                                : {
+                                    ...ss,
+                                    stats: newStats,
+                                    status: newStats.questionsAnswered > 0 ? 'estudando' : ss.status,
+                                  }
+                            ),
+                          }
+                    ),
+                  }
+            ),
+          };
+        }),
+
+      backupSubjects: () => {
+        const snapshot = JSON.parse(JSON.stringify(get().subjects));
+        localStorage.setItem('phoenix-study-backup', JSON.stringify({ subjects: snapshot, date: Date.now() }));
+        return snapshot.length;
+      },
+
+      restoreSubjects: () => {
+        const raw = localStorage.getItem('phoenix-study-backup');
+        if (!raw) return false;
+        try {
+          const { subjects } = JSON.parse(raw);
+          if (Array.isArray(subjects)) {
+            set({ subjects });
+            return true;
+          }
+        } catch {}
+        return false;
+      },
+
+      getBackupInfo: () => {
+        const raw = localStorage.getItem('phoenix-study-backup');
+        if (!raw) return null;
+        try {
+          const { subjects, date } = JSON.parse(raw);
+          return { count: subjects.length, date };
+        } catch {
+          return null;
+        }
+      },
     }),
-    { name: 'phoenix-study' }
+    {
+      name: 'phoenix-study',
+    }
   )
 );

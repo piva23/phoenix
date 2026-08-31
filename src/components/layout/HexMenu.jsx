@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import clsx from 'clsx';
 import {
   LayoutDashboard,
   BookOpen,
@@ -15,7 +14,6 @@ import {
 } from 'lucide-react';
 import { useSessionModalStore } from '../../stores/useSessionModalStore';
 import { useActiveSessionUIStore } from '../../stores/useActiveSessionUIStore';
-import { QuickExpenseModal } from '../../modules/finance/components/QuickExpenseModal';
 
 function fmtTimer(sec) {
   if (sec === null || sec === undefined) return '00:00';
@@ -56,57 +54,7 @@ const itemVariants = {
 };
 
 /* ═══════════════════════════════════════════════════════
-   BOTTOM BAR — Mobile only (lg:hidden)
-   ═══════════════════════════════════════════════════════ */
-
-function BottomBar({ onOpenDrawer }) {
-  return (
-    <div className="fixed bottom-0 left-0 right-0 lg:hidden z-[90]">
-      <div className="bg-surface/90 backdrop-blur-xl border-t border-white/5 flex items-center h-16 justify-around px-2">
-        {MAIN_ITEMS.map((item) => (
-          <NavLink
-            key={item.path}
-            to={item.path}
-            className={({ isActive }) =>
-              clsx(
-                'flex-1 flex flex-col items-center justify-center gap-1 h-full transition-all relative',
-                isActive ? 'text-text-main font-semibold' : 'text-text-dim hover:text-text-muted'
-              )
-            }
-          >
-            {({ isActive }) => (
-              <>
-                <div className="relative flex items-center justify-center">
-                  <item.icon size={20} />
-                  {isActive && (
-                    <motion.div
-                      layoutId="bottomBarIndicator"
-                      className="absolute -bottom-1.5 w-1 h-1 rounded-full"
-                      style={{ background: 'var(--primary)', boxShadow: '0 0 6px var(--primary)' }}
-                    />
-                  )}
-                </div>
-                <span className="text-[9px] tracking-wide mt-0.5">{item.label}</span>
-              </>
-            )}
-          </NavLink>
-        ))}
-        <button
-          onClick={onOpenDrawer}
-          className="flex-1 flex flex-col items-center justify-center gap-1 h-full transition-all text-text-dim hover:text-text-muted"
-        >
-          <div className="relative flex items-center justify-center">
-            <span className="text-xl">⋯</span>
-          </div>
-          <span className="text-[9px] tracking-wide mt-0.5">Menu</span>
-        </button>
-      </div>
-    </div>
-  );
-}
-
-/* ═══════════════════════════════════════════════════════
-   HEX FAB — Desktop only (hidden below lg)
+   HEX FAB — Mobile + Desktop
    ═══════════════════════════════════════════════════════ */
 
 function HexFAB({ isOpen, setIsOpen }) {
@@ -131,10 +79,10 @@ function HexFAB({ isOpen, setIsOpen }) {
   ];
 
   return (
-    <div className="hidden lg:flex fixed bottom-6 right-6 z-[999] flex-col items-center select-none group">
-      {/* Session Tooltip */}
+    <div className="flex fixed bottom-24 right-4 lg:bottom-6 lg:right-6 z-[92] lg:z-[999] flex-col items-center select-none group">
+      {/* Session Tooltip — desktop only */}
       {isSessionActive && (
-        <div className="absolute bottom-20 bg-background/90 backdrop-blur-xl border border-white/10 px-4 py-2 rounded-full shadow-2xl flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none transform translate-y-2 group-hover:translate-y-0 z-[1000] whitespace-nowrap">
+        <div className="hidden lg:block absolute bottom-20 bg-background/90 backdrop-blur-xl border border-white/10 px-4 py-2 rounded-full shadow-2xl flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none transform translate-y-2 group-hover:translate-y-0 z-[1000] whitespace-nowrap">
           <span className="relative flex h-2.5 w-2.5">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
             <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500"></span>
@@ -154,21 +102,22 @@ function HexFAB({ isOpen, setIsOpen }) {
             initial="hidden"
             animate="visible"
             exit="hidden"
-            className="flex flex-col items-center gap-3 mb-4"
+            className="flex flex-col items-center gap-2 lg:gap-3 mb-3 lg:mb-4"
           >
             {desktopMenuItems.map((item) => {
               const IconComponent = item.icon;
               return (
                 <motion.div key={item.label || item.name} variants={itemVariants} className="relative group/item flex items-center justify-center">
-                  <div className="absolute right-14 bg-background/95 backdrop-blur-md border border-white/10 text-text-main text-[10px] font-black uppercase tracking-wider py-1.5 px-3 rounded-lg shadow-xl opacity-0 group-hover/item:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap">
+                  <div className="hidden lg:block absolute right-14 bg-background/95 backdrop-blur-md border border-white/10 text-text-main text-[10px] font-black uppercase tracking-wider py-1.5 px-3 rounded-lg shadow-xl opacity-0 group-hover/item:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap">
                     {item.label || item.name}
                   </div>
                   <button
                     onClick={item.action}
                     style={hexClipStyle}
-                    className={`w-11 h-11 flex items-center justify-center card-surface shadow-lg transition-all duration-300 relative group-hover/item:scale-105 cursor-pointer ${item.color}`}
+                    className={`w-10 h-10 lg:w-11 lg:h-11 flex items-center justify-center card-surface shadow-lg transition-all duration-300 relative group-hover/item:scale-105 cursor-pointer ${item.color}`}
                   >
-                    <IconComponent size={18} />
+                    <IconComponent size={16} className="lg:hidden" />
+                    <IconComponent size={18} className="hidden lg:block" />
                     <div className="absolute inset-0 bg-white/[0.02] group-hover/item:bg-transparent transition-colors" />
                   </button>
                 </motion.div>
@@ -179,9 +128,9 @@ function HexFAB({ isOpen, setIsOpen }) {
       </AnimatePresence>
 
       {/* Master Toggle */}
-      <div className="relative w-16 h-16 flex items-center justify-center">
+      <div className="relative w-12 h-12 lg:w-16 lg:h-16 flex items-center justify-center">
         {isSessionActive && (
-          <svg className="absolute w-[62px] h-[62px] -rotate-90 pointer-events-none z-20" viewBox="0 0 64 64">
+          <svg className="absolute w-[48px] h-[48px] lg:w-[62px] lg:h-[62px] -rotate-90 pointer-events-none z-20" viewBox="0 0 64 64">
             <circle cx="32" cy="32" r="29" fill="none" stroke="rgba(255,255,255,0.03)" strokeWidth="2.5" />
             <circle
               cx="32" cy="32" r="29" fill="none" stroke="#60A5FA" strokeWidth="2.5" strokeLinecap="round"
@@ -194,7 +143,7 @@ function HexFAB({ isOpen, setIsOpen }) {
         <motion.button
           onClick={handleToggle}
           style={hexClipStyle}
-          className={`w-14 h-14 flex items-center justify-center text-white cursor-pointer relative z-10 transition-all duration-300 ${
+          className={`w-11 h-11 lg:w-14 lg:h-14 flex items-center justify-center text-white cursor-pointer relative z-10 transition-all duration-300 ${
             isSessionActive
               ? 'bg-blue-600 shadow-lg shadow-blue-500/40 hover:scale-105'
               : 'bg-gradient-to-br from-primary to-secondary shadow-xl hover:shadow-2xl hover:shadow-primary/20'
@@ -203,12 +152,12 @@ function HexFAB({ isOpen, setIsOpen }) {
           whileTap={{ scale: 0.95 }}
         >
           {isSessionActive ? (
-            <div className="flex items-center justify-center animate-pulse"><Activity size={24} strokeWidth={2.5} /></div>
+            <div className="flex items-center justify-center animate-pulse"><Activity size={20} className="lg:hidden" strokeWidth={2.5} /><Activity size={24} className="hidden lg:block" strokeWidth={2.5} /></div>
           ) : (
             <motion.div
               animate={{ rotate: isOpen ? 180 : 0 }}
               transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-              className="flex items-center justify-center text-2xl font-bold"
+              className="flex items-center justify-center text-xl lg:text-2xl font-bold"
               style={{ fontFamily: 'serif' }}
             >
               🜁
@@ -222,110 +171,10 @@ function HexFAB({ isOpen, setIsOpen }) {
 }
 
 /* ═══════════════════════════════════════════════════════
-   DRAWER — Extra items (shared mobile + desktop)
-   ═══════════════════════════════════════════════════════ */
-
-function Drawer({ open, onClose, onOpenExpense }) {
-  const navigate = useNavigate();
-  const openSessionModal = useSessionModalStore(s => s.openModal || s.openSessionModal);
-
-  return (
-    <AnimatePresence>
-      {open && (
-        <>
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[95] bg-black/70 backdrop-blur-sm lg:z-[998]"
-            onClick={onClose}
-          />
-          <motion.div
-            initial={{ y: '100%' }}
-            animate={{ y: 0 }}
-            exit={{ y: '100%' }}
-            transition={{ type: 'spring', damping: 25, stiffness: 220 }}
-            className="fixed bottom-16 left-0 right-0 z-[96] lg:z-[999] card-glass rounded-t-2xl p-4 shadow-2xl border-t border-white/10 lg:bottom-1/4 lg:left-auto lg:right-28 lg:w-72 lg:rounded-2xl lg:border"
-          >
-            <div className="w-12 h-1.5 bg-white/10 rounded-full mx-auto mb-5 cursor-pointer lg:hidden" onClick={onClose} />
-            <div className="text-xs font-bold text-text-dim uppercase tracking-wider mb-4 px-1 select-none flex justify-between items-center">
-              Mais Módulos
-              <span className="hidden lg:block cursor-pointer hover:text-white" onClick={onClose}>✕</span>
-            </div>
-
-            {/* Session shortcut */}
-            <button
-              onClick={() => { if(openSessionModal) openSessionModal(); onClose(); }}
-              className="w-full flex items-center gap-3 p-3 rounded-xl border border-emerald-500/20 bg-emerald-500/5 hover:bg-emerald-500/10 text-emerald-400 transition-all mb-2"
-            >
-              <BookOpen size={20} />
-              <div className="text-left">
-                <div className="text-xs font-bold">Sessão de Estudo</div>
-                <div className="text-[10px] text-text-dim">Abrir timer e sessão</div>
-              </div>
-            </button>
-
-            {/* Quick Expense shortcut */}
-            <button
-              onClick={() => { onOpenExpense(); onClose(); }}
-              className="w-full flex items-center gap-3 p-3 rounded-xl border border-amber-500/20 bg-amber-500/5 hover:bg-amber-500/10 text-amber-400 transition-all mb-3"
-            >
-              <Wallet size={20} />
-              <div className="text-left">
-                <div className="text-xs font-bold">Lançar Despesa</div>
-                <div className="text-[10px] text-text-dim">Registrar rápido</div>
-              </div>
-            </button>
-
-            <div className="grid grid-cols-2 gap-3">
-              {EXTRA_ITEMS.map((mod) => (
-                <NavLink
-                  key={mod.path}
-                  to={mod.path}
-                  onClick={onClose}
-                  className={({ isActive }) =>
-                    clsx(
-                      'flex flex-col items-center gap-2 p-3 rounded-xl border transition-all',
-                      isActive
-                        ? 'card-glass border-white/10 text-text-main'
-                        : 'card-surface hover:bg-white/5 text-text-muted hover:text-text-main'
-                    )
-                  }
-                >
-                  <mod.icon size={20} />
-                  <span className="text-[10px] font-medium text-center truncate w-full">{mod.label}</span>
-                </NavLink>
-              ))}
-            </div>
-          </motion.div>
-        </>
-      )}
-    </AnimatePresence>
-  );
-}
-
-/* ═══════════════════════════════════════════════════════
-   EXPORT — HexMenu (renders BottomBar + HexFAB + Drawer)
+   EXPORT — HexMenu
    ═══════════════════════════════════════════════════════ */
 
 export default function HexMenu() {
-  const [drawerOpen, setDrawerOpen] = useState(false);
   const [hexOpen, setHexOpen] = useState(false);
-  const [quickExpenseOpen, setQuickExpenseOpen] = useState(false);
-
-  return (
-    <>
-      {/* Mobile Bottom Bar */}
-      <BottomBar onOpenDrawer={() => setDrawerOpen(true)} />
-
-      {/* Desktop Hex FAB */}
-      <HexFAB isOpen={hexOpen} setIsOpen={setHexOpen} />
-
-      {/* Shared Drawer */}
-      <Drawer open={drawerOpen} onClose={() => { setDrawerOpen(false); setHexOpen(false); }} onOpenExpense={() => setQuickExpenseOpen(true)} />
-
-      {/* Quick Expense Modal */}
-      {quickExpenseOpen && <QuickExpenseModal onClose={() => setQuickExpenseOpen(false)} />}
-    </>
-  );
+  return <HexFAB isOpen={hexOpen} setIsOpen={setHexOpen} />;
 }

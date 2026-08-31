@@ -24,6 +24,16 @@
     --secondary: #06B6D4;
     --accent: #EC4899;
     --glow: rgba(139,92,246,0.3);
+    --danger: #EF4444;
+    --success: #10B981;
+    --accent-study: #F59E0B;
+
+    /* ── Navigation (Sidebar + Topbar) ── */
+    --nav-active: #10B981;
+    --nav-active-rgb: 16,185,129;
+    --nav-surface: rgba(255,255,255,0.03);
+    --nav-border: rgba(255,255,255,0.06);
+    --nav-hover: rgba(255,255,255,0.05);
   }
   body {
     background-color: var(--bg);

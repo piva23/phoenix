@@ -36,11 +36,7 @@ const MODES = [
   { id: 'leitura', label: 'Leitura', icon: '📖', color: '#3B82F6' },
   { id: 'video', label: 'Videoaula', icon: '▶️', color: '#8B5CF6' },
   { id: 'questoes', label: 'Questões', icon: '🎯', color: '#10B981' },
-  { id: 'flashcards', label: 'Flashcards', icon: '🃏', color: '#F59E0B' },
   { id: 'revisao', label: 'Revisão', icon: '🔄', color: '#06B6D4' },
-  { id: 'feynman', label: 'Feynman', icon: '🧠', color: '#EC4899' },
-  { id: 'recall', label: 'Recall Ativo', icon: '⚡', color: '#F97316' },
-  { id: 'mpa', label: 'MPA / Âncora', icon: '🔗', color: '#A855F7' },
   { id: 'mapa', label: 'Mapa Mental', icon: '🗺️', color: '#14B8A6' },
 ];
 
@@ -269,19 +265,10 @@ export function SessionQuickModal() {
   // questões
   const [qAnswered, setQAnswered] = useState('');
   const [qCorrect, setQCorrect] = useState('');
-  const [gaps, setGaps] = useState('');
   // vídeo
   const [videoMin, setVideoMin] = useState('');
-  // feynman
-  const [feynmanNote, setFeynmanNote] = useState('');
-  // recall
-  const [recallText, setRecallText] = useState('');
-  const [recallMissed, setRecallMissed] = useState('');
-  // mpa
-  const [anchor, setAnchor] = useState('');
   // sempre presentes
   const [connection, setConnection] = useState('');
-  const [insecurity, setInsecurity] = useState('');
   const [concluded, setConcluded] = useState(null);
   const [generateRev, setGenerateRev] = useState(true);
   // score da revisão (1=difícil, 3=médio, 5=fácil) — só relevante quando revisionId existe
@@ -384,14 +371,12 @@ export function SessionQuickModal() {
     setSelectedModes(preMode ? [preMode] : []);
     setQAnswered('');
     setQCorrect('');
-    setGaps('');
     setVideoMin('');
     setFeynmanNote('');
     setRecallText('');
     setRecallMissed('');
     setAnchor('');
     setConnection('');
-    setInsecurity('');
     setConcluded(null);
     setGenerateRev(true);
     setRevisionScore(3);
@@ -497,18 +482,11 @@ export function SessionQuickModal() {
 
     // bônus XP por metodologia ativa
     const bonusConnection = connection.trim() ? 5 : 0;
-    const bonusFeynman = feynmanNote.trim() ? 8 : 0;
-    const bonusRecall = recallText.trim() ? 6 : 0;
-    const bonusMpa = anchor.trim() ? 4 : 0;
-
     const xpEarned =
       mins * (XP_RULES.STUDY_MINUTE?.xp || 1) +
       qC * (XP_RULES.QUESTION_CORRECT?.xp || 2) +
       (XP_RULES.SESSION_COMPLETED?.xp || 15) +
-      bonusConnection +
-      bonusFeynman +
-      bonusRecall +
-      bonusMpa;
+      bonusConnection;
 
     const session = {
       subjectId,
@@ -523,13 +501,7 @@ export function SessionQuickModal() {
       questionsAnswered: has('questoes') ? qA : 0,
       questionsCorrect: has('questoes') ? qC : 0,
       videoMinutes: has('video') ? Number(videoMin) || 0 : 0,
-      gaps: gaps.trim() || null,
       connection: connection.trim() || null,
-      insecurity: insecurity.trim() || null,
-      feynmanNote: feynmanNote.trim() || null,
-      recallText: recallText.trim() || null,
-      recallMissed: recallMissed.trim() || null,
-      anchor: anchor.trim() || null,
       xpEarned,
     };
 
@@ -556,26 +528,6 @@ export function SessionQuickModal() {
           lastStudied: today(),
         };
       }
-      if (gaps.trim())
-        updates.gaps = [
-          ...(subtopic?.gaps || []),
-          { text: gaps.trim(), date: today() },
-        ];
-      if (insecurity.trim())
-        updates.insecurities = [
-          ...(subtopic?.insecurities || []),
-          { text: insecurity.trim(), date: today() },
-        ];
-      if (feynmanNote.trim())
-        updates.feynmanNotes = [
-          ...(subtopic?.feynmanNotes || []),
-          { text: feynmanNote.trim(), date: today() },
-        ];
-      if (anchor.trim())
-        updates.anchors = [
-          ...(subtopic?.anchors || []),
-          { text: anchor.trim(), date: today(), type: 'mpa' },
-        ];
       if (connection.trim())
         updates.connections = [
           ...(subtopic?.connections || []),
@@ -608,17 +560,6 @@ export function SessionQuickModal() {
         xp: bonusConnection,
         color: '#8B5CF6',
       },
-      feynmanNote.trim() && {
-        label: '🎤 Feynman',
-        xp: bonusFeynman,
-        color: '#EC4899',
-      },
-      recallText.trim() && {
-        label: '⚡ Recall ativo',
-        xp: bonusRecall,
-        color: '#F97316',
-      },
-      anchor.trim() && { label: '🔗 MPA', xp: bonusMpa, color: '#A855F7' },
     ].filter(Boolean);
 
     setResult({
@@ -1490,19 +1431,6 @@ export function SessionQuickModal() {
                       % de acerto
                     </div>
                   )}
-                  <div>
-                    <div
-                      className="text-[10px] mb-1"
-                      style={{ color: 'var(--text-dim)' }}
-                    >
-                      O que você errou ou confundiu? (diagnóstico de gaps)
-                    </div>
-                    <TA
-                      placeholder="Ex: confundi prazo de 5 dias com 15 em licitação dispensada..."
-                      value={gaps}
-                      onChange={setGaps}
-                    />
-                  </div>
                 </div>
               )}
 
@@ -1522,106 +1450,6 @@ export function SessionQuickModal() {
                     placeholder="Quantos minutos de videoaula?"
                     value={videoMin}
                     onChange={setVideoMin}
-                  />
-                </div>
-              )}
-
-              {/* feynman */}
-              {has('feynman') && (
-                <div
-                  className="p-4 rounded-xl border space-y-2"
-                  style={{ borderColor: '#EC489933', background: '#EC489908' }}
-                >
-                  <div
-                    className="text-xs font-bold"
-                    style={{ color: '#EC4899' }}
-                  >
-                    🧠 Técnica Feynman
-                  </div>
-                  <div
-                    className="text-[10px]"
-                    style={{ color: 'var(--text-dim)' }}
-                  >
-                    Explique o conteúdo com suas próprias palavras, como se
-                    estivesse ensinando alguém do zero.
-                  </div>
-                  <TA
-                    placeholder="Ex: licitação dispensada é quando o valor é tão pequeno que o custo de licitar superaria o benefício..."
-                    value={feynmanNote}
-                    onChange={setFeynmanNote}
-                    rows={3}
-                  />
-                </div>
-              )}
-
-              {/* recall ativo */}
-              {has('recall') && (
-                <div
-                  className="p-4 rounded-xl border space-y-3"
-                  style={{ borderColor: '#F9741633', background: '#F9741608' }}
-                >
-                  <div
-                    className="text-xs font-bold"
-                    style={{ color: '#F97316' }}
-                  >
-                    ⚡ Recall Ativo
-                  </div>
-                  <WarnBox>
-                    O esforço de lembrar sem consultar o material é o que fixa a
-                    memória — não a releitura.
-                  </WarnBox>
-                  <div>
-                    <div
-                      className="text-[10px] mb-1"
-                      style={{ color: 'var(--text-dim)' }}
-                    >
-                      O que você conseguiu evocar (sem olhar)?
-                    </div>
-                    <TA
-                      placeholder="Liste os pontos que você lembrou..."
-                      value={recallText}
-                      onChange={setRecallText}
-                    />
-                  </div>
-                  <div>
-                    <div
-                      className="text-[10px] mb-1"
-                      style={{ color: 'var(--text-dim)' }}
-                    >
-                      O que você não lembrou / esqueceu?
-                    </div>
-                    <TA
-                      placeholder="Esses são seus gaps — foco nas próximas sessões..."
-                      value={recallMissed}
-                      onChange={setRecallMissed}
-                    />
-                  </div>
-                </div>
-              )}
-
-              {/* mpa */}
-              {has('mpa') && (
-                <div
-                  className="p-4 rounded-xl border space-y-2"
-                  style={{ borderColor: '#A855F733', background: '#A855F708' }}
-                >
-                  <div
-                    className="text-xs font-bold"
-                    style={{ color: '#A855F7' }}
-                  >
-                    🔗 Âncora MPA criada
-                  </div>
-                  <div
-                    className="text-[10px]"
-                    style={{ color: 'var(--text-dim)' }}
-                  >
-                    Descreva a associação que você criou (sigla, história,
-                    imagem mental, analogia).
-                  </div>
-                  <TA
-                    placeholder="Ex: LIMPE = Legalidade, Impessoalidade, Moralidade, Publicidade, Eficiência. Lembro da 'limpa da administração'..."
-                    value={anchor}
-                    onChange={setAnchor}
                   />
                 </div>
               )}
@@ -1656,34 +1484,6 @@ export function SessionQuickModal() {
                     +5 XP — pensamento de ordem superior ativo
                   </div>
                 )}
-              </div>
-
-              {/* insegurança — reconhecer ≠ lembrar */}
-              <div>
-                <Label>
-                  Ficou com dúvida em algo, mesmo acertando?{' '}
-                  <span
-                    style={{
-                      textTransform: 'none',
-                      fontSize: '9px',
-                      letterSpacing: 0,
-                      color: 'var(--text-dim)',
-                    }}
-                  >
-                    (opcional)
-                  </span>
-                </Label>
-                <WarnBox>
-                  Insegurança = lacuna real. Registrar aqui é o que separa os
-                  70% dos 90%.
-                </WarnBox>
-                <div className="mt-2">
-                  <TA
-                    placeholder="Ex: não tenho certeza se prazo para impugnar edital é 5 ou 3 dias úteis..."
-                    value={insecurity}
-                    onChange={setInsecurity}
-                  />
-                </div>
               </div>
 
               {/* status do subtópico */}

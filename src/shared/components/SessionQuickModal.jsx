@@ -62,52 +62,6 @@ function fmtTimer(sec) {
   return `${String(Math.floor(sec / 60)).padStart(2, '0')}:${String(sec % 60).padStart(2, '0')}`;
 }
 
-// ── FloatingTimer ─────────────────────────────────────────────────────────────
-
-function FloatingTimer({ elapsed, remaining, accent, subjectName, onReopen }) {
-  const display = remaining ?? elapsed;
-  const overtime = remaining !== null && remaining === 0;
-  const bg = overtime
-    ? '#EF4444'
-    : accent?.startsWith('#')
-      ? accent
-      : '#8B5CF6';
-  return (
-    <button
-      onClick={onReopen}
-      className="fixed bottom-6 right-6 z-[300] flex items-center gap-3 px-4 py-3 rounded-2xl font-bold text-sm text-white shadow-2xl transition-transform hover:scale-105 active:scale-95"
-      style={{ background: bg, boxShadow: `0 4px 28px ${bg}55` }}
-    >
-      <span className="relative flex items-center justify-center w-4 h-4 shrink-0">
-        <span
-          className="absolute w-3 h-3 rounded-full opacity-40"
-          style={{
-            background: 'white',
-            animation: 'ping 1.2s cubic-bezier(0,0,.2,1) infinite',
-          }}
-        />
-        <span className="w-2.5 h-2.5 rounded-full bg-white" />
-      </span>
-      <span className="font-mono text-base tabular-nums">
-        {fmtTimer(display)}
-      </span>
-      <span className="flex flex-col items-start leading-tight">
-        <span className="text-[10px] font-bold uppercase tracking-wider opacity-80 max-w-[100px] truncate">
-          {subjectName || 'Sessão'}
-        </span>
-        <span className="text-[9px] opacity-60">
-          {remaining !== null
-            ? overtime
-              ? 'tempo esgotado'
-              : 'restante'
-            : 'decorrido'}
-        </span>
-      </span>
-      <span className="text-xs opacity-70">↑</span>
-    </button>
-  );
-}
-
 // ── ui atoms ──────────────────────────────────────────────────────────────────
 
 function Label({ children }) {
@@ -591,20 +545,9 @@ export function SessionQuickModal() {
         ? Math.round(((duration - remaining) / duration) * 100)
         : null;
 
-  // minimizado
+  // minimizado — HexMenu handles visual feedback, just keep audio alive
   if (minimized && sessionActive) {
-    return (
-      <>
-        <audio ref={audioRef} />
-        <FloatingTimer
-          elapsed={elapsed}
-          remaining={remaining}
-          accent={accentSafe}
-          subjectName={subject?.name}
-          onReopen={() => setMinimized(false)}
-        />
-      </>
-    );
+    return <audio ref={audioRef} />;
   }
   if (!open && !sessionActive) return null;
 

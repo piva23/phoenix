@@ -28,7 +28,7 @@ const HealthPage = lazy(() => import('../modules/health/pages/HealthPage'));
 // Finance — lazy loaded
 const FinancePage = lazy(() => import('../modules/finance/pages/FinancePage'));
 
-// Study — lazy loaded (13 rotas)
+// Study — lazy loaded
 const StudyTodayPage = lazy(() => import('../modules/study/pages/StudyTodayPage'));
 const StudySubjectsPage = lazy(() => import('../modules/study/pages/StudySubjectsPage'));
 const StudySubjectDetailPage = lazy(() => import('../modules/study/pages/StudySubjectDetailPage'));
@@ -78,6 +78,7 @@ function AppRoutes() {
             <Route path="study/analytics" element={<StudyAnalyticsPage />} />
             <Route path="study/simulados" element={<StudySimuladosPage />} />
             <Route path="study/questoes" element={<StudyQuestoesPage />} />
+            <Route path="study/questoes/:materia" element={<StudyQuestoesPage />} />
             <Route path="study/techniques" element={<StudyTechniquesPage />} />
 
           </Route>

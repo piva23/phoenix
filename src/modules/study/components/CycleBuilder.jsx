@@ -127,8 +127,6 @@ export function CycleBuilder({ onSave, onClose, editCycle = null }) {
       mindMapImage: null,
       links: [],
       flashcards: [],
-      gaps: [],
-      insecurities: [],
       feynmanNotes: [],
       anchors: [],
       loci: [],

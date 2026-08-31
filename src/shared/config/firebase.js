@@ -6,32 +6,13 @@ if (process.env.NODE_ENV === 'development') {
   console.warn("LEMBRETE: Autorize o domínio atual (ex: localhost) no Firebase Console -> Authentication -> Settings -> Authorized domains");
 }
 
-// Using import.meta.env for configuration as requested, with a process.env fallback to support CRA packaging
-const getEnvVal = (key) => {
-  try {
-    // @ts-ignore
-    const metaEnv = import.meta.env;
-    if (metaEnv && metaEnv[key]) {
-      return metaEnv[key];
-    }
-  } catch (e) {}
-  try {
-    // @ts-ignore
-    const procEnv = process.env;
-    if (procEnv && procEnv[key]) {
-      return procEnv[key];
-    }
-  } catch (e) {}
-  return '';
-};
-
 const firebaseConfig = {
-  apiKey: getEnvVal('VITE_FIREBASE_API_KEY') || getEnvVal('REACT_APP_FIREBASE_API_KEY'),
-  authDomain: getEnvVal('VITE_FIREBASE_AUTH_DOMAIN') || getEnvVal('REACT_APP_FIREBASE_AUTH_DOMAIN'),
-  projectId: getEnvVal('VITE_FIREBASE_PROJECT_ID') || getEnvVal('REACT_APP_FIREBASE_PROJECT_ID'),
-  storageBucket: getEnvVal('VITE_FIREBASE_STORAGE_BUCKET') || getEnvVal('REACT_APP_FIREBASE_STORAGE_BUCKET'),
-  messagingSenderId: getEnvVal('VITE_FIREBASE_MESSAGING_SENDER_ID') || getEnvVal('REACT_APP_FIREBASE_MESSAGING_SENDER_ID'),
-  appId: getEnvVal('VITE_FIREBASE_APP_ID') || getEnvVal('REACT_APP_FIREBASE_APP_ID')
+  apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
+  authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.REACT_APP_FIREBASE_APP_ID,
 };
 
 const app = initializeApp(firebaseConfig);

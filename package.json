@@ -30,7 +30,7 @@
     "tailwindcss": "3.4.17"
   },
   "scripts": {
-    "dev": "PORT=3000 HOST=0.0.0.0 react-scripts start",
+    "dev": "react-scripts start",
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test"

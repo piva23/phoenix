@@ -8,9 +8,22 @@ export function MainLayout() {
   const sidebarOpen = useUIStore(s => s.sidebarOpen);
 
   return (
-    <div className="flex min-h-screen bg-background text-white font-sans selection:bg-primary/30 overflow-hidden">
-      {/* Cyber Grid Background */}
-      <div className="fixed inset-0 bg-[linear-gradient(to_right,#1f293708_1px,transparent_1px),linear-gradient(to_bottom,#1f293708_1px,transparent_1px)] bg-[size:32px_32px] pointer-events-none" />
+    <div
+      className="flex min-h-screen text-white font-sans overflow-hidden"
+      style={{
+        background: 'var(--bg)',
+        selectionBackground: 'rgba(var(--nav-active-rgb), 0.3)',
+      }}
+    >
+      {/* Subtle grid — barely visible, no distraction */}
+      <div
+        className="fixed inset-0 pointer-events-none opacity-[0.015]"
+        style={{
+          backgroundImage:
+            'linear-gradient(to right, rgba(255,255,255,0.5) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.5) 1px, transparent 1px)',
+          backgroundSize: '64px 64px',
+        }}
+      />
 
       {/* Desktop Sidebar */}
       <div className="hidden lg:block z-[100]">

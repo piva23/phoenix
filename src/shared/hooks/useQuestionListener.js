@@ -6,7 +6,6 @@ export function useQuestionListener() {
   const addSubject = useStudyStore(s => s.addSubject);
   const addTopic = useStudyStore(s => s.addTopic);
   const addSubtopic = useStudyStore(s => s.addSubtopic);
-  const updateSubtopic = useStudyStore(s => s.updateSubtopic);
   const addFlashcard = useStudyStore(s => s.addFlashcard);
 
   useEffect(() => {
@@ -113,24 +112,10 @@ export function useQuestionListener() {
         difficulty: 'medium'
       });
 
-      // 5. Inserir também como um Gap na aba "Gaps & Inseguranças" para visualização instantânea
-      const existingGaps = subtopic.gaps || [];
-      updateSubtopic(targetSubjectId, targetTopicId, targetSubtopicId, {
-        gaps: [
-          ...existingGaps,
-          {
-            id: `gap_ext_${Date.now()}`,
-            text: `[Caderno de Erros] Pergunta: ${pergunta.slice(0, 80)}... (Gabarito: ${respostaCorreta} / Sua resposta: ${respostaUsuario})`,
-            date: new Date().toISOString().slice(0, 10),
-            resolved: false
-          }
-        ]
-      });
-
-      toast.success(`Questão de "${disciplina || 'Caixa de Entrada'}" capturada no Caderno de Erros! 🎯`);
+      toast.success(`Questão de "${disciplina || 'Caixa de Entrada'}" capturada! 🎯`);
     };
 
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
-  }, [addSubject, addTopic, addSubtopic, updateSubtopic, addFlashcard]);
+  }, [addSubject, addTopic, addSubtopic, addFlashcard]);
 }
