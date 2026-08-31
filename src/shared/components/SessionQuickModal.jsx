@@ -10,6 +10,7 @@ import { usePersonaStore } from '../../stores/usePersonaStore';
 import { useCycleStore } from '../../stores/useCycleStore';
 import { useRevisionStore } from '../../stores/useRevisionStore';
 import { useSessionModalStore } from '../../stores/useSessionModalStore';
+import { useActiveSessionUIStore } from '../../stores/useActiveSessionUIStore';
 import { useSoundStore } from '../../stores/useSoundStore';
 import { today, formatMinutes } from '../../shared/utils/time';
 import toast from 'react-hot-toast';
@@ -40,12 +41,7 @@ const MODES = [
   { id: 'leitura', label: 'Leitura', icon: '📖', color: '#3B82F6' },
   { id: 'video', label: 'Videoaula', icon: '▶️', color: '#8B5CF6' },
   { id: 'questoes', label: 'Questões', icon: '🎯', color: '#10B981' },
-  { id: 'flashcards', label: 'Flashcards', icon: '🃏', color: '#F59E0B' },
   { id: 'revisao', label: 'Revisão', icon: '🔄', color: '#06B6D4' },
-  { id: 'feynman', label: 'Feynman', icon: '🧠', color: '#EC4899' },
-  { id: 'recall', label: 'Recall Ativo', icon: '⚡', color: '#F97316' },
-  { id: 'mpa', label: 'MPA / Âncora', icon: '🔗', color: '#A855F7' },
-  { id: 'mapa', label: 'Mapa Mental', icon: '🗺️', color: '#14B8A6' },
 ];
 
 const DURATIONS = [
@@ -125,24 +121,6 @@ function Label({ children }) {
   );
 }
 
-function TA({ placeholder, value, onChange, rows = 2 }) {
-  return (
-    <textarea
-      rows={rows}
-      placeholder={placeholder}
-      value={value}
-      onChange={e => onChange(e.target.value)}
-      className="w-full px-3 py-2.5 rounded-xl text-sm border outline-none resize-none"
-      style={{
-        background: 'var(--bg-surface-2)',
-        borderColor: 'var(--border)',
-        color: 'var(--text-main)',
-        lineHeight: 1.6,
-      }}
-    />
-  );
-}
-
 function NI({ placeholder, value, onChange }) {
   return (
     <input
@@ -219,7 +197,12 @@ export function SessionQuickModal() {
   // Estado de abertura agora vem de uma store global (não mais props) —
   // é isso que garante que o modal sobrevive à navegação entre páginas.
   const open = useSessionModalStore(s => s.open);
-  const onClose = useSessionModalStore(s => s.closeModal);
+  const rawClose = useSessionModalStore(s => s.closeModal);
+  const onClose = () => {
+    // Always clear HexMenu UI state when modal closes
+    useActiveSessionUIStore.getState().endSession();
+    rawClose();
+  };
   const preSubjectId = useSessionModalStore(s => s.preSubjectId);
   const preTopicId = useSessionModalStore(s => s.preTopicId);
   const preSubtopicId = useSessionModalStore(s => s.preSubtopicId);
@@ -273,19 +256,10 @@ export function SessionQuickModal() {
   // questões
   const [qAnswered, setQAnswered] = useState('');
   const [qCorrect, setQCorrect] = useState('');
-  const [gaps, setGaps] = useState('');
   // vídeo
   const [videoMin, setVideoMin] = useState('');
-  // feynman
-  const [feynmanNote, setFeynmanNote] = useState('');
-  // recall
-  const [recallText, setRecallText] = useState('');
-  const [recallMissed, setRecallMissed] = useState('');
-  // mpa
-  const [anchor, setAnchor] = useState('');
   // sempre presentes
   const [connection, setConnection] = useState('');
-  const [insecurity, setInsecurity] = useState('');
   const [concluded, setConcluded] = useState(null);
   const [generateRev, setGenerateRev] = useState(true);
   // score da revisão (1=difícil, 3=médio, 5=fácil) — só relevante quando revisionId existe
@@ -388,14 +362,8 @@ export function SessionQuickModal() {
     setSelectedModes(preMode ? [preMode] : []);
     setQAnswered('');
     setQCorrect('');
-    setGaps('');
     setVideoMin('');
-    setFeynmanNote('');
-    setRecallText('');
-    setRecallMissed('');
-    setAnchor('');
     setConnection('');
-    setInsecurity('');
     setConcluded(null);
     setGenerateRev(true);
     setRevisionScore(3);
@@ -409,6 +377,8 @@ export function SessionQuickModal() {
         if (timerMode !== 'pomodoro' || pomoPhase === 'foco') {
           setElapsed(e => e + 1);
         }
+        // Sync tick to HexMenu UI store
+        useActiveSessionUIStore.getState().tick();
         setRemaining(r => {
           if (r === null) return null;
           if (r <= 1) {
@@ -462,6 +432,7 @@ export function SessionQuickModal() {
     if (!subjectId) return;
     startedAt.current = new Date().toISOString();
     setElapsed(0);
+    const totalTime = timerMode === 'pomodoro' ? pomoPreset.work * 60 : duration;
     if (timerMode === 'pomodoro') {
       setPomoPhase('foco');
       setPomoCount(0);
@@ -471,6 +442,12 @@ export function SessionQuickModal() {
     }
     setPaused(false);
     setPhase('running');
+    // Sync with HexMenu UI store
+    useActiveSessionUIStore.getState().startSession({
+      subjectName: subject?.name || '',
+      topicName: topic?.name || '',
+      totalTime: totalTime || 0,
+    });
   }
 
   function handleSkipPhase() {
@@ -495,24 +472,20 @@ export function SessionQuickModal() {
   }
 
   function handleSave() {
+    // End HexMenu UI session
+    useActiveSessionUIStore.getState().endSession();
     const mins = Math.max(1, Math.floor(elapsed / 60));
     const qA = Number(qAnswered) || 0;
     const qC = Number(qCorrect) || 0;
 
     // bônus XP por metodologia ativa
     const bonusConnection = connection.trim() ? 5 : 0;
-    const bonusFeynman = feynmanNote.trim() ? 8 : 0;
-    const bonusRecall = recallText.trim() ? 6 : 0;
-    const bonusMpa = anchor.trim() ? 4 : 0;
 
     const xpEarned =
       mins * (XP_RULES.STUDY_MINUTE?.xp || 1) +
       qC * (XP_RULES.QUESTION_CORRECT?.xp || 2) +
       (XP_RULES.SESSION_COMPLETED?.xp || 15) +
-      bonusConnection +
-      bonusFeynman +
-      bonusRecall +
-      bonusMpa;
+      bonusConnection;
 
     const session = {
       subjectId,
@@ -527,13 +500,7 @@ export function SessionQuickModal() {
       questionsAnswered: has('questoes') ? qA : 0,
       questionsCorrect: has('questoes') ? qC : 0,
       videoMinutes: has('video') ? Number(videoMin) || 0 : 0,
-      gaps: gaps.trim() || null,
       connection: connection.trim() || null,
-      insecurity: insecurity.trim() || null,
-      feynmanNote: feynmanNote.trim() || null,
-      recallText: recallText.trim() || null,
-      recallMissed: recallMissed.trim() || null,
-      anchor: anchor.trim() || null,
       xpEarned,
     };
 
@@ -553,26 +520,6 @@ export function SessionQuickModal() {
           lastStudied: today(),
         };
       }
-      if (gaps.trim())
-        updates.gaps = [
-          ...(subtopic?.gaps || []),
-          { text: gaps.trim(), date: today() },
-        ];
-      if (insecurity.trim())
-        updates.insecurities = [
-          ...(subtopic?.insecurities || []),
-          { text: insecurity.trim(), date: today() },
-        ];
-      if (feynmanNote.trim())
-        updates.feynmanNotes = [
-          ...(subtopic?.feynmanNotes || []),
-          { text: feynmanNote.trim(), date: today() },
-        ];
-      if (anchor.trim())
-        updates.anchors = [
-          ...(subtopic?.anchors || []),
-          { text: anchor.trim(), date: today(), type: 'mpa' },
-        ];
       if (connection.trim())
         updates.connections = [
           ...(subtopic?.connections || []),
@@ -586,8 +533,17 @@ export function SessionQuickModal() {
         // score escolhido (fácil/médio/difícil), o que já agenda a próxima
         // automaticamente. Não gera uma segunda cadeia de revisões.
         completeRevision(revisionId, revisionScore);
-      } else if (generateRev) {
-        generateRevisions(subjectId, topicId, subtopicId);
+      } else {
+        // Auto-detect: se há uma revisão pendente para este subtópico,
+        // conclui automaticamente com o score selecionado.
+        const pendingRevision = useRevisionStore.getState().revisions.find(
+          r => r.subtopicId === subtopicId && !r.completed
+        );
+        if (pendingRevision) {
+          completeRevision(pendingRevision.id, revisionScore);
+        } else if (generateRev) {
+          generateRevisions(subjectId, topicId, subtopicId);
+        }
       }
     }
 
@@ -605,17 +561,6 @@ export function SessionQuickModal() {
         xp: bonusConnection,
         color: '#8B5CF6',
       },
-      feynmanNote.trim() && {
-        label: '🎤 Feynman',
-        xp: bonusFeynman,
-        color: '#EC4899',
-      },
-      recallText.trim() && {
-        label: '⚡ Recall ativo',
-        xp: bonusRecall,
-        color: '#F97316',
-      },
-      anchor.trim() && { label: '🔗 MPA', xp: bonusMpa, color: '#A855F7' },
     ].filter(Boolean);
 
     setResult({
@@ -1410,51 +1355,6 @@ export function SessionQuickModal() {
                   <NI placeholder="0" value={videoMin} onChange={setVideoMin} />
                 </div>
               )}
-
-              {has('feynman') && (
-                <div>
-                  <Label>Nota Feynman</Label>
-                  <TA placeholder="Explique com suas palavras..." value={feynmanNote} onChange={setFeynmanNote} />
-                </div>
-              )}
-
-              {has('recall') && (
-                <div className="space-y-3">
-                  <div>
-                    <Label>Recall — o que lembra</Label>
-                    <TA placeholder="Escreva de memória o que estudou..." value={recallText} onChange={setRecallText} />
-                  </div>
-                  <div>
-                    <Label>O que esqueceu</Label>
-                    <TA placeholder="Pontos que não conseguiu lembrar..." value={recallMissed} onChange={setRecallMissed} />
-                  </div>
-                </div>
-              )}
-
-              {has('mpa') && (
-                <div>
-                  <Label>Âncora MPA</Label>
-                  <TA placeholder="Qual imagem/conceito âncora você criou?" value={anchor} onChange={setAnchor} />
-                </div>
-              )}
-
-              {/* sempre presentes */}
-              <div className="space-y-3">
-                <div>
-                  <Label>Conexão com outro conhecimento</Label>
-                  <TA placeholder="O que esse conteúdo lembra de outro assunto?" value={connection} onChange={setConnection} />
-                </div>
-                <div>
-                  <Label>Insegurança / Dúvida</Label>
-                  <TA placeholder="O que ainda não ficou 100%?" value={insecurity} onChange={setInsecurity} />
-                </div>
-              </div>
-
-              {/* gaps */}
-              <div>
-                <Label>Gaps identificados</Label>
-                <TA placeholder="Lacunas que precisam ser preenchidas..." value={gaps} onChange={setGaps} />
-              </div>
 
               {/* conclusão */}
               <div>
