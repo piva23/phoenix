@@ -68,9 +68,10 @@ export function Topbar() {
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
         {/* ESQUERDA: Menu + User Info */}
         <div className="flex items-center gap-3 md:gap-4">
+          {/* Hamburger — desktop only (toggle sidebar collapse) */}
           <button
             onClick={toggleSidebar}
-            className="lg:hidden flex items-center justify-center w-10 h-10 rounded-2xl transition-all"
+            className="hidden lg:flex items-center justify-center w-10 h-10 rounded-2xl transition-all"
             style={{
               background: 'var(--nav-surface)',
               border: '1px solid var(--nav-border)',
