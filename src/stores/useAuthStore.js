@@ -7,6 +7,11 @@ export const useAuthStore = create((set) => ({
   loading: true,
 
   loginWithGoogle: async () => {
+    if (!auth || !googleProvider) {
+      console.warn('Firebase auth not configured');
+      set({ loading: false });
+      return null;
+    }
     try {
       set({ loading: true });
       const result = await signInWithPopup(auth, googleProvider);
@@ -20,6 +25,10 @@ export const useAuthStore = create((set) => ({
   },
 
   logout: async () => {
+    if (!auth) {
+      set({ user: null, loading: false });
+      return;
+    }
     try {
       set({ loading: true });
       await signOut(auth);
@@ -32,6 +41,10 @@ export const useAuthStore = create((set) => ({
   },
 
   initializeAuth: () => {
+    if (!auth) {
+      set({ user: null, loading: false });
+      return () => {};
+    }
     // Return unsubscribe function in case caller wants to cleanup
     return onAuthStateChanged(auth, (user) => {
       set({ user: user, loading: false });
