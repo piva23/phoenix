@@ -1,19 +1,13 @@
 import { useEffect } from 'react'
-import { usePersonaStore } from '../stores/usePersonaStore'
 
 export function ThemeEffect() {
-  const activePersonaId = usePersonaStore(s => s.activePersonaId)
-  const getActivePersona = usePersonaStore(s => s.getActivePersona)
-
   useEffect(() => {
-    const persona = getActivePersona()
-    if (!persona) return
     const root = document.documentElement
-    root.style.setProperty('--primary',   persona.colorPrimary)
-    root.style.setProperty('--secondary', persona.colorSecondary)
-    root.style.setProperty('--accent',    persona.colorAccent)
-    root.style.setProperty('--glow',      persona.glow || persona.colorPrimary + '55')
-  }, [activePersonaId])
+    root.style.setProperty('--primary', '#8B5CF6')
+    root.style.setProperty('--secondary', '#EC4899')
+    root.style.setProperty('--accent', '#10B981')
+    root.style.setProperty('--glow', '#8B5CF655')
+  }, [])
 
   return null
 }

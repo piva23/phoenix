@@ -1,16 +1,12 @@
 import React from 'react';
 import { AvatarEvolution } from '../components/AvatarEvolution';
 import { MissionsBoard } from '../components/MissionsBoard';
-import { BadgesGallery } from '../components/BadgesGallery';
 import { useGameStore } from '../../../stores/useGameStore';
-import { usePersonaStore } from '../../../stores/usePersonaStore';
 import { motion } from 'framer-motion';
 import { PageHeader } from '../../../components/layout/PageHeader';
 
 export function RPGPage() {
   const { missions, badges } = useGameStore();
-  const getActivePersona = usePersonaStore((s) => s.getActivePersona);
-  const persona = getActivePersona();
 
   // Metrics calculation
   const totalMissions = missions.length;
@@ -59,7 +55,7 @@ export function RPGPage() {
             <span className="text-xl">🔮</span>
             <span className="block text-xs text-text-dim font-bold uppercase mt-1">Ativo</span>
             <span className="block text-sm font-black text-secondary mt-1 whitespace-nowrap overflow-hidden text-ellipsis max-w-[80px]">
-              {persona?.name || 'Horus'}
+              Felipe
             </span>
           </div>
         </div>

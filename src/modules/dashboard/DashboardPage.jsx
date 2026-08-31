@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { usePersonaStore } from '../../stores/usePersonaStore';
+
 import { useGameStore, calcLevelProgress } from '../../stores/useGameStore';
 import { useVisionStore } from '../../stores/useVisionStore';
 import { PageHeader } from '../../components/layout/PageHeader';
@@ -26,25 +26,22 @@ const WEEKDAYS = [
 
 export function DashboardPage() {
   const name = useGameStore(s => s.name);
-  const getActivePersona = usePersonaStore(s => s.getActivePersona);
-  const activePersona = getActivePersona();
   const visionItems = useVisionStore(s => s.items);
-  const getItemsForPersona = useVisionStore(s => s.getItemsForPersona);
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
-  // Pick a daily quote from vision items (active ones for current persona, or all active)
+  // Pick a daily quote from vision items (active ones)
   const dailyQuote = useMemo(() => {
-    const active = getItemsForPersona(activePersona?.id);
+    const active = visionItems.filter(i => i.active);
     if (active.length > 0) {
       // Rotate by day-of-year to get deterministic but varied selection
       const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0)) / 86400000);
       return active[dayOfYear % active.length]?.text || active[0]?.text;
     }
-    // Fallback to persona quotes or default
+    // Fallback
     const fallbackIdx = Math.floor(Date.now() / 86400000) % FALLBACK_QUOTES.length;
     return FALLBACK_QUOTES[fallbackIdx];
-  }, [activePersona?.id, visionItems.length]);
+  }, [visionItems.length]);
 
   const now = new Date();
   const dateStr = `${WEEKDAYS[now.getDay()]}, ${now.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long' })}`;
@@ -57,7 +54,7 @@ export function DashboardPage() {
       <PageHeader
         icon="👁️"
         title={`Olá, ${firstName}.`}
-        subtitle={activePersona?.greeting || 'Sintonize a sua lente diária.'}
+        subtitle="Sintonize a sua lente diária."
         badge={
           <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
             Frase do Dia

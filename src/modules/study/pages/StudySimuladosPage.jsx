@@ -6,7 +6,6 @@ import { useConcursoStore } from '../../../stores/useConcursoStore';
 import { useStudyStore } from '../../../stores/useStudyStore';
 import { useQuestionsStore } from '../../../stores/useQuestionsStore';
 import { useGameStore } from '../../../stores/useGameStore';
-import { usePersonaStore } from '../../../stores/usePersonaStore';
 import { formatDateBR } from '../../../shared/utils/time';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';

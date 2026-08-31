@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { usePersonaStore } from '../../stores/usePersonaStore';
 import { useGameStore, calcXPProgress } from '../../stores/useGameStore';
 import { exportData, importData } from '../../shared/utils/DataManagement';
 import { useSecurityStore } from '../../stores/useSecurityStore';
@@ -59,9 +58,6 @@ export function SettingsPage() {
   const xp = useGameStore((s) => s.totalXP);
   const gameName = useGameStore((s) => s.name);
   const xpData = calcXPProgress(xp);
-
-  const { getActivePersona } = usePersonaStore();
-  const activePersona = getActivePersona();
 
   const { pin, setPin, lock, clearPin } = useSecurityStore();
 
@@ -250,11 +246,6 @@ export function SettingsPage() {
                   <div className="min-w-0 flex-1">
                     <p className="text-base font-bold text-white truncate">{displayName}</p>
                     <p className="text-xs text-text-dim truncate">{user.email || 'Sem email'}</p>
-                    {activePersona && (
-                      <p className="text-xs text-text-muted mt-1">
-                        Persona: <span className="text-white font-semibold">{activePersona.icon} {activePersona.name}</span>
-                      </p>
-                    )}
                     {isOfflineUser && (
                       <p className="text-xs text-amber-400 mt-1 font-medium">
                         ⚠️ Modo offline — dados locais apenas
@@ -526,7 +517,7 @@ export function SettingsPage() {
                 <span className="text-4xl inline-block animate-bounce">🚨</span>
                 <h4 className="text-base font-black text-white uppercase">Confirmar Destruição de Dados</h4>
                 <p className="text-xs text-text-dim leading-relaxed">
-                  Esta ação irá formatar totalmente seu Phoenix OS, limpando permanentemente todas as personas, finanças, editais, revisões, matérias e rotinas.
+                  Esta ação irá formatar totalmente seu Phoenix OS, limpando permanentemente todos os dados locais.
                 </p>
               </div>
 

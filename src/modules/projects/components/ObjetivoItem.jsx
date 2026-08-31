@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useProjectStore } from '../../../stores/useProjectStore';
 import { useGameStore } from '../../../stores/useGameStore';
-import { usePersonaStore } from '../../../stores/usePersonaStore';
 import { KeyResultBar } from './KeyResultBar';
 import { TaskItem } from './TaskItem';
 import { TaskFormModal } from './TaskFormModal';
@@ -121,7 +120,6 @@ export function ObjetivoItem({ objetivo, projectId, projectCor }) {
     deleteObjetivo,
   } = useProjectStore();
   const { logXP, addXP } = useGameStore();
-  const activePersonaId = usePersonaStore(s => s.activePersonaId);
 
   const [open, setOpen] = useState(true);
   const [showKRForm, setShowKRForm] = useState(false);
@@ -147,7 +145,7 @@ export function ObjetivoItem({ objetivo, projectId, projectCor }) {
         action: 'TASK_COMPLETED',
         xp,
         moduleOrigin: 'projects',
-        personaId: activePersonaId,
+        personaId: null,
         radarAxis: 'disciplina',
       });
       addXP(xp);

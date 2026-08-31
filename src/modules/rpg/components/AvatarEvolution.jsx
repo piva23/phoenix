@@ -1,26 +1,13 @@
 import React from 'react';
-import { usePersonaStore } from '../../../stores/usePersonaStore';
 import { useGameStore, calcLevelProgress } from '../../../stores/useGameStore';
 import { motion } from 'framer-motion';
-import {
-  Radar,
-  RadarChart,
-  PolarGrid,
-  PolarAngleAxis,
-  PolarRadiusAxis,
-  ResponsiveContainer,
-} from 'recharts';
 
 export function AvatarEvolution() {
-  const getActivePersona = usePersonaStore((s) => s.getActivePersona);
-  const persona = getActivePersona();
   const totalXP = useGameStore((s) => s.totalXP);
-  const radarXP = useGameStore((s) => s.radar) || {};
-
-  // Usar a fórmula unificada do store
   const { level, currentXP, neededXP, progress } = calcLevelProgress(totalXP || 0);
 
-  // Dynamic attributes mapping the 6 requested RPG axes
+  // Dynamic attributes - using radar data from game store
+  const radarXP = useGameStore((s) => s.radar) || {};
   const data = [
     { subject: 'Conhecimento', A: Math.max(10, (radarXP.conhecimento || 0) + 20 * level), fullMark: 150 },
     { subject: 'Disciplina', A: Math.max(10, (radarXP.disciplina || 0) + 25 * level), fullMark: 150 },
@@ -45,17 +32,17 @@ export function AvatarEvolution() {
         <div className="space-y-6">
           <div className="flex items-center gap-4">
             <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-primary to-secondary p-0.5 shadow-lg flex items-center justify-center relative group">
-              <span className="text-3xl filter drop-shadow">{persona?.icon || '🧙‍♂️'}</span>
+              <span className="text-3xl filter drop-shadow">⚔️</span>
               <div className="absolute -bottom-2 -right-2 bg-black border border-white/20 text-[10px] font-black px-2 py-0.5 rounded-full text-white shadow">
                 Lvl {level}
               </div>
             </div>
             <div>
               <h3 className="text-lg font-black text-text-main tracking-tight">
-                {persona?.name || 'Inominável'}
+                Felipe
               </h3>
               <p className="text-xs text-text-muted capitalize">
-                Persona Ativa • {persona?.role || 'Aventureiro'}
+                Aventureiro
               </p>
             </div>
           </div>
@@ -109,7 +96,7 @@ export function AvatarEvolution() {
                 axisLine={false}
               />
               <Radar
-                name={persona?.name || 'Atributos'}
+                name={ Felipe }
                 dataKey="A"
                 stroke="var(--primary)"
                 fill="var(--primary)"

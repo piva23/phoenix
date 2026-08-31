@@ -1,7 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useProjectStore } from '../../stores/useProjectStore';
-import { usePersonaStore } from '../../stores/usePersonaStore';
 import { ProjectFormModal } from './components/ProjectFormModal';
 import { KanbanView } from './views/KanbanView';
 import { formatDateBR, daysUntil } from '../../shared/utils/time';
@@ -22,7 +21,7 @@ const INITIAL_TEMPLATES = [
     icone: '🧠',
     cor: '#8B5CF6',
     status: 'ativo',
-    personaId: 'horus',
+    personaId: null,
     dataInicio: '2026-07-01',
     dataFim: '2026-12-31',
     objetivos: [
@@ -68,7 +67,7 @@ const INITIAL_TEMPLATES = [
     icone: '🏡',
     cor: '#EF4444',
     status: 'ativo',
-    personaId: 'maion',
+    personaId: null,
     dataInicio: '2026-07-01',
     dataFim: '2026-10-31',
     objetivos: [
@@ -114,7 +113,7 @@ const INITIAL_TEMPLATES = [
     icone: '🫀',
     cor: '#10B981',
     status: 'ativo',
-    personaId: 'leotauro',
+    personaId: null,
     dataInicio: '2026-07-01',
     dataFim: '2026-12-31',
     objetivos: [
@@ -160,7 +159,7 @@ const INITIAL_TEMPLATES = [
     icone: '🏠',
     cor: '#3B82F6',
     status: 'ativo',
-    personaId: 'leao-peixe',
+    personaId: null,
     dataInicio: '2026-07-01',
     dataFim: '2027-06-30',
     objetivos: [
@@ -206,7 +205,7 @@ const INITIAL_TEMPLATES = [
     icone: '💰',
     cor: '#F59E0B',
     status: 'ativo',
-    personaId: 'maion',
+    personaId: null,
     dataInicio: '2026-07-01',
     dataFim: '2026-12-31',
     objetivos: [
@@ -250,12 +249,10 @@ const INITIAL_TEMPLATES = [
 export function ProjectsPage() {
   const navigate = useNavigate();
   const { projects, deleteProject, getProjectProgress, importProjects } = useProjectStore();
-  const { personas } = usePersonaStore();
 
   const [activeTab, setActiveTab] = useState('list'); // 'list' | 'kanban'
   const [formOpen, setFormOpen] = useState(false);
   const [editTarget, setEditTarget] = useState(null);
-  const [filterPersona, setFilterPersona] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all');
   const addProject = useProjectStore(s => s.addProject);
   const updateProject = useProjectStore(s => s.updateProject);
@@ -263,7 +260,6 @@ export function ProjectsPage() {
   const fileInputRef = useRef(null);
 
   const filtered = projects.filter(p => {
-    if (filterPersona !== 'all' && p.personaId !== filterPersona) return false;
     if (filterStatus !== 'all' && p.status !== filterStatus) return false;
     return true;
   });
@@ -398,25 +394,6 @@ export function ProjectsPage() {
                   border: '1px solid var(--border)',
                   color: 'var(--text-main)',
                 }}
-                value={filterPersona}
-                onChange={e => setFilterPersona(e.target.value)}
-              >
-                <option value="all">Todas as personas</option>
-                {personas.map(p => (
-                  <option key={p.id} value={p.id}>
-                    {p.icon} {p.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <select
-                className="px-3 py-2 rounded-xl text-xs font-semibold outline-none focus:border-primary/50"
-                style={{
-                  background: 'var(--bg-surface)',
-                  border: '1px solid var(--border)',
-                  color: 'var(--text-main)',
-                }}
                 value={filterStatus}
                 onChange={e => setFilterStatus(e.target.value)}
               >
@@ -472,7 +449,6 @@ export function ProjectsPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {filtered.map(p => {
                 const progress = getProjectProgress(p.id);
-                const persona = personas.find(x => x.id === p.personaId);
                 const status = STATUS_CONFIG[p.status] || STATUS_CONFIG.ativo;
                 const cor = p.cor || 'var(--primary)';
                 const days = daysUntil(p.dataFim);
@@ -521,14 +497,6 @@ export function ProjectsPage() {
                               <h4 className="font-bold text-text-main text-sm leading-snug line-clamp-1">
                                 {p.nome}
                               </h4>
-                              {persona && (
-                                <span
-                                  className="text-[10px] font-bold mt-0.5 flex items-center gap-1 uppercase tracking-wider"
-                                  style={{ color: persona.colorPrimary }}
-                                >
-                                  {persona.icon} {persona.name}
-                                </span>
-                              )}
                             </div>
                           </div>
 

@@ -1,7 +1,6 @@
 import { useMemo } from 'react'
 import { useGameStore, RADAR_AXES, calcXPProgress } from '../../stores/useGameStore'
 import { useSessionStore } from '../../stores/useSessionStore'
-import { usePersonaStore } from '../../stores/usePersonaStore'
 import { formatMinutes } from '../../shared/utils/time'
 import { PageHeader } from '../../components/layout/PageHeader'
 
@@ -50,9 +49,6 @@ function RadarChart({ data }) {
 
 export function AnalyticsPage() {
   const { getRadarNormalized, getXPByModule, xpLogs } = useGameStore()
-  const xp = useGameStore(s => s.totalXP)
-  const sessions = useSessionStore(s => s.sessions)
-  const personas = usePersonaStore(s => s.personas)
 
   const radar = getRadarNormalized()
   const xpData = calcXPProgress(xp)
@@ -60,12 +56,11 @@ export function AnalyticsPage() {
 
   const personaUsage = useMemo(() => {
     const map = {}
-    xpLogs.forEach(l => { map[l.personaId]=(map[l.personaId]||0)+l.xp })
-    return Object.entries(map).map(([id,totalXP])=>{
-      const p = personas.find(x=>x.id===id)
-      return { id, name:p?.name||id, icon:p?.icon||'?', color:p?.colorPrimary||'var(--primary)', totalXP }
+    xpLogs.forEach(l => { map[l.module]=(map[l.module]||0)+l.xp })
+    return Object.entries(map).map(([mod,totalXP])=>{
+      return { id: mod, name:MODULE_LABELS[mod]||mod, icon:MODULE_ICONS[mod]||'◈', totalXP }
     }).sort((a,b)=>b.totalXP-a.totalXP)
-  }, [xpLogs, personas])
+  }, [xpLogs])
 
   const totalStudyMins = sessions.reduce((a,s)=>a+(s.totalMinutes||0),0)
   const totalSessions = sessions.length

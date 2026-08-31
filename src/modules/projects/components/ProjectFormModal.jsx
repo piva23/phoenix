@@ -1,20 +1,16 @@
 import { useState } from 'react'
-import { usePersonaStore } from '../../../stores/usePersonaStore'
 import { motion } from 'framer-motion'
 
 const ICONS = ['🎯','🚀','💡','⚡','🔥','🏗️','📐','🎨','📱','💼','🌍','🏆','🔬','📈','🛠️','🎭','🌱','💎','🏛️','⚔️']
 const COLORS = ['#7C3AED','#06B6D4','#EF4444','#F59E0B','#10B981','#EC4899','#8B5CF6','#3B82F6','#F97316','#14B8A6']
 
 export function ProjectFormModal({ onClose, onSave, editData = null }) {
-  const personas = usePersonaStore(s => s.personas)
-  const activePersonaId = usePersonaStore(s => s.activePersonaId)
-
   const [form, setForm] = useState({
     nome:        editData?.nome        || '',
     descricao:   editData?.descricao   || '',
     icone:       editData?.icone       || '🎯',
     cor:         editData?.cor         || '#7C3AED',
-    personaId:   editData?.personaId   || activePersonaId,
+    personaId:   null,
     status:      editData?.status      || 'ativo',
     dataInicio:  editData?.dataInicio  || '',
     dataFim:     editData?.dataFim     || '',
@@ -29,8 +25,6 @@ export function ProjectFormModal({ onClose, onSave, editData = null }) {
     onSave(form)
     onClose()
   }
-
-  const activePersona = personas.find(p => p.id === form.personaId)
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
@@ -57,9 +51,6 @@ export function ProjectFormModal({ onClose, onSave, editData = null }) {
             </div>
             <div>
               <div className="font-bold text-lg text-text-main">{form.nome || 'Nome do Projeto'}</div>
-              <div className="text-xs flex items-center gap-1.5 mt-0.5" style={{ color: form.cor }}>
-                {activePersona?.icon} {activePersona?.name || 'Persona'}
-              </div>
             </div>
           </div>
         </div>
@@ -101,23 +92,15 @@ export function ProjectFormModal({ onClose, onSave, editData = null }) {
               value={form.descricao} onChange={e => sf('descricao', e.target.value)} />
           </div>
 
-          {/* Persona + Status */}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="text-xs font-semibold text-text-muted uppercase tracking-wider block mb-1.5">Persona</label>
-              <select className={inp} style={inpStyle} value={form.personaId} onChange={e => sf('personaId', e.target.value)}>
-                {personas.map(p => <option key={p.id} value={p.id}>{p.icon} {p.name}</option>)}
-              </select>
-            </div>
-            <div>
-              <label className="text-xs font-semibold text-text-muted uppercase tracking-wider block mb-1.5">Status</label>
-              <select className={inp} style={inpStyle} value={form.status} onChange={e => sf('status', e.target.value)}>
-                <option value="ativo">Ativo</option>
-                <option value="pausado">Pausado</option>
-                <option value="concluido">Concluído</option>
-                <option value="arquivado">Arquivado</option>
-              </select>
-            </div>
+          {/* Status */}
+          <div>
+            <label className="text-xs font-semibold text-text-muted uppercase tracking-wider block mb-1.5">Status</label>
+            <select className={inp} style={inpStyle} value={form.status} onChange={e => sf('status', e.target.value)}>
+              <option value="ativo">Ativo</option>
+              <option value="pausado">Pausado</option>
+              <option value="concluido">Concluído</option>
+              <option value="arquivado">Arquivado</option>
+            </select>
           </div>
 
           {/* Datas */}

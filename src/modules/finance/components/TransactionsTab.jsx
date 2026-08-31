@@ -1,12 +1,10 @@
 import { useState, useMemo } from 'react'
 import { useFinanceStore, monthKey, fmtBRL, parseMonthKey } from '../../../stores/useFinanceStore'
-import { usePersonaStore } from '../../../stores/usePersonaStore'
 import { QuickAddModal } from './QuickAddModal'
 import toast from 'react-hot-toast'
 
 export function TransactionsTab() {
   const { transactions, categories, cards, deleteTransaction, deleteInstallmentGroup, updateTransaction } = useFinanceStore()
-  const personas = usePersonaStore(s => s.personas)
   const [modalOpen, setModalOpen] = useState(false)
   const [filterCat, setFilterCat] = useState('')
   const [filterMonth, setFilterMonth] = useState(monthKey(new Date().getFullYear(), new Date().getMonth()))
@@ -15,7 +13,6 @@ export function TransactionsTab() {
 
   const catMap  = Object.fromEntries(categories.map(c => [c.id, c]))
   const cardMap = Object.fromEntries(cards.map(c => [c.id, c]))
-  const personaMap = Object.fromEntries(personas.map(p => [p.id, p]))
 
   const filtered = useMemo(() => {
     return transactions.filter(tx => {
@@ -117,7 +114,6 @@ export function TransactionsTab() {
                 {txs.map((tx, i) => {
                   const cat  = catMap[tx.categoryId]
                   const card = tx.cardId ? cardMap[tx.cardId] : null
-                  const persona = tx.personaId ? personaMap[tx.personaId] : null
                   const isIncome = tx.type === 'income'
                   const isEditing = editingId === tx.id
 
@@ -164,11 +160,6 @@ export function TransactionsTab() {
                           {tx.installments && (
                             <span className="text-xs px-1.5 py-0.5 rounded-full font-semibold" style={{ background: '#8A05BE22', color: '#8A05BE' }}>
                               {tx.installmentIndex}/{tx.installments}
-                            </span>
-                          )}
-                          {persona && (
-                            <span className="text-xs px-1.5 py-0.5 rounded-full font-semibold" style={{ background: 'var(--primary)22', color: 'var(--primary)' }}>
-                              {persona.icon} {persona.name}
                             </span>
                           )}
                         </div>

@@ -195,7 +195,7 @@ const DEFAULT_RPG_BADGES = [
   { id: 'b-estudioso', title: 'Estudioso de Ferro', description: 'Complete 10 sessões de estudo focadas', icon: '🛡️', unlocked: true, unlockedAt: Date.now() - 86400000 },
   { id: 'b-leotauro', title: 'Corpo de Leotauro', description: 'Mantenha o registro de musculação por 2 semanas seguidas', icon: '🦁', unlocked: false, unlockedAt: null },
   { id: 'b-alma-gemea', title: 'Alma Gêmea', description: 'Atingir harmonia máxima no Módulo de Relacionamentos', icon: '💖', unlocked: false, unlockedAt: null },
-  { id: 'b-fogo', title: 'Alma de Fogo', description: 'Despertar a primeira Persona no Nível 5', icon: '🔥', unlocked: false, unlockedAt: null },
+  { id: 'b-fogo', title: 'Alma de Fogo', description: 'Atingir o Nível 5', icon: '🔥', unlocked: false, unlockedAt: null },
 ];
 
 // ── Initial state ────────────────────────────────────────────────────────────
@@ -390,10 +390,10 @@ export const useGameStore = create(
         get().dispatchXP('general', amount, attribute, false);
       },
 
-      // ═══ LOGXP (compat useXPStore — aceita moduleOrigin, personaId) ═══════
+      // ═══ LOGXP (compat useXPStore — aceita moduleOrigin) ═══════════════
       // NOTA: apenas registra no histórico. O radar/level/atributos são
       // atualizados exclusivamente por dispatchXP (fonte única de verdade).
-      logXP: ({ action, xp, module: mod, moduleOrigin, personaId, radarAxis }) => {
+      logXP: ({ action, xp, module: mod, moduleOrigin, radarAxis }) => {
         const modKey = mod || moduleOrigin || 'general';
         set((state) => ({
           xpLogs: [...state.xpLogs, {
@@ -402,7 +402,6 @@ export const useGameStore = create(
             xp,
             module: modKey,
             moduleOrigin: modKey,
-            personaId,
             radarAxis: radarAxis || 'disciplina',
             timestamp: Date.now(),
           }],

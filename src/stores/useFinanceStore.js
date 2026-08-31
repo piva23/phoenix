@@ -21,17 +21,11 @@ const todayStr = () => new Date().toISOString().split('T')[0]
 
 // Credita XP sem criar dependência circular forte
 // Usa dispatchXP (fonte única): atualiza totalXP/level/atributos/radar de uma vez
-function grantXP({ action, xp, radarAxis = 'disciplina', personaId = null }) {
+function grantXP({ action, xp, radarAxis = 'disciplina' }) {
   try {
     const { useGameStore } = require('./useGameStore')
     useGameStore.getState().dispatchXP('finance', xp, 'disciplina', false, radarAxis)
   } catch (_) {}
-  if (personaId) {
-    try {
-      const { usePersonaStore } = require('./usePersonaStore')
-      usePersonaStore.getState().addPersonaXP(personaId, xp)
-    } catch (_) {}
-  }
 }
 
 // ── Categorias padrão ────────────────────────────────────────────────────────
@@ -107,7 +101,7 @@ export const useFinanceStore = create(
 
       // ── Transações ──────────────────────────────────────────────────────────
       // { id, date, description, categoryId, amount, type:'income'|'expense',
-      //   cardId?, installments?, installmentIndex?, groupId?, personaId?, projectId?, recurringId? }
+      //   cardId?, installments?, installmentIndex?, groupId?, projectId?, recurringId? }
       transactions: [],
 
       // ── Orçamento ───────────────────────────────────────────────────────────
@@ -122,7 +116,7 @@ export const useFinanceStore = create(
       confirmedRecurring: [], // chaves `${id}_${monthKey}_${day}` já confirmadas
 
       // ── Envelopes (sinking funds de curto prazo) ─────────────────────────────
-      // { id, name, icon, color, target, current, deadline, projectId?, personaId?, goalReached, createdAt }
+      // { id, name, icon, color, target, current, deadline, projectId?, goalReached, createdAt }
       envelopes: [],
 
       // ── Investimentos ────────────────────────────────────────────────────────
@@ -193,7 +187,7 @@ export const useFinanceStore = create(
         })
       })),
       // Marca fatura como paga e cria a transação de saída equivalente ao total
-      payInvoice: (cardId, mk, { categoryId = 'fatura', date = todayStr(), personaId = null } = {}) => {
+      payInvoice: (cardId, mk, { categoryId = 'fatura', date = todayStr() } = {}) => {
         const card = get().cards.find(c => c.id === cardId)
         if (!card) return null
         const invoice = get().getCardInvoice(cardId, mk)
@@ -207,7 +201,6 @@ export const useFinanceStore = create(
           amount: total,
           type: 'expense',
           date,
-          personaId,
           isInvoicePayment: true,
           invoicePaidMonth: mk,
           invoicePaidCard: cardId,
@@ -218,7 +211,7 @@ export const useFinanceStore = create(
             ...c, invoiceStatus: { ...c.invoiceStatus, [mk]: 'paid' }
           }),
         }))
-        grantXP({ action: 'Fatura paga em dia', xp: 5, personaId })
+        grantXP({ action: 'Fatura paga em dia', xp: 5 })
         return tx
       },
 
@@ -230,7 +223,7 @@ export const useFinanceStore = create(
         ]
       })),
 
-      addInstallmentPurchase: ({ description, categoryId, totalAmount, installments, cardId, purchaseDate, personaId = null, projectId = null }) => {
+      addInstallmentPurchase: ({ description, categoryId, totalAmount, installments, cardId, purchaseDate, projectId = null }) => {
         const groupId = `grp_${Date.now()}`
         const card = get().cards.find(c => c.id === cardId)
         if (!card) return
@@ -266,7 +259,6 @@ export const useFinanceStore = create(
             groupId,
             date: purchaseDate,
             purchaseDate,
-            personaId,
             projectId,
           })
         }
@@ -304,7 +296,6 @@ export const useFinanceStore = create(
           categoryId: data.categoryId || 'sal_fim',
           daysOfMonth: data.daysOfMonth || [5],
           active: true,
-          personaId: data.personaId || null,
         }]
       })),
       updateRecurringIncome: (id, data) => set(s => ({
@@ -349,14 +340,13 @@ export const useFinanceStore = create(
           amount: actualAmount ?? rec.amount,
           type: 'income',
           date: dateStr,
-          personaId: rec.personaId,
           recurringId: id,
         }
         set(s => ({
           transactions: [...s.transactions, tx],
           confirmedRecurring: [...s.confirmedRecurring, key],
         }))
-        grantXP({ action: `Recebimento confirmado: ${rec.name}`, xp: 5, personaId: rec.personaId })
+        grantXP({ action: `Recebimento confirmado: ${rec.name}`, xp: 5 })
         return tx
       },
 
@@ -417,7 +407,6 @@ export const useFinanceStore = create(
           current: Number(data.current) || 0,
           deadline: data.deadline || null,
           projectId: data.projectId || null,
-          personaId: data.personaId || null,
           goalReached: false,
           createdAt: Date.now(),
         }]
@@ -438,7 +427,7 @@ export const useFinanceStore = create(
             ...e, current: newCurrent, goalReached: e.goalReached || justReached,
           })
         }))
-        if (justReached) grantXP({ action: `Meta atingida: ${env.name}`, xp: 30, personaId: env.personaId })
+        if (justReached) grantXP({ action: `Meta atingida: ${env.name}`, xp: 30 })
       },
       withdrawEnvelope: (id, amount) => set(s => ({
         envelopes: s.envelopes.map(e => e.id !== id ? e : {
@@ -535,12 +524,6 @@ export const useFinanceStore = create(
         return items.sort((a, b) => a.diff - b.diff)
       },
 
-      getMonthByPersona: (mk) => {
-        const txs = get().getMonthTransactions(mk).filter(t => t.type === 'expense' && t.personaId)
-        const map = {}
-        txs.forEach(t => { map[t.personaId] = (map[t.personaId] || 0) + t.amount })
-        return map
-      },
       getTransactionsByProject: (projectId) => get().transactions.filter(t => t.projectId === projectId),
 
       // ── BUDGET ───────────────────────────────────────────────────────────────

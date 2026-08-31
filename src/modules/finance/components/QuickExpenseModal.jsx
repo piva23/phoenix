@@ -1,6 +1,5 @@
 import { useState, useMemo } from 'react'
 import { useFinanceStore, fmtBRL } from '../../../stores/useFinanceStore'
-import { usePersonaStore } from '../../../stores/usePersonaStore'
 import toast from 'react-hot-toast'
 
 const todayStr = () => new Date().toISOString().split('T')[0]
@@ -57,7 +56,6 @@ export function parseNubankNotification(text) {
 
 export function QuickExpenseModal({ onClose }) {
   const { categories, cards, transactions, addTransaction, addInstallmentPurchase } = useFinanceStore()
-  const { personas } = usePersonaStore()
 
   const [type, setType] = useState('expense') // expense | income
   const [amount, setAmount] = useState('')
@@ -67,7 +65,6 @@ export function QuickExpenseModal({ onClose }) {
   const [cardId, setCardId] = useState('')
   const [isInstallment, setIsInstallment] = useState(false)
   const [installments, setInstallments] = useState(2)
-  const [personaId, setPersonaId] = useState('')
   const [showNubankInput, setShowNubankInput] = useState(false)
   const [nubankText, setNubankText] = useState('')
 
@@ -146,7 +143,7 @@ export function QuickExpenseModal({ onClose }) {
         installments: Number(installments),
         cardId,
         purchaseDate: date,
-        personaId: personaId || null,
+        personaId: null,
       })
       toast.success(`Compra de ${installments}x de ${fmtBRL(numericAmount / installments)} lançada!`)
     } else {
@@ -157,7 +154,7 @@ export function QuickExpenseModal({ onClose }) {
         type,
         date,
         cardId: (type === 'expense' && cardId) ? cardId : null,
-        personaId: personaId || null,
+        personaId: null,
       })
       toast.success(type === 'income' ? 'Receita lançada!' : 'Despesa lançada!')
     }
@@ -364,24 +361,6 @@ export function QuickExpenseModal({ onClose }) {
                 </div>
               )}
             </div>
-          </div>
-        )}
-
-        {/* Personas do sistema */}
-        {personas && personas.length > 0 && (
-          <div className="px-5 mt-4">
-            <label className="text-[10px] uppercase font-bold tracking-wider text-text-muted block mb-1">Vincular à Persona</label>
-            <select
-              className="w-full px-3 py-2.5 rounded-xl text-xs outline-none border text-text-main"
-              style={{ background: 'var(--bg-surface-2)', borderColor: 'var(--border)' }}
-              value={personaId}
-              onChange={e => setPersonaId(e.target.value)}
-            >
-              <option value="">Nenhuma</option>
-              {personas.map(p => (
-                <option key={p.id} value={p.id}>{p.icon} {p.name}</option>
-              ))}
-            </select>
           </div>
         )}
 

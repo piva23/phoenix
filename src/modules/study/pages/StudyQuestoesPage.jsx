@@ -4,7 +4,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useQuestionsStore } from '../../../stores/useQuestionsStore';
 import { useStudyStore } from '../../../stores/useStudyStore';
 import { useGameStore, XP_RULES } from '../../../stores/useGameStore';
-import { usePersonaStore } from '../../../stores/usePersonaStore';
 import toast from 'react-hot-toast';
 import { StudyLayout } from '../components/StudyLayout';
 import { BentoCard, SectionHeader, Badge } from '../components/BentoCard';
@@ -73,8 +72,6 @@ function PracticeMode({ questions, onExit }) {
   const updateSubtopicStats = useStudyStore(s => s.updateSubtopicStats);
   const subjects = useStudyStore(s => s.subjects);
   const { dispatchXP } = useGameStore();
-  const activePersonaId = usePersonaStore(s => s.activePersonaId);
-  const addPersonaXP = usePersonaStore(s => s.addPersonaXP);
 
   const [idx, setIdx] = useState(0);
   const [selected, setSelected] = useState(null);
@@ -130,7 +127,7 @@ function PracticeMode({ questions, onExit }) {
   function next() {
     if (idx < questions.length - 1) { setIdx(i => i + 1); setSelected(null); setRevealed(false); setDiscarded(new Set()); setHighlights([]); setShowToolbar(false); }
     else { const totalCorrect = results.filter(r => r.correct).length; const xp = totalCorrect * (XP_RULES.QUESTION_CORRECT?.xp || 2);
-      if (xp > 0) { dispatchXP('study', xp, 'sabedoria', false, 'conhecimento'); if (activePersonaId) addPersonaXP(activePersonaId, xp); }
+      if (xp > 0) { dispatchXP('study', xp, 'sabedoria', false, 'conhecimento'); }
       const g = {}; results.forEach(r => { if (r.question?.subjectId && r.question?.topicId && r.question?.subtopicId) {
         const k = `${r.question.subjectId}|${r.question.topicId}|${r.question.subtopicId}`;
         if (!g[k]) g[k] = { qA: 0, qC: 0 }; g[k].qA++; if (r.correct) g[k].qC++; } });

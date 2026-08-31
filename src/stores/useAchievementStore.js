@@ -132,10 +132,8 @@ export const ACHIEVEMENT_DEFINITIONS = [
     check: (s) => s.concursosPassed >= 1 },
 
   // ══════════════════════════════════════════════════════════════════════════
-  // 🌟 MISC (3 conquistas)
+  // 🌟 MISC (2 conquistas)
   // ══════════════════════════════════════════════════════════════════════════
-  { id: 'a_first_persona', name: 'Identidade', description: 'Crie sua primeira persona', icon: '🎭', category: 'misc', xpReward: 50,
-    check: (s) => s.totalPersonas >= 1 },
   { id: 'a_first_subject', name: 'Curioso', description: 'Cadastre sua primeira matéria', icon: '📋', category: 'misc', xpReward: 50,
     check: (s) => s.totalSubjects >= 1 },
   { id: 'a_first_calendar', name: 'Organizado', description: 'Crie seu primeiro evento no calendário', icon: '📅', category: 'misc', xpReward: 50,
@@ -157,7 +155,6 @@ function buildConsolidatedState() {
     const healthStore = require('./useHealthStore').useHealthStore.getState();
     const financeStore = require('./useFinanceStore').useFinanceStore.getState();
     const calendarStore = require('./useCalendarStore').useCalendarStore.getState();
-    const personaStore = require('./usePersonaStore').usePersonaStore.getState();
     const cycleStore = require('./useCycleStore').useCycleStore.getState();
 
     // Sessões vivem no useSessionStore (não no useStudyStore)
@@ -189,9 +186,6 @@ function buildConsolidatedState() {
       (t) => t.type === 'expense'
     ).length;
 
-    // Personas criadas pelo utilizador (têm createdAt); a lista base não tem
-    const totalPersonas = (personaStore.personas || []).filter((p) => p.createdAt).length;
-
     return {
       // Game store
       totalXP: gameStore.totalXP || 0,
@@ -217,8 +211,6 @@ function buildConsolidatedState() {
       savingsGoalReached: false, // TODO: implementar quando houver meta de economia
       // Calendar
       totalCalendarEvents: (calendarStore.manualEvents || []).length,
-      // Personas
-      totalPersonas,
     };
   } catch (e) {
     if (process.env.NODE_ENV !== 'production') {
@@ -276,7 +268,6 @@ export const ACHIEVEMENT_PROGRESS = {
   a_first_essay: ['totalEssays', 1],
   a_10_essays: ['totalEssays', 10],
   a_concurso_passed: ['concursosPassed', 1],
-  a_first_persona: ['totalPersonas', 1],
   a_first_subject: ['totalSubjects', 1],
   a_first_calendar: ['totalCalendarEvents', 1],
 };
