@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { auth, googleProvider } from '../shared/config/firebase';
-import { signInWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged } from 'firebase/auth';
+import { signInWithPopup, signInWithRedirect, signOut, onAuthStateChanged } from 'firebase/auth';
 
 export const useAuthStore = create((set, get) => ({
   user: null,
@@ -71,10 +71,6 @@ export const useAuthStore = create((set, get) => ({
       set({ user: null, loading: false });
       return () => {};
     }
-    // Check for redirect result on init
-    getRedirectResult(auth).catch((err) => {
-      console.warn('Redirect result error:', err.message);
-    });
     // Return unsubscribe function in case caller wants to cleanup
     return onAuthStateChanged(auth, (user) => {
       set({ user: user, loading: false, error: null });
