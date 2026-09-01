@@ -1,7 +1,7 @@
 import React from 'react';
 import { useGameStore, calcLevelProgress } from '../../../stores/useGameStore';
 import { motion } from 'framer-motion';
-import { ResponsiveContainer } from 'recharts';
+import { ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
 
 export function AvatarEvolution() {
   const totalXP = useGameStore((s) => s.totalXP);
