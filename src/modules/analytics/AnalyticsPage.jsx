@@ -50,6 +50,7 @@ function RadarChart({ data }) {
 export function AnalyticsPage() {
   const { getRadarNormalized, getXPByModule, xpLogs, totalXP } = useGameStore()
   const xp = totalXP
+  const sessions = useSessionStore(s => s.sessions)
 
   const radar = getRadarNormalized()
   const xpData = calcXPProgress(xp)
