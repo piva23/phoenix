@@ -73,9 +73,28 @@ export function RPGPage() {
           <MissionsBoard />
         </div>
 
-        {/* Row 2: Badges Gallery (Spans 1 column on lg) */}
+        {/* Right Column: Progresso geral de conquistas */}
         <div className="lg:col-span-1">
-          <BadgesGallery />
+          <div className="space-y-4">
+            <div className="card-surface p-4 rounded-2xl border border-border-strong">
+              <h3 className="font-semibold text-sm mb-4">Conquistas Recentes</h3>
+              <div className="space-y-2 text-sm text-text-dim">
+                <span>Total desbloqueadas: {useGameStore((s) => Object.keys(s.unlocked || {}).length)}</span>
+                <span>XP total: {useGameStore((s) => s.totalXP)}</span>
+              </div>
+              <a href="#achievements" className="text-primary underline text-xs font-medium">Ver todas as conquistas →</a>
+            </div>
+
+            <div className="card-surface p-4 rounded-2xl border border-border-strong">
+              <h3 className="font-semibold text-sm mb-4">Progresso Geral</h3>
+              <div className="h-2 bg-surface-2 rounded-full overflow-hidden">
+                <div className="h-full bg-primary rounded-full transition-all" style={{ width: '60%' }} />
+              </div>
+              <div className="text-xs text-text-muted mt-2">
+                60% completo
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </motion.div>
