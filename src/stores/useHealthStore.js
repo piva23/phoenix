@@ -23,6 +23,12 @@ export const useHealthStore = create(
       // ── PLANOS NASCEM ZERADOS ────────────────────────────────────────────────
       plans: EMPTY_PLANS,
 
+      // ── PROGRAMAS ───────────────────────────────────────────────────────────
+      programs: {
+        activeProgramId: 'std_health_v1',
+        saved: {},
+      },
+
       // ── LOGS DIÁRIOS ────────────────────────────────────────────────────────
       waterLog: {},
       workoutLog: {}, // { "YYYY-MM-DD": { "exerciseId": [ { id, peso, reps, isExtra, done } ] } }
@@ -650,6 +656,111 @@ export const useHealthStore = create(
               .toISOString()
               .split('T')[0]
         ),
+
+      // ── PROGRAMS SYSTEM ─────────────────────────────────────────────────────
+
+      getActiveProgramPlans: () => {
+        const { programs, plans } = get();
+        if (!programs.activeProgramId) return plans;
+        const activeProgram = programs.saved[programs.activeProgramId];
+        return activeProgram ? activeProgram.plans : plans;
+      },
+
+      switchProgram: (programId) => {
+        const { programs } = get();
+        const targetProgram = programs.saved[programId];
+        if (!targetProgram) return false;
+
+        set((state) => ({
+          programs: {
+            ...state.programs,
+            activeProgramId: programId,
+          },
+          plans: { ...targetProgram.plans },
+        }));
+        return true;
+      },
+
+      saveProgram: (programData) => {
+        const id = programData.id || `prog_${Date.now()}`;
+        const { plans } = get();
+
+        set((state) => ({
+          programs: {
+            ...state.programs,
+            saved: {
+              ...state.programs.saved,
+              [id]: {
+                ...programData,
+                id,
+                isDefault: false,
+                createdAt: new Date().toISOString(),
+                plans: { ...plans },
+              },
+            },
+          },
+        }));
+        return id;
+      },
+
+      deleteProgram: (programId) => {
+        const { programs } = get();
+        if (programs.saved[programId]?.isDefault) return false;
+
+        set((state) => {
+          const newSaved = { ...state.programs.saved };
+          delete newSaved[programId];
+          return {
+            programs: {
+              ...state.programs,
+              saved: newSaved,
+              activeProgramId: state.programs.activeProgramId === programId
+                ? 'std_health_v1'
+                : state.programs.activeProgramId,
+            },
+          };
+        });
+        return true;
+      },
+
+      importProgram: (jsonContent) => {
+        try {
+          const data = typeof jsonContent === 'string' ? JSON.parse(jsonContent) : jsonContent;
+          if (!data || !data.plans) return null;
+
+          const id = `prog_${Date.now()}`;
+          const newProgram = {
+            id,
+            name: data.name || 'Programa Importado',
+            description: data.description || '',
+            icon: data.icon || '📥',
+            isDefault: false,
+            createdAt: new Date().toISOString(),
+            plans: data.plans,
+          };
+
+          set((state) => ({
+            programs: {
+              ...state.programs,
+              saved: {
+                ...state.programs.saved,
+                [id]: newProgram,
+              },
+            },
+          }));
+          return id;
+        } catch (e) {
+          console.error('[health] importProgram error:', e);
+          return null;
+        }
+      },
+
+      exportProgram: (programId) => {
+        const { programs } = get();
+        const program = programs.saved[programId];
+        if (!program) return null;
+        return JSON.stringify(program, null, 2);
+      },
     }),
     { name: 'phoenix-health' }
   )
