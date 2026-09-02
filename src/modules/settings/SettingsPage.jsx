@@ -9,7 +9,8 @@ import { PageHeader } from '../../components/layout/PageHeader';
 import { useAuthStore } from '../../stores/useAuthStore';
 import { db } from '../../shared/config/firebase';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
-import { LogOut, Cloud, CloudOff, Shield, AlertTriangle, Download, Upload } from 'lucide-react';
+import { LogOut, Cloud, CloudOff, Shield, AlertTriangle, Download, Upload, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
+import { useSyncStore, SYNC_INTERVAL_OPTIONS } from '../../stores/useSyncStore';
 
 // ── Shared card wrapper ─────────────────────────────────────────────────────
 function Card({ children, className = '' }) {
@@ -61,6 +62,14 @@ export function SettingsPage() {
 
   const { pin, setPin, lock, clearPin } = useSecurityStore();
 
+  // Sync store
+  const syncInterval = useSyncStore((s) => s.interval);
+  const isSyncingCloud = useSyncStore((s) => s.isSyncing);
+  const lastSynced = useSyncStore((s) => s.lastSynced);
+  const syncError = useSyncStore((s) => s.error);
+  const setSyncInterval = useSyncStore((s) => s.setInterval);
+  const syncToCloud = useSyncStore((s) => s.syncToCloud);
+
   const navigate = useNavigate();
 
   // ── Local state ─────────────────────────────────────────────────────────
@@ -68,6 +77,29 @@ export function SettingsPage() {
   const [isSyncing, setIsSyncing] = useState(false);
   const [showClearAllModal, setShowClearAllModal] = useState(false);
   const [confirmText, setConfirmText] = useState('');
+
+  // ── Sync helpers ─────────────────────────────────────────────────────
+  const formatSyncTime = (isoString) => {
+    if (!isoString) return null;
+    const date = new Date(isoString);
+    const day = date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    const time = date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    return `${day} às ${time}`;
+  };
+
+  const handleIntervalChange = (e) => {
+    setSyncInterval(e.target.value);
+    toast.success('Intervalo de sincronização atualizado!');
+  };
+
+  const handleSyncNow = async () => {
+    await syncToCloud();
+    if (useSyncStore.getState().error) {
+      toast.error('Erro ao sincronizar com a nuvem.');
+    } else {
+      toast.success('Sincronizado com a nuvem!');
+    }
+  };
 
   // ── Derived values ──────────────────────────────────────────────────────
   const canCloudSync = !!user && !!db;
@@ -302,7 +334,64 @@ export function SettingsPage() {
           </Card>
         </motion.div>
 
-        {/* ── 2. Data Management Card ──────────────────────────────────────── */}
+        {/* ── 2. Cloud Sync Settings Card ──────────────────────────────────── */}
+        {canCloudSync && (
+          <motion.div variants={cardVariant}>
+            <Card>
+              <div className="flex items-center gap-3 mb-4">
+                <Cloud className="w-5 h-5 text-primary" />
+                <h3 className="text-sm font-black text-white uppercase tracking-wider">Sincronização em Nuvem</h3>
+                {isSyncingCloud && <Loader2 className="w-4 h-4 text-primary animate-spin" />}
+                {!isSyncingCloud && lastSynced && <CheckCircle2 className="w-4 h-4 text-emerald-400" />}
+                {!isSyncingCloud && syncError && <AlertCircle className="w-4 h-4 text-red-400" />}
+              </div>
+
+              {/* Status */}
+              <div className="text-xs text-text-dim mb-3">
+                {lastSynced
+                  ? `Última sincronização: ${formatSyncTime(lastSynced)}`
+                  : 'Nunca sincronizado'}
+                {syncError && <div className="text-red-400 mt-1">Erro: {syncError}</div>}
+              </div>
+
+              {/* Interval selector */}
+              <div className="mb-3">
+                <label className="text-[10px] font-bold text-text-dim uppercase tracking-wider block mb-1.5">
+                  Intervalo
+                </label>
+                <select
+                  value={syncInterval}
+                  onChange={handleIntervalChange}
+                  className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-primary/40 transition-colors"
+                >
+                  {SYNC_INTERVAL_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Manual sync button */}
+              <button
+                onClick={handleSyncNow}
+                disabled={isSyncingCloud}
+                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold bg-primary/10 hover:bg-primary/20 text-primary border border-primary/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isSyncingCloud ? (
+                  <>
+                    <Loader2 size={14} className="animate-spin" />
+                    Sincronizando...
+                  </>
+                ) : (
+                  '🔄 Sincronizar Agora'
+                )}
+              </button>
+            </Card>
+          </motion.div>
+        )}
+
+        {/* ── 3. Data Management Card ──────────────────────────────────────── */}
         <motion.div variants={cardVariant}>
           <Card>
             <CardHeader
