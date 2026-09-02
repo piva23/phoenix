@@ -10,6 +10,7 @@ import { useQuestionListener } from '../shared/hooks/useQuestionListener';
 import LoadingScreen from '../shared/components/LoadingScreen';
 import { useGameStore } from '../stores/useGameStore';
 import { useSyncStore } from '../stores/useSyncStore';
+import { useAuthStore } from '../stores/useAuthStore';
 
 // Auth (não lazy — necessário para proteção de rotas)
 import LoginPage from '../modules/auth/LoginPage';
