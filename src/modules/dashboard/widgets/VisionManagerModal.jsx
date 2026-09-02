@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { useVisionStore } from '../../../stores/useVisionStore';
-import { usePersonaStore } from '../../../stores/usePersonaStore';
 import { VisionItemModal } from './VisionItemModal';
 import { motion } from 'framer-motion';
 
@@ -14,12 +13,9 @@ const TYPE_ICONS = {
   audio_url: '🎵',
 };
 
-export function VisionManagerModal({ onClose, activePersonaId }) {
+export function VisionManagerModal({ onClose }) {
   const { items, toggleItem, deleteItem } = useVisionStore();
-  const personas = usePersonaStore(s => s.personas);
   const [editItem, setEditItem] = useState(null);
-  const getPersonaName = id =>
-    !id ? 'Global' : personas.find(p => p.id === id)?.name || id;
 
   return (
     <>
@@ -94,23 +90,6 @@ export function VisionManagerModal({ onClose, activePersonaId }) {
                         item.url?.slice(0, 40) ||
                         'Sem título'}
                     </div>
-                    <div className="flex items-center gap-2 mt-0.5">
-                      <span className="text-xs text-text-dim">{item.type}</span>
-                      <span className="text-text-dim">·</span>
-                      <span
-                        className="text-xs px-1.5 py-0.5 rounded-full"
-                        style={{
-                          background: item.personaId
-                            ? 'var(--primary)18'
-                            : 'rgba(255,255,255,0.06)',
-                          color: item.personaId
-                            ? 'var(--primary)'
-                            : 'var(--text-dim)',
-                        }}
-                      >
-                        {getPersonaName(item.personaId)}
-                      </span>
-                    </div>
                   </div>
 
                   <div className="flex items-center gap-1 flex-shrink-0">
@@ -148,7 +127,6 @@ export function VisionManagerModal({ onClose, activePersonaId }) {
         <VisionItemModal
           editItem={editItem}
           onClose={() => setEditItem(null)}
-          activePersonaId={activePersonaId}
         />
       )}
     </>

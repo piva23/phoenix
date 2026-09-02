@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { useFinanceStore, fmtBRL } from '../../../stores/useFinanceStore'
 import { useProjectStore } from '../../../stores/useProjectStore'
-import { usePersonaStore } from '../../../stores/usePersonaStore'
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
 import toast from 'react-hot-toast'
 
@@ -168,7 +167,6 @@ function UpdateBalanceModal({ currentBalance, onSave, onClose }) {
 function EnvelopesSection() {
   const { envelopes, addEnvelope, deleteEnvelope, depositEnvelope, withdrawEnvelope } = useFinanceStore()
   const projects = useProjectStore(s => s.projects)
-  const personas = usePersonaStore(s => s.personas)
   const [showNew, setShowNew] = useState(false)
   const [depositTarget, setDepositTarget] = useState(null)
   const [depositVal, setDepositVal] = useState('')
@@ -180,7 +178,6 @@ function EnvelopesSection() {
       {envelopes.map(env => {
         const pct = env.target > 0 ? Math.min(100, (env.current / env.target) * 100) : 0
         const project = projects.find(p => p.id === env.projectId)
-        const persona = personas.find(p => p.id === env.personaId)
         return (
           <div key={env.id} className="rounded-2xl p-4" style={{ background: 'var(--bg-surface)', border: `1px solid ${env.color}33` }}>
             <div className="flex items-center justify-between mb-2">
@@ -189,7 +186,6 @@ function EnvelopesSection() {
             </div>
             <div className="flex items-center gap-2 flex-wrap mb-2">
               {project && <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: 'var(--primary)22', color: 'var(--primary)' }}>◇ {project.nome || project.name}</span>}
-              {persona && <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: env.color + '22', color: env.color }}>{persona.icon} {persona.name}</span>}
               {env.deadline && <span className="text-xs text-text-dim">até {new Date(env.deadline + 'T12:00').toLocaleDateString('pt-BR')}</span>}
             </div>
             <div className="h-2 rounded-full overflow-hidden mb-1.5" style={{ background: 'var(--bg-surface-2)' }}>
@@ -224,7 +220,7 @@ function EnvelopesSection() {
       )}
 
       {showNew ? (
-        <NewEnvelopeForm onClose={() => setShowNew(false)} onSave={(data) => { addEnvelope(data); setShowNew(false); toast.success('Meta criada!') }} projects={projects} personas={personas} />
+        <NewEnvelopeForm onClose={() => setShowNew(false)} onSave={(data) => { addEnvelope(data); setShowNew(false); toast.success('Meta criada!') }} projects={projects} />
       ) : (
         <button onClick={() => setShowNew(true)} className="w-full py-3 rounded-xl text-sm font-semibold border" style={{ borderColor: 'var(--primary)44', color: 'var(--primary)' }}>
           + Nova meta / envelope
@@ -234,8 +230,8 @@ function EnvelopesSection() {
   )
 }
 
-function NewEnvelopeForm({ onClose, onSave, projects, personas }) {
-  const [form, setForm] = useState({ name: '', target: '', icon: '🎯', color: '#38BDF8', deadline: '', projectId: '', personaId: '' })
+function NewEnvelopeForm({ onClose, onSave, projects }) {
+  const [form, setForm] = useState({ name: '', target: '', icon: '🎯', color: '#38BDF8', deadline: '', projectId: '' })
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
   return (
     <div className="rounded-2xl p-4 space-y-2" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)' }}>
@@ -257,11 +253,6 @@ function NewEnvelopeForm({ onClose, onSave, projects, personas }) {
           value={form.projectId} onChange={e => set('projectId', e.target.value)}>
           <option value="">Sem projeto</option>
           {projects.map(p => <option key={p.id} value={p.id}>{p.nome || p.name}</option>)}
-        </select>
-        <select className="px-3 py-2 rounded-xl text-xs outline-none" style={{ background: 'var(--bg-surface-2)', border: '1px solid var(--border)', color: 'var(--text-main)' }}
-          value={form.personaId} onChange={e => set('personaId', e.target.value)}>
-          <option value="">Sem persona</option>
-          {personas.map(p => <option key={p.id} value={p.id}>{p.icon} {p.name}</option>)}
         </select>
       </div>
       <div className="flex gap-2 pt-1">

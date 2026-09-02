@@ -369,9 +369,6 @@ export const useProjectStore = create(
       },
 
       // ── Seletores derivados ───────────────────────────────
-      getProjectsByPersona: personaId =>
-        get().projects.filter(p => p.personaId === personaId),
-
       getProjectProgress: projectId => {
         const p = get().projects.find(x => x.id === projectId);
         if (!p) return 0;

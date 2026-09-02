@@ -6,7 +6,6 @@ import { useState, useEffect, useRef } from 'react';
 import { useStudyStore } from '../../stores/useStudyStore';
 import { useSessionStore } from '../../stores/useSessionStore';
 import { useGameStore, XP_RULES } from '../../stores/useGameStore';
-import { usePersonaStore } from '../../stores/usePersonaStore';
 import { useCycleStore } from '../../stores/useCycleStore';
 import { useRevisionStore } from '../../stores/useRevisionStore';
 import { useSessionModalStore } from '../../stores/useSessionModalStore';
@@ -227,8 +226,6 @@ export function SessionQuickModal() {
   const updateSubtopic = useStudyStore(s => s.updateSubtopic);
   const addSession = useSessionStore(s => s.addSession);
   const { dispatchXP } = useGameStore();
-  const activePersonaId = usePersonaStore(s => s.activePersonaId);
-  const addPersonaXP = usePersonaStore(s => s.addPersonaXP);
   const { getActiveCycle, addMinutesToItem } = useCycleStore();
   const generateRevisions = useRevisionStore(s => s.generateRevisions);
   const completeRevision = useRevisionStore(s => s.completeRevision);
@@ -460,7 +457,6 @@ export function SessionQuickModal() {
 
     addSession(session);
     dispatchXP('study', xpEarned, 'foco', false, 'conhecimento');
-    if (activePersonaId) addPersonaXP(activePersonaId, xpEarned);
 
     // atualiza subtópico com dados metodológicos
     if (subtopicId) {

@@ -1,6 +1,5 @@
 import { useState, useMemo } from 'react'
 import { useFinanceStore, fmtBRL } from '../../../stores/useFinanceStore'
-import { usePersonaStore } from '../../../stores/usePersonaStore'
 import toast from 'react-hot-toast'
 
 const todayStr = () => new Date().toISOString().split('T')[0]
@@ -10,7 +9,6 @@ const QUICK_VALUES = [10, 20, 50, 100, 200]
 
 export function QuickAddModal({ onClose }) {
   const { categories, cards, transactions, addTransaction, addInstallmentPurchase } = useFinanceStore()
-  const personas = usePersonaStore(s => s.personas)
 
   const [type, setType] = useState('expense') // income | expense
   const [amount, setAmount] = useState('')
@@ -21,7 +19,6 @@ export function QuickAddModal({ onClose }) {
   const [cardId, setCardId] = useState('')
   const [installments, setInstallments] = useState(2)
   const [isInstallment, setIsInstallment] = useState(false)
-  const [personaId, setPersonaId] = useState('')
 
   const cats = categories.filter(c => c.type === type)
 
@@ -44,7 +41,7 @@ export function QuickAddModal({ onClose }) {
       addInstallmentPurchase({
         description: description || cats.find(c => c.id === categoryId)?.name || 'Compra',
         categoryId, totalAmount: val, installments: Number(installments),
-        cardId, purchaseDate: date, personaId: personaId || null,
+        cardId, purchaseDate: date, personaId: null,
       })
       toast.success(`Parcelado em ${installments}x lançado!`)
     } else {
@@ -52,7 +49,7 @@ export function QuickAddModal({ onClose }) {
         description: description || cats.find(c => c.id === categoryId)?.name || (type === 'income' ? 'Receita' : 'Despesa'),
         categoryId, amount: val, type, date,
         cardId: (type === 'expense' && cardId) ? cardId : null,
-        personaId: personaId || null,
+        personaId: null,
       })
       toast.success(type === 'income' ? 'Receita lançada!' : 'Despesa lançada!')
     }
@@ -134,7 +131,7 @@ export function QuickAddModal({ onClose }) {
         {/* Avançado */}
         <div className="px-4 mt-3">
           <button onClick={() => setAdvanced(a => !a)} className="text-xs font-semibold" style={{ color: 'var(--primary)' }}>
-            {advanced ? '▲ Ocultar opções avançadas' : '▼ Data, cartão, parcelas, persona...'}
+            {advanced ? '▲ Ocultar opções avançadas' : '▼ Data, cartão e parcelas'}
           </button>
         </div>
 
@@ -146,15 +143,6 @@ export function QuickAddModal({ onClose }) {
                 <input type="date" className="w-full px-2 py-2 rounded-lg text-xs outline-none"
                   style={{ background: 'var(--bg-surface-2)', border: '1px solid var(--border)', color: 'var(--text-main)' }}
                   value={date} onChange={e => setDate(e.target.value)} />
-              </div>
-              <div>
-                <label className="text-xs text-text-dim block mb-1">Persona</label>
-                <select className="w-full px-2 py-2 rounded-lg text-xs outline-none"
-                  style={{ background: 'var(--bg-surface-2)', border: '1px solid var(--border)', color: 'var(--text-main)' }}
-                  value={personaId} onChange={e => setPersonaId(e.target.value)}>
-                  <option value="">—</option>
-                  {personas.map(p => <option key={p.id} value={p.id}>{p.icon} {p.name}</option>)}
-                </select>
               </div>
             </div>
 

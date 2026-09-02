@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useVisionStore } from '../../../stores/useVisionStore';
-import { usePersonaStore } from '../../../stores/usePersonaStore';
+
 import { VisionItemModal } from './VisionItemModal';
 import { VisionManagerModal } from './VisionManagerModal';
 
@@ -191,9 +191,8 @@ function VisionItem({ item }) {
 }
 
 export function VisionBoardWidget() {
-  const getItemsForPersona = useVisionStore(s => s.getItemsForPersona);
-  const activePersonaId = usePersonaStore(s => s.activePersonaId);
-  const items = getItemsForPersona(activePersonaId);
+  const allItems = useVisionStore(s => s.items);
+  const items = allItems.filter(i => i.active);
   const [index, setIndex] = useState(0);
   const [direction, setDirection] = useState(1);
   const [addOpen, setAddOpen] = useState(false);
@@ -201,7 +200,7 @@ export function VisionBoardWidget() {
 
   useEffect(() => {
     if (items.length > 0) setIndex(Math.floor(Math.random() * items.length));
-  }, [activePersonaId]);
+  }, [items.length]);
 
   useEffect(() => {
     if (index >= items.length && items.length > 0) setIndex(items.length - 1);

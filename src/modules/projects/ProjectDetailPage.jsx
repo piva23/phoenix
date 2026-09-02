@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useProjectStore } from '../../stores/useProjectStore';
-import { usePersonaStore } from '../../stores/usePersonaStore';
 import { ObjetivosView } from './views/ObjetivosView';
 import { GanttView } from './views/GanttView';
 import { ProjectAnalyticsView } from './views/ProjectAnalyticsView';
@@ -33,7 +32,6 @@ export function ProjectDetailPage() {
   const getProjectProgress = useProjectStore(s => s.getProjectProgress);
   const updateProject = useProjectStore(s => s.updateProject);
   const deleteProject = useProjectStore(s => s.deleteProject);
-  const personas = usePersonaStore(s => s.personas);
 
   const [activeView, setActiveView] = useState('objetivos');
   const [editOpen, setEditOpen] = useState(false);
@@ -66,7 +64,6 @@ export function ProjectDetailPage() {
     objectives: rawProject.objetivos || rawProject.objectives || [],
   };
 
-  const persona = personas.find(p => p.id === project.personaId);
   const progress = getProjectProgress(id) || 0;
   const status = STATUS_CONFIG[project.status] || STATUS_CONFIG.ativo;
   const days = daysUntil(project.dataFim);
@@ -145,14 +142,6 @@ export function ProjectDetailPage() {
                 </p>
               )}
               <div className="flex items-center gap-3 flex-wrap text-xs text-text-dim">
-                {persona && (
-                  <span className="flex items-center gap-1.5">
-                    <span>{persona.icon}</span>
-                    <span style={{ color: persona.colorPrimary }}>
-                      {persona.name}
-                    </span>
-                  </span>
-                )}
                 {project.dataInicio && (
                   <span>📅 Início: {formatDateBR(project.dataInicio)}</span>
                 )}

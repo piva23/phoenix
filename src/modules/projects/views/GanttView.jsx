@@ -1,6 +1,5 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { formatDateBR } from '../../../shared/utils/time';
-import { usePersonaStore } from '../../../stores/usePersonaStore';
 import toast from 'react-hot-toast';
 
 // Configuração de Pixels por Dia para o Zoom
@@ -15,10 +14,8 @@ export function GanttView({ project }) {
   const [zoom, setZoom] = useState('month');
   const scrollRef = useRef(null);
 
-  // Recupera as informações da Persona ativa
-  const getActivePersona = usePersonaStore(s => s.getActivePersona);
-  const activePersona = getActivePersona();
-  const personaColor = activePersona?.colorPrimary || '#7C3AED';
+  // Cor primária do projeto
+  const projectColor = project.cor || '#7C3AED';
 
   // Estados para o Drag-to-Scroll (Arrastar com o mouse)
   const [isDragging, setIsDragging] = useState(false);
@@ -158,7 +155,7 @@ export function GanttView({ project }) {
       style={{
         background: 'var(--bg-surface)',
         borderColor: 'var(--border)',
-        '--color-primary': personaColor // Injects active persona color globally in local scope
+        '--color-primary': projectColor // Injects project color globally in local scope
       }}
     >
       {/* Injeta CSS para esconder a scrollbar horizontal nativa em dispositivos */}

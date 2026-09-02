@@ -5,7 +5,6 @@ import toast from 'react-hot-toast';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import { useConcursoStore } from '../../../stores/useConcursoStore';
 import { useGameStore, XP_RULES } from '../../../stores/useGameStore';
-import { usePersonaStore } from '../../../stores/usePersonaStore';
 import { useCycleStore } from '../../../stores/useCycleStore';
 import { useStudyStore } from '../../../stores/useStudyStore';
 import { useSimuladoStore } from '../../../stores/useSimuladoStore';

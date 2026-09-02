@@ -5,7 +5,6 @@ import { StudyLayout } from '../components/StudyLayout'
 import { BentoCard, SectionHeader, Badge } from '../components/BentoCard'
 import { useRedacaoStore } from '../../../stores/useRedacaoStore'
 import { useGameStore, XP_RULES } from '../../../stores/useGameStore'
-import { usePersonaStore } from '../../../stores/usePersonaStore'
 import { formatDateBR } from '../../../shared/utils/time'
 
 const countWords = (t) => t?.trim() ? t.trim().split(/\s+/).length : 0

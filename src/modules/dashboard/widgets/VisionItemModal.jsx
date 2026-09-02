@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { useVisionStore } from '../../../stores/useVisionStore';
-import { usePersonaStore } from '../../../stores/usePersonaStore';
 import { motion } from 'framer-motion';
 
 const TYPES = [
@@ -11,15 +10,13 @@ const TYPES = [
   { id: 'audio_url', label: 'Áudio (URL)', icon: '🎵' },
 ];
 
-export function VisionItemModal({ onClose, activePersonaId, editItem = null }) {
+export function VisionItemModal({ onClose, editItem = null }) {
   const { addItem, updateItem } = useVisionStore();
-  const personas = usePersonaStore(s => s.personas);
   const [type, setType] = useState(editItem?.type || 'affirmation');
   const [form, setForm] = useState({
     title: editItem?.title || '',
     text: editItem?.text || '',
     url: editItem?.url || '',
-    personaId: editItem?.personaId ?? null,
   });
   const s = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
@@ -168,28 +165,6 @@ export function VisionItemModal({ onClose, activePersonaId, editItem = null }) {
               onFocus={e => (e.target.style.borderColor = 'var(--primary)')}
               onBlur={e => (e.target.style.borderColor = 'var(--border)')}
             />
-          </div>
-          <div>
-            <label className="text-xs font-semibold text-text-muted uppercase tracking-wider block mb-1.5">
-              Visível para
-            </label>
-            <select
-              className="w-full px-3 py-2.5 rounded-xl text-sm outline-none"
-              style={{
-                background: 'var(--bg-surface-2)',
-                border: '1px solid var(--border)',
-                color: 'var(--text-main)',
-              }}
-              value={form.personaId || ''}
-              onChange={e => s('personaId', e.target.value || null)}
-            >
-              <option value="">🌐 Todas as personas (global)</option>
-              {personas.map(p => (
-                <option key={p.id} value={p.id}>
-                  {p.icon} {p.name}
-                </option>
-              ))}
-            </select>
           </div>
         </div>
         <div
