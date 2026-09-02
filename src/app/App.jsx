@@ -20,6 +20,7 @@ const CalendarPage = lazy(() => import('../modules/calendar/pages/CalendarPage')
 const AnalyticsPage = lazy(() => import('../modules/analytics/AnalyticsPage'));
 const SettingsPage = lazy(() => import('../modules/settings/SettingsPage'));
 const RPGPage = lazy(() => import('../modules/rpg/pages/RPGPage'));
+const AchievementsPage = lazy(() => import('../modules/achievements/AchievementsPage'));
 
 // Health — lazy loaded
 const HealthPage = lazy(() => import('../modules/health/pages/HealthPage'));
@@ -56,6 +57,7 @@ function AppRoutes() {
             <Route path="dashboard" element={<DashboardPage />} />
             <Route path="calendar" element={<CalendarPage />} />
             <Route path="rpg" element={<RPGPage />} />
+            <Route path="achievements" element={<AchievementsPage />} />
             <Route path="health" element={<HealthPage />} />
             <Route path="finance" element={<FinancePage />} />
             <Route path="analytics" element={<AnalyticsPage />} />

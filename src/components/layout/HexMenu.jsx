@@ -9,6 +9,7 @@ import {
   Calendar,
   Dumbbell,
   Swords,
+  Trophy,
   BarChart3,
   Settings,
 } from 'lucide-react';
@@ -33,6 +34,7 @@ const MAIN_ITEMS = [
 
 const EXTRA_ITEMS = [
   { path: '/rpg', icon: Swords, label: 'Aventura', color: 'text-purple-400 hover:bg-purple-500/10 border-purple-500/20' },
+  { path: '/achievements', icon: Trophy, label: 'Conquistas', color: 'text-amber-400 hover:bg-amber-500/10 border-amber-500/20' },
   { path: '/finance', icon: Wallet, label: 'Finanças', color: 'text-amber-400 hover:bg-amber-500/10 border-amber-500/20' },
   { path: '/analytics', icon: BarChart3, label: 'Analytics', color: 'text-blue-400 hover:bg-blue-500/10 border-blue-500/20' },
   { path: '/settings', icon: Settings, label: 'Config', color: 'text-zinc-400 hover:bg-zinc-500/10 border-zinc-500/20' },
