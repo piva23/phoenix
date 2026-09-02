@@ -449,6 +449,44 @@ export const useHealthStore = create(
       updateMealPlan: meals =>
         set(state => ({ plans: { ...state.plans, mealPlan: meals } })),
 
+      // ── IMPORTAÇÃO DE JSON E FOOD DB ───────────────────────────────────────
+      importHealthJSON: (jsonContent) => {
+        try {
+          const data = typeof jsonContent === 'string' ? JSON.parse(jsonContent) : jsonContent;
+          if (!data || typeof data !== 'object') return false;
+          
+          set((state) => ({
+            plans: {
+              ...state.plans,
+              workout: data.workout || data.workoutPlan || state.plans.workout,
+              mealPlan: data.mealPlan || state.plans.mealPlan,
+              habits: data.habits || state.plans.habits,
+              meds: data.meds || state.plans.meds,
+              water: data.water || state.plans.water,
+              circuits: data.circuits || state.plans.circuits,
+              foodDb: { ...state.plans.foodDb, ...(data.foodDb || {}) },
+              goals: data.goals || state.plans.goals,
+            }
+          }));
+          return true;
+        } catch (e) {
+          console.error('importHealthJSON error:', e);
+          return false;
+        }
+      },
+
+      addFoodDbItem: (foodKey, foodObj) => {
+        set((state) => ({
+          plans: {
+            ...state.plans,
+            foodDb: {
+              ...state.plans.foodDb,
+              [foodKey]: foodObj,
+            }
+          }
+        }));
+      },
+
       addHabit: data =>
         set(state => ({
           plans: {
