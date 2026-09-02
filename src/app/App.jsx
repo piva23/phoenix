@@ -9,6 +9,7 @@ import { LockScreen } from '../layouts/LockScreen';
 import { useQuestionListener } from '../shared/hooks/useQuestionListener';
 import LoadingScreen from '../shared/components/LoadingScreen';
 import { useGameStore } from '../stores/useGameStore';
+import { useSyncStore } from '../stores/useSyncStore';
 
 // Auth (não lazy — necessário para proteção de rotas)
 import LoginPage from '../modules/auth/LoginPage';
@@ -95,6 +96,59 @@ export default function App() {
   // (reset diário de missões mesmo sem dispatchXP).
   useEffect(() => {
     try { useGameStore.getState().refreshDynamicMissions(); } catch (_) {}
+  }, []);
+
+  // Start/stop auto sync based on auth state
+  useEffect(() => {
+    // Check initial state and subscribe for changes
+    const checkAndSync = (prevUser) => {
+      const { user } = useAuthStore.getState();
+      if (user && !prevUser) {
+        // User logged in — start auto sync and load cloud data
+        useSyncStore.getState().startAutoSync();
+        useSyncStore.getState().loadFromCloud();
+      } else if (!user && prevUser) {
+        // User logged out — stop auto sync
+        useSyncStore.getState().stopAutoSync();
+      }
+    };
+
+    let prevUser = useAuthStore.getState().user;
+
+    // If already logged in, start sync immediately
+    if (prevUser) {
+      useSyncStore.getState().startAutoSync();
+      useSyncStore.getState().loadFromCloud();
+    }
+
+    const unsubscribe = useAuthStore.subscribe((state) => {
+      checkAndSync(prevUser);
+      prevUser = state.user;
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  // Sync to cloud when app goes to background
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        const user = useAuthStore.getState().user;
+        if (user) {
+          useSyncStore.getState().syncToCloud();
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, []);
+
+  // Clean up sync timer on unmount
+  useEffect(() => {
+    return () => {
+      useSyncStore.getState().stopAutoSync();
+    };
   }, []);
 
   return (
