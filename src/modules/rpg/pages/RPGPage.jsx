@@ -3,14 +3,11 @@ import { AvatarEvolution } from '../components/AvatarEvolution';
 import { MissionsBoard } from '../components/MissionsBoard';
 import { BadgesGallery } from '../components/BadgesGallery';
 import { useGameStore } from '../../../stores/useGameStore';
-import { usePersonaStore } from '../../../stores/usePersonaStore';
 import { motion } from 'framer-motion';
 import { PageHeader } from '../../../components/layout/PageHeader';
 
 export function RPGPage() {
   const { missions, badges } = useGameStore();
-  const getActivePersona = usePersonaStore((s) => s.getActivePersona);
-  const persona = getActivePersona();
 
   const totalMissions = missions.length;
   const claimedMissions = missions.filter((m) => m.status === 'claimed').length;
@@ -56,9 +53,9 @@ export function RPGPage() {
 
           <div className="flex-1 card-surface p-2.5 sm:p-3 px-3 sm:px-4 text-center min-w-[70px] sm:min-w-[90px]">
             <span className="text-base sm:text-xl">🔮</span>
-            <span className="block text-[9px] sm:text-xs text-text-dim font-bold uppercase mt-1">Ativo</span>
-            <span className="block text-xs sm:text-sm font-black text-secondary mt-1 whitespace-nowrap overflow-hidden text-ellipsis max-w-[60px] sm:max-w-[80px]">
-              {persona?.name || 'Horus'}
+            <span className="block text-[9px] sm:text-xs text-text-dim font-bold uppercase mt-1">XP</span>
+            <span className="block text-sm sm:text-lg font-black text-secondary mt-0.5">
+              {useGameStore.getState().totalXP}
             </span>
           </div>
         </div>

@@ -1,5 +1,4 @@
 import React from 'react';
-import { usePersonaStore } from '../../../stores/usePersonaStore';
 import { useGameStore, calcLevelProgress } from '../../../stores/useGameStore';
 import { motion } from 'framer-motion';
 import {
@@ -12,8 +11,6 @@ import {
 } from 'recharts';
 
 export function AvatarEvolution() {
-  const getActivePersona = usePersonaStore((s) => s.getActivePersona);
-  const persona = getActivePersona();
   const totalXP = useGameStore((s) => s.totalXP);
   const radarXP = useGameStore((s) => s.radar) || {};
 
@@ -43,17 +40,17 @@ export function AvatarEvolution() {
         <div className="space-y-5">
           <div className="flex items-center gap-4">
             <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-tr from-primary to-secondary p-0.5 shadow-lg flex items-center justify-center relative group flex-shrink-0">
-              <span className="text-2xl sm:text-3xl filter drop-shadow">{persona?.icon || '🧙‍♂️'}</span>
+              <span className="text-2xl sm:text-3xl filter drop-shadow">🧙‍♂️</span>
               <div className="absolute -bottom-2 -right-2 bg-black border border-white/20 text-[10px] font-black px-2 py-0.5 rounded-full text-white shadow">
                 Lvl {level}
               </div>
             </div>
             <div className="min-w-0">
               <h3 className="text-base sm:text-lg font-black text-text-main tracking-tight truncate">
-                {persona?.name || 'Inominável'}
+                Aventureiro
               </h3>
               <p className="text-xs text-text-muted capitalize truncate">
-                Persona Ativa • {persona?.role || 'Aventureiro'}
+                Nível {level} • {Math.round(currentXP)} XP
               </p>
             </div>
           </div>
@@ -124,7 +121,7 @@ export function AvatarEvolution() {
                 axisLine={false}
               />
               <Radar
-                name={persona?.name || 'Atributos'}
+                name="Atributos"
                 dataKey="A"
                 stroke="var(--primary)"
                 fill="var(--primary)"
