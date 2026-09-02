@@ -15,7 +15,7 @@ export function Topbar() {
   const t = today();
 
   // Auth
-  const { user, logout, getDisplayName, getInitials, getPhotoURL } = useAuthStore();
+  const { logout } = useAuthStore();
 
   // Streaks da saúde
   const waterLog = useHealthStore(s => s.waterLog[t] || []);
@@ -28,12 +28,8 @@ export function Topbar() {
   const mealDone = Object.keys(habitLog).length > 0;
 
   const xpData = calcXPProgress(xp);
-  const displayName = getDisplayName();
-  const initials = getInitials();
-  const photoURL = getPhotoURL();
-  const firstName = displayName.split(' ')[0];
 
-  // Profile dropdown
+  // Menu dropdown
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
 
@@ -66,11 +62,11 @@ export function Topbar() {
       }}
     >
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
-        {/* ESQUERDA: Menu + User Info */}
-        <div className="flex items-center gap-3 md:gap-4">
+        {/* ESQUERDA: Menu toggle */}
+        <div className="flex items-center gap-3">
           <button
             onClick={toggleSidebar}
-            className="lg:hidden flex items-center justify-center w-10 h-10 rounded-2xl transition-all"
+            className="flex items-center justify-center w-10 h-10 rounded-2xl transition-all"
             style={{
               background: 'var(--nav-surface)',
               border: '1px solid var(--nav-border)',
@@ -87,34 +83,10 @@ export function Topbar() {
           >
             <Menu size={18} />
           </button>
-
-          {/* User Avatar + Name */}
-          <div className="flex items-center gap-3">
-            {photoURL ? (
-              <img
-                src={photoURL}
-                alt={displayName}
-                className="w-9 h-9 rounded-xl object-cover flex-shrink-0"
-                style={{ border: '2px solid rgba(16,185,129,0.3)' }}
-              />
-            ) : (
-              <div
-                className="w-9 h-9 rounded-xl flex items-center justify-center text-sm font-black text-white flex-shrink-0"
-                style={{ background: 'linear-gradient(135deg, #10B981, #06B6D4)' }}
-              >
-                {initials}
-              </div>
-            )}
-            <div className="hidden sm:block">
-              <div className="text-sm font-bold" style={{ color: 'var(--text-main)' }}>
-                {firstName}
-              </div>
-            </div>
-          </div>
         </div>
 
-        {/* DIREITA: Streaks + XP + Profile */}
-        <div className="flex items-center gap-4 sm:gap-6">
+        {/* DIREITA: Streaks + XP + Menu */}
+        <div className="flex items-center gap-3 sm:gap-4">
           {/* Streaks de Saúde */}
           <div className="hidden sm:flex items-center gap-3">
             <div
@@ -140,7 +112,7 @@ export function Topbar() {
             </div>
           </div>
 
-          {/* Streaks de Hábitos (Sobriedade) */}
+          {/* Streaks de Hábitos */}
           <div className="hidden sm:flex items-center gap-3">
             <div
               className="flex items-center gap-1 text-xs transition-colors"
@@ -193,38 +165,18 @@ export function Topbar() {
             </div>
           </div>
 
-          {/* Profile Dropdown */}
+          {/* Menu Button (Settings + Logout) */}
           <div className="relative" ref={dropdownRef}>
             <button
               onClick={() => setDropdownOpen(!dropdownOpen)}
-              className="flex items-center gap-2 rounded-xl px-3 py-2 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
+              className="flex items-center justify-center w-10 h-10 rounded-2xl transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
               style={{
                 background: dropdownOpen ? 'rgba(16,185,129,0.1)' : 'var(--nav-surface)',
                 border: `1px solid ${dropdownOpen ? 'rgba(16,185,129,0.2)' : 'var(--nav-border)'}`,
+                color: 'var(--text-dim)',
               }}
             >
-              {photoURL ? (
-                <img
-                  src={photoURL}
-                  alt={displayName}
-                  className="w-8 h-8 rounded-lg object-cover flex-shrink-0"
-                />
-              ) : (
-                <div
-                  className="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-black text-white flex-shrink-0"
-                  style={{ background: 'linear-gradient(135deg, #10B981, #06B6D4)' }}
-                >
-                  {initials}
-                </div>
-              )}
-              <ChevronDown
-                size={14}
-                className="hidden sm:block transition-transform duration-200"
-                style={{
-                  color: 'var(--text-dim)',
-                  transform: dropdownOpen ? 'rotate(180deg)' : 'rotate(0)',
-                }}
-              />
+              <Settings size={18} />
             </button>
 
             {/* Dropdown Menu */}
@@ -235,30 +187,9 @@ export function Topbar() {
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: -8, scale: 0.95 }}
                   transition={{ duration: 0.15 }}
-                  className="absolute right-0 top-full mt-2 w-64 rounded-2xl border border-white/[0.08] shadow-2xl overflow-hidden z-[60]"
+                  className="absolute right-0 top-full mt-2 w-48 rounded-2xl border border-white/[0.08] shadow-2xl overflow-hidden z-[60]"
                   style={{ background: 'rgba(23, 23, 30, 0.95)', backdropFilter: 'blur(20px)' }}
                 >
-                  {/* User Info */}
-                  <div className="p-4 border-b border-white/[0.06]">
-                    <div className="flex items-center gap-3">
-                      {photoURL ? (
-                        <img src={photoURL} alt={displayName} className="w-10 h-10 rounded-xl object-cover" />
-                      ) : (
-                        <div
-                          className="w-10 h-10 rounded-xl flex items-center justify-center text-sm font-black text-white"
-                          style={{ background: 'linear-gradient(135deg, #10B981, #06B6D4)' }}
-                        >
-                          {initials}
-                        </div>
-                      )}
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-bold text-white truncate">{displayName}</p>
-                        <p className="text-[11px] text-[var(--text-dim)] truncate">{user?.email || 'Modo offline'}</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Menu Items */}
                   <div className="p-2">
                     <button
                       onClick={() => { setDropdownOpen(false); navigate('/settings'); }}

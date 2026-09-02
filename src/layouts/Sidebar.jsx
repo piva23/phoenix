@@ -34,13 +34,9 @@ const MENU_BLOCKS = [
 
 export function Sidebar() {
   const { sidebarOpen, toggleSidebar } = useUIStore();
-  const { user, logout, getDisplayName, getInitials, getPhotoURL } = useAuthStore();
+  const { logout } = useAuthStore();
   const navigate = useNavigate();
   const w = sidebarOpen ? 260 : 80;
-  const displayName = getDisplayName();
-  const initials = getInitials();
-  const photoURL = getPhotoURL();
-  const firstName = displayName.split(' ')[0];
 
   const handleLogout = async () => {
     try {
@@ -184,61 +180,11 @@ export function Sidebar() {
         ))}
       </nav>
 
-      {/* ── USER FOOTER ───────────────────────────────────────────────────── */}
+      {/* ── FOOTER: Logout ────────────────────────────────────────────────── */}
       <div
-        className="flex-shrink-0 border-t p-3 space-y-2"
+        className="flex-shrink-0 border-t p-3"
         style={{ borderColor: 'var(--nav-border)' }}
       >
-        {/* User Info */}
-        <button
-          onClick={() => navigate('/settings')}
-          className={clsx(
-            'flex items-center gap-3 w-full rounded-xl py-2.5 transition-all duration-200 group cursor-pointer',
-            sidebarOpen ? 'px-3 justify-start' : 'px-0 justify-center'
-          )}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = 'var(--nav-hover)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = 'transparent';
-          }}
-        >
-          {photoURL ? (
-            <img
-              src={photoURL}
-              alt={displayName}
-              className="w-9 h-9 rounded-xl object-cover flex-shrink-0"
-              style={{ border: '2px solid rgba(16,185,129,0.3)' }}
-            />
-          ) : (
-            <div
-              className="w-9 h-9 rounded-xl flex items-center justify-center text-sm font-black text-white flex-shrink-0 transition-shadow duration-300 group-hover:shadow-[0_0_16px_rgba(16,185,129,0.3)]"
-              style={{ background: 'linear-gradient(135deg, #10B981, #06B6D4)' }}
-            >
-              {initials}
-            </div>
-          )}
-          <AnimatePresence>
-            {sidebarOpen && (
-              <motion.div
-                initial={{ opacity: 0, x: -4 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -4 }}
-                transition={{ duration: 0.15 }}
-                className="text-left overflow-hidden flex-1 min-w-0"
-              >
-                <div className="text-xs font-bold whitespace-nowrap truncate" style={{ color: 'var(--text-main)' }}>
-                  {firstName}
-                </div>
-                <div className="text-[10px] whitespace-nowrap truncate" style={{ color: 'var(--text-dim)' }}>
-                  {user?.email ? (sidebarOpen ? user.email : 'Ver perfil') : 'Ver perfil →'}
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </button>
-
-        {/* Logout Button */}
         <button
           onClick={handleLogout}
           className={clsx(

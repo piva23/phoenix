@@ -27,11 +27,11 @@ export function MissionsBoard() {
   const getStatusBadge = (status) => {
     switch (status) {
       case 'claimable':
-        return <span className="text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full uppercase tracking-wider font-bold animate-pulse">Pronta</span>;
+        return <span className="text-[9px] sm:text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full uppercase tracking-wider font-bold animate-pulse">Pronta</span>;
       case 'claimed':
-        return <span className="text-[10px] bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-0.5 rounded-full uppercase tracking-wider font-bold">Resgatada</span>;
+        return <span className="text-[9px] sm:text-[10px] bg-blue-500/10 text-blue-400 border border-blue-500/20 px-2 py-0.5 rounded-full uppercase tracking-wider font-bold">Resgatada</span>;
       default:
-        return <span className="text-[10px] bg-white/5 text-text-dim border border-white/10 px-2 py-0.5 rounded-full uppercase tracking-wider font-bold">Bloqueada</span>;
+        return <span className="text-[9px] sm:text-[10px] bg-white/5 text-text-dim border border-white/10 px-2 py-0.5 rounded-full uppercase tracking-wider font-bold">Bloqueada</span>;
     }
   };
 
@@ -41,19 +41,19 @@ export function MissionsBoard() {
         return { bg: 'bg-indigo-500/5', border: 'border-indigo-500/20', text: 'text-indigo-400', label: 'Diária' };
       case 'semanal':
         return { bg: 'bg-purple-500/5', border: 'border-purple-500/20', text: 'text-purple-400', label: 'Semanal' };
-      default: // épica
+      default:
         return { bg: 'bg-amber-500/5', border: 'border-amber-500/20', text: 'text-amber-400', label: 'Épica' };
     }
   };
 
   return (
-    <div id="missions-board-panel" className="bg-surface border border-border rounded-3xl p-6 shadow-xl relative overflow-hidden backdrop-blur-md flex flex-col h-full">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+    <div id="missions-board-panel" className="bg-surface border border-border rounded-3xl p-4 sm:p-6 shadow-xl relative overflow-hidden backdrop-blur-md flex flex-col h-full">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-4 sm:mb-6">
         <div>
           <h2 className="text-sm font-bold text-text-dim uppercase tracking-widest flex items-center gap-2">
-            <span className="text-secondary text-lg">⚔️</span> Missões Transversais do Sistema
+            <span className="text-secondary text-lg">⚔️</span> Missões Transversais
           </h2>
-          <p className="text-xs text-text-muted mt-1">
+          <p className="text-[10px] sm:text-xs text-text-muted mt-1">
             Complete tarefas reais no Phoenix OS para ganhar recompensas de experiência.
           </p>
         </div>
@@ -61,15 +61,15 @@ export function MissionsBoard() {
         <div className="flex items-center gap-2">
           <button
             onClick={resetAllRPG}
-            className="px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/10 rounded-xl text-[10px] uppercase font-bold tracking-wider text-text-dim transition-all"
+            className="px-2.5 sm:px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/10 rounded-xl text-[9px] sm:text-[10px] uppercase font-bold tracking-wider text-text-dim transition-all"
             title="Resetar progresso de missões para demonstração"
           >
-            Resetar Missões ↺
+            Resetar ↺
           </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 flex-1">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 flex-1">
         <AnimatePresence mode="popLayout">
           {missions.map((mission) => {
             const styles = getTypeStyle(mission.type);
@@ -84,7 +84,7 @@ export function MissionsBoard() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, scale: 0.95 }}
                 transition={{ type: 'spring', stiffness: 100, damping: 15 }}
-                className={`flex flex-col justify-between p-4 rounded-2xl border transition-all duration-300 relative ${styles.bg} ${
+                className={`flex flex-col justify-between p-3 sm:p-4 rounded-2xl border transition-all duration-300 relative ${styles.bg} ${
                   isClaimable
                     ? 'border-emerald-500/30 shadow-lg shadow-emerald-500/5 bg-emerald-500/[0.02]'
                     : isClaimed
@@ -94,27 +94,27 @@ export function MissionsBoard() {
               >
                 <div className="space-y-2">
                   <div className="flex items-center justify-between gap-2">
-                    <span className={`text-[9px] font-black uppercase tracking-widest ${styles.text}`}>
+                    <span className={`text-[8px] sm:text-[9px] font-black uppercase tracking-widest ${styles.text}`}>
                       ✦ {styles.label}
                     </span>
                     {getStatusBadge(mission.status)}
                   </div>
 
                   <div>
-                    <h3 className="text-sm font-bold text-text-main tracking-tight">
+                    <h3 className="text-xs sm:text-sm font-bold text-text-main tracking-tight">
                       {mission.title}
                     </h3>
-                    <p className="text-xs text-text-muted mt-1 leading-relaxed">
+                    <p className="text-[10px] sm:text-xs text-text-muted mt-1 leading-relaxed">
                       {mission.req}
                     </p>
                   </div>
                 </div>
 
-                <div className="mt-4 pt-3 border-t border-white/5 flex items-center justify-between gap-2">
+                <div className="mt-3 sm:mt-4 pt-2.5 sm:pt-3 border-t border-white/5 flex items-center justify-between gap-2">
                   <div className="flex items-center gap-1.5">
                     <span className="text-xs">🏆</span>
-                    <span className="text-xs font-black text-text-main font-mono">
-                      +{mission.xpReward} <span className="text-[10px] text-text-dim">XP</span>
+                    <span className="text-[10px] sm:text-xs font-black text-text-main font-mono">
+                      +{mission.xpReward} <span className="text-[9px] sm:text-[10px] text-text-dim">XP</span>
                     </span>
                   </div>
 
@@ -124,18 +124,18 @@ export function MissionsBoard() {
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                         onClick={() => handleClaim(mission)}
-                        className="px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider bg-emerald-500 text-black shadow-[0_0_15px_rgba(16,185,129,0.4)] hover:shadow-[0_0_20px_rgba(16,185,129,0.6)] transition-all duration-200"
+                        className="px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-xl text-[10px] sm:text-xs font-black uppercase tracking-wider bg-emerald-500 text-black shadow-[0_0_15px_rgba(16,185,129,0.4)] hover:shadow-[0_0_20px_rgba(16,185,129,0.6)] transition-all duration-200"
                       >
                         Reivindicar!
                       </motion.button>
                     ) : isClaimed ? (
-                      <span className="text-xs text-text-dim italic flex items-center gap-1">
+                      <span className="text-[10px] sm:text-xs text-text-dim italic flex items-center gap-1">
                         Concluído ✓
                       </span>
                     ) : (
                       <button
                         disabled
-                        className="px-3 py-1.5 rounded-xl text-xs font-bold text-text-dim bg-white/5 border border-white/5 cursor-not-allowed"
+                        className="px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-xl text-[10px] sm:text-xs font-bold text-text-dim bg-white/5 border border-white/5 cursor-not-allowed"
                       >
                         Em progresso
                       </button>

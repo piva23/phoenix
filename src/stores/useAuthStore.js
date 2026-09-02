@@ -36,20 +36,6 @@ export const useAuthStore = create((set, get) => ({
     }
   },
 
-  loginOffline: () => {
-    // Allow offline mode with a synthetic user
-    set({
-      user: {
-        uid: 'offline-user',
-        displayName: 'Estudante',
-        email: 'offline@phoenix.local',
-        photoURL: null,
-      },
-      loading: false,
-      error: null,
-    });
-  },
-
   logout: async () => {
     if (!auth) {
       set({ user: null, loading: false });

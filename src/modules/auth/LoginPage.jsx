@@ -6,7 +6,7 @@ import { FcGoogle } from 'react-icons/fc';
 import toast, { Toaster } from 'react-hot-toast';
 
 export default function LoginPage() {
-  const { user, loginWithGoogle, loginOffline, loading, isFirebaseConfigured } = useAuthStore();
+  const { user, loginWithGoogle, loading, isFirebaseConfigured } = useAuthStore();
   const navigate = useNavigate();
   const [authError, setAuthError] = useState(null);
 
@@ -35,12 +35,6 @@ export default function LoginPage() {
       setAuthError(errMsg);
       toast.error(errMsg);
     }
-  };
-
-  const handleOffline = () => {
-    loginOffline();
-    toast.success('Entrando em modo offline...');
-    navigate('/', { replace: true });
   };
 
   return (
@@ -86,13 +80,6 @@ export default function LoginPage() {
           </div>
         )}
 
-        {/* Firebase not configured warning */}
-        {!isFirebaseConfigured && (
-          <div className="w-full mb-6 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs text-center leading-relaxed">
-            ⚠️ Firebase não configurado. Configure as variáveis de ambiente para habilitar login e sincronização na nuvem.
-          </div>
-        )}
-
         {/* Google Sign In button */}
         <motion.button
           onClick={handleLogin}
@@ -113,20 +100,9 @@ export default function LoginPage() {
           <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-[#8B5CF6] to-[#06B6D4] opacity-0 group-hover:opacity-5 transition-opacity duration-300 pointer-events-none"></div>
         </motion.button>
 
-        {/* Offline mode button */}
-        <motion.button
-          onClick={handleOffline}
-          whileHover={{ scale: 1.01 }}
-          whileTap={{ scale: 0.99 }}
-          className="w-full mt-3 py-3 px-6 rounded-xl font-medium flex items-center justify-center gap-2 text-[#9B9AAB] hover:text-[#F0EFF8] bg-transparent hover:bg-white/[0.03] border border-white/[0.04] hover:border-white/[0.08] transition-all text-sm"
-          disabled={loading}
-        >
-          <span>Continuar offline</span>
-        </motion.button>
-
         <div className="mt-8 text-center">
           <p className="text-[10px] uppercase tracking-widest text-[#6B6A7A]">
-            {isFirebaseConfigured ? 'Powered by Firebase Auth' : 'Modo offline disponível'}
+            Powered by Firebase Auth
           </p>
         </div>
       </motion.div>

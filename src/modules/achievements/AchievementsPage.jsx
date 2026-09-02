@@ -52,7 +52,7 @@ function AchievementCard({ achievement, isUnlocked, unlockedAt, liveState }) {
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className={`relative flex flex-col p-5 rounded-2xl border transition-all duration-300 overflow-hidden ${
+      className={`relative flex flex-col p-3.5 sm:p-5 rounded-2xl border transition-all duration-300 overflow-hidden ${
         isUnlocked
           ? 'bg-gradient-to-b from-amber-500/[0.04] to-transparent border-amber-500/30 shadow-lg shadow-amber-500/5'
           : 'bg-white/[0.01] border-white/5'
@@ -64,9 +64,9 @@ function AchievementCard({ achievement, isUnlocked, unlockedAt, liveState }) {
       )}
 
       {/* Ícone */}
-      <div className="flex items-start justify-between mb-3">
+      <div className="flex items-start justify-between mb-2.5 sm:mb-3">
         <div
-          className={`w-14 h-14 rounded-2xl flex items-center justify-center text-2xl transition-all duration-300 ${
+          className={`w-11 h-11 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center text-xl sm:text-2xl transition-all duration-300 ${
             isUnlocked
               ? 'bg-amber-500/10 shadow-[0_0_15px_rgba(245,158,11,0.2)]'
               : 'bg-white/5 filter grayscale opacity-40'
@@ -181,26 +181,26 @@ export function AchievementsPage() {
       />
 
       {/* Stats cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        <div className="card-surface p-4 text-center">
-          <div className="text-2xl mb-1">🏆</div>
-          <div className="text-lg font-black text-text-main">{stats.count}</div>
-          <div className="text-[10px] text-text-dim uppercase tracking-wider font-bold">Conquistas</div>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-4 mb-4 sm:mb-6">
+        <div className="card-surface p-3 sm:p-4 text-center">
+          <div className="text-xl sm:text-2xl mb-1">🏆</div>
+          <div className="text-base sm:text-lg font-black text-text-main">{stats.count}</div>
+          <div className="text-[9px] sm:text-[10px] text-text-dim uppercase tracking-wider font-bold">Conquistas</div>
         </div>
-        <div className="card-surface p-4 text-center">
-          <div className="text-2xl mb-1">⚡</div>
-          <div className="text-lg font-black text-amber-400">{stats.totalXP}</div>
-          <div className="text-[10px] text-text-dim uppercase tracking-wider font-bold">XP Ganho</div>
+        <div className="card-surface p-3 sm:p-4 text-center">
+          <div className="text-xl sm:text-2xl mb-1">⚡</div>
+          <div className="text-base sm:text-lg font-black text-amber-400">{stats.totalXP}</div>
+          <div className="text-[9px] sm:text-[10px] text-text-dim uppercase tracking-wider font-bold">XP Ganho</div>
         </div>
-        <div className="card-surface p-4 text-center">
-          <div className="text-2xl mb-1">📊</div>
-          <div className="text-lg font-black text-primary">{stats.pct}%</div>
-          <div className="text-[10px] text-text-dim uppercase tracking-wider font-bold">Progresso</div>
+        <div className="card-surface p-3 sm:p-4 text-center">
+          <div className="text-xl sm:text-2xl mb-1">📊</div>
+          <div className="text-base sm:text-lg font-black text-primary">{stats.pct}%</div>
+          <div className="text-[9px] sm:text-[10px] text-text-dim uppercase tracking-wider font-bold">Progresso</div>
         </div>
-        <div className="card-surface p-4 text-center">
-          <div className="text-2xl mb-1">🎯</div>
-          <div className="text-lg font-black text-text-main">{stats.total - stats.count}</div>
-          <div className="text-[10px] text-text-dim uppercase tracking-wider font-bold">Restantes</div>
+        <div className="card-surface p-3 sm:p-4 text-center">
+          <div className="text-xl sm:text-2xl mb-1">🎯</div>
+          <div className="text-base sm:text-lg font-black text-text-main">{stats.total - stats.count}</div>
+          <div className="text-[9px] sm:text-[10px] text-text-dim uppercase tracking-wider font-bold">Restantes</div>
         </div>
       </div>
 
@@ -217,7 +217,7 @@ export function AchievementsPage() {
       </div>
 
       {/* Category filters */}
-      <div className="flex gap-1.5 overflow-x-auto scrollbar-hide p-1.5 card-surface mb-6">
+      <div className="flex gap-1 sm:gap-1.5 overflow-x-auto scrollbar-hide p-1 sm:p-1.5 card-surface mb-4 sm:mb-6">
         {CATEGORIES.map((cat) => {
           const count = categoryCounts[cat.id] || 0;
           const total = cat.id === 'all'
@@ -227,7 +227,7 @@ export function AchievementsPage() {
             <button
               key={cat.id}
               onClick={() => setActiveCategory(cat.id)}
-              className={`flex-shrink-0 px-4 py-2.5 rounded-xl text-xs font-bold transition-all duration-300 whitespace-nowrap uppercase tracking-wider cursor-pointer ${
+              className={`flex-shrink-0 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl text-[10px] sm:text-xs font-bold transition-all duration-300 whitespace-nowrap uppercase tracking-wider cursor-pointer ${
                 activeCategory === cat.id
                   ? 'bg-gradient-to-r from-amber-500 to-yellow-400 text-black shadow-lg shadow-amber-500/25 border border-white/10'
                   : 'text-text-dim hover:text-text-main hover:bg-white/5 border border-transparent'
@@ -235,7 +235,7 @@ export function AchievementsPage() {
             >
               {cat.icon} {cat.label}
               {count > 0 && (
-                <span className="ml-1.5 text-[9px] opacity-70">
+                <span className="ml-1 sm:ml-1.5 text-[8px] sm:text-[9px] opacity-70">
                   {count}/{total}
                 </span>
               )}
@@ -245,7 +245,7 @@ export function AchievementsPage() {
       </div>
 
       {/* Achievements grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
         {filteredAchievements.map((achievement) => (
           <AchievementCard
             key={achievement.id}
