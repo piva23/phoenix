@@ -117,7 +117,7 @@ function HexFAB({ isOpen, setIsOpen }) {
                     {item.label || item.name}
                   </div>
                   <button
-                    onClick={item.path ? navigate(item.path) : item.action}
+                    onClick={() => item.path ? navigate(item.path) : item.action}
                     style={hexClipStyle}
                     className={`w-10 h-10 lg:w-12 lg:h-12 flex items-center justify-center card-surface shadow-lg transition-all duration-300 relative group-hover/item:scale-105 cursor-pointer ${item.label ? item.color : 'text-white'}`}
                   >

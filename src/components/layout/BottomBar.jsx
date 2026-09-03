@@ -36,7 +36,7 @@ export default function BottomBar() {
   const location = useLocation();
   const [hexOpen, setHexOpen] = useState(false);
   const openSessionModal = useSessionModalStore(s => s.openModal || s.openSessionModal);
-  const { isSessionActive } = useActiveSessionUIStore();
+  const { isSessionActive, timeLeft } = useActiveSessionUIStore();
 
   const handleNav = (path) => {
     setHexOpen(false);
@@ -121,7 +121,7 @@ export default function BottomBar() {
                 </span>
               </div>
               <span className="text-dim text-[9px]">
-                {fmtTimer((useActiveSessionUIStore?.timeLeft || 0))}
+                {fmtTimer((timeLeft || 0))}
               </span>
             </motion.div>
           )}
