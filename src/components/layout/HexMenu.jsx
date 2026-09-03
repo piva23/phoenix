@@ -21,25 +21,6 @@ function fmtTimer(sec) {
   return `${String(Math.floor(sec / 60)).padStart(2, '0')}:${String(sec % 60).padStart(2, '0')}`;
 }
 
-/* ═══════════════════════════════════════════════════════
-   ITENS DE NAVEGAÇÃO
-   ═══════════════════════════════════════════════════════ */
-
-const MAIN_ITEMS = [
-  { path: '/dashboard', icon: LayoutDashboard, label: 'Home', color: 'text-text-main hover:bg-white/10 border-white/20' },
-  { path: '/calendar', icon: Calendar, label: 'Calendário', color: 'text-orange-400 hover:bg-orange-500/10 border-orange-500/20' },
-  { path: '/study', icon: BookOpen, label: 'Estudo', color: 'text-emerald-400 hover:bg-emerald-500/10 border-emerald-500/20' },
-  { path: '/health', icon: Dumbbell, label: 'Saúde', color: 'text-red-400 hover:bg-red-500/10 border-red-500/20' },
-];
-
-const EXTRA_ITEMS = [
-  { path: '/rpg', icon: Swords, label: 'Aventura', color: 'text-purple-400 hover:bg-purple-500/10 border-purple-500/20' },
-  { path: '/achievements', icon: Trophy, label: 'Conquistas', color: 'text-amber-400 hover:bg-amber-500/10 border-amber-500/20' },
-  { path: '/finance', icon: Wallet, label: 'Finanças', color: 'text-amber-400 hover:bg-amber-500/10 border-amber-500/20' },
-  { path: '/analytics', icon: BarChart3, label: 'Analytics', color: 'text-blue-400 hover:bg-blue-500/10 border-blue-500/20' },
-  { path: '/settings', icon: Settings, label: 'Config', color: 'text-zinc-400 hover:bg-zinc-500/10 border-zinc-500/20' },
-];
-
 const hexClipStyle = {
   clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)',
 };
@@ -52,12 +33,12 @@ const containerVariants = {
 const itemVariants = {
   hidden: { opacity: 0, y: 20, scale: 0.8 },
   visible: { opacity: 1, y: 0, scale: 1, transition: { type: 'spring', stiffness: 350, damping: 22 } },
-  exit: { opacity: 0, y: 15, scale: 0.8, transition: { duration: 0.15 } },
+  exit: { opacity: 0, y: 15, scale: 0.8, transition: { duration: 0.15} },
 };
 
-/* ═══════════════════════════════════════════════════════
+/* ════════════════════════════════════════════════════════
    HEX FAB — Mobile + Desktop
-   ═══════════════════════════════════════════════════════ */
+   ════════════════════════════════════════════════════════ */
 
 function HexFAB({ isOpen, setIsOpen }) {
   const navigate = useNavigate();
@@ -74,16 +55,38 @@ function HexFAB({ isOpen, setIsOpen }) {
     }
   };
 
-  const desktopMenuItems = [
-    ...MAIN_ITEMS.map(i => ({ ...i, action: () => { navigate(i.path); setIsOpen(false); } })),
-    { name: 'Sessão de Estudo', icon: BookOpen, color: 'text-emerald-400 hover:bg-emerald-500/10 border-emerald-500/20', action: () => { if(openSessionModal) openSessionModal(); setIsOpen(false); } },
-    ...EXTRA_ITEMS.map(i => ({ ...i, name: i.label, action: () => { navigate(i.path); setIsOpen(false); } })),
-  ];
+  // Check if on large screen (desktop) vs mobile
+  const isDesktop = typeof window !== 'undefined' && window.innerWidth >= 1024;
+
+  // Menu items — desktop shows labels, mobile shows icons only
+  const menuItems = isDesktop
+    ? [
+        { path: '/dashboard', icon: LayoutDashboard, label: 'Home' },
+        { path: '/calendar', icon: Calendar, label: 'Calendário' },
+        { path: '/study', icon: BookOpen, label: 'Estudo' },
+        { path: '/health', icon: Dumbbell, label: 'Saúde' },
+        { path: '/rpg', icon: Swords, label: 'Aventura' },
+        { path: '/achievements', icon: Trophy, label: 'Conquistas' },
+        { path: '/finance', icon: Wallet, label: 'Finanças' },
+        { path: '/analytics', icon: BarChart3, label: 'Analytics' },
+        { path: '/settings', icon: Settings, label: 'Config' },
+      ]
+    : [
+        { path: '/dashboard', icon: LayoutDashboard },
+        { path: '/calendar', icon: Calendar },
+        { path: '/study', icon: BookOpen },
+        { path: '/health', icon: Dumbbell },
+        { path: '/rpg', icon: Swords },
+        { path: '/achievements', icon: Trophy },
+        { path: '/finance', icon: Wallet },
+        { path: '/analytics', icon: BarChart3 },
+        { path: '/settings', icon: Settings },
+      ];
 
   return (
-    <div className="flex fixed bottom-24 right-4 lg:bottom-6 lg:right-6 z-[92] lg:z-[999] flex-col items-center select-none group">
+    <div className="fixed bottom-24 right-4 lg:bottom-6 lg:right-6 z-[92] lg:z-[999] flex-col items-center select-none group">
       {/* Session Tooltip — desktop only */}
-      {isSessionActive && (
+      {isSessionActive && isDesktop && (
         <div className="hidden lg:block absolute bottom-20 bg-background/90 backdrop-blur-xl border border-white/10 px-4 py-2 rounded-full shadow-2xl flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none transform translate-y-2 group-hover:translate-y-0 z-[1000] whitespace-nowrap">
           <span className="relative flex h-2.5 w-2.5">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
@@ -104,9 +107,9 @@ function HexFAB({ isOpen, setIsOpen }) {
             initial="hidden"
             animate="visible"
             exit="hidden"
-            className="flex flex-col items-center gap-2 lg:gap-3 mb-3 lg:mb-4"
+            className="absolute bottom-0 left-0 right-0 z-[99] flex flex-col items-center gap-2 pb-8 pt-8 md:pb-12 md:pt-12"
           >
-            {desktopMenuItems.map((item) => {
+            {menuItems.map((item) => {
               const IconComponent = item.icon;
               return (
                 <motion.div key={item.label || item.name} variants={itemVariants} className="relative group/item flex items-center justify-center">
@@ -114,9 +117,9 @@ function HexFAB({ isOpen, setIsOpen }) {
                     {item.label || item.name}
                   </div>
                   <button
-                    onClick={item.action}
+                    onClick={item.path ? navigate(item.path) : item.action}
                     style={hexClipStyle}
-                    className={`w-10 h-10 lg:w-11 lg:h-11 flex items-center justify-center card-surface shadow-lg transition-all duration-300 relative group-hover/item:scale-105 cursor-pointer ${item.color}`}
+                    className={`w-10 h-10 lg:w-12 lg:h-12 flex items-center justify-center card-surface shadow-lg transition-all duration-300 relative group-hover/item:scale-105 cursor-pointer ${item.label ? item.color : 'text-white'}`}
                   >
                     <IconComponent size={16} className="lg:hidden" />
                     <IconComponent size={18} className="hidden lg:block" />
@@ -172,14 +175,14 @@ function HexFAB({ isOpen, setIsOpen }) {
   );
 }
 
-/* ═══════════════════════════════════════════════════════
+/* ════════════════════════════════════════════════════════
    EXPORT — HexMenu
-   ═══════════════════════════════════════════════════════ */
+   ════════════════════════════════════════════════════════ */
 
 export default function HexMenu() {
   const [hexOpen, setHexOpen] = useState(false);
   return (
-    <div className="hidden lg:flex">
+    <div className="flex">
       <HexFAB isOpen={hexOpen} setIsOpen={setHexOpen} />
     </div>
   );
