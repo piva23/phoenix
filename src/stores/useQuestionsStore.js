@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { questionAdapter } from '../services/questionAdapter.service';
+import { registrarResposta } from '../shared/services/questionResponseRecorder';
+import { useAuthStore } from './useAuthStore';
 
 // Formato de uma questão na store:
 // { id, enunciado, alternativas: ["A) ...", "B) ..."], gabarito: "B",
@@ -132,6 +134,16 @@ export const useQuestionsStore = create(
           sessionId,
         };
         set(state => ({ answers: [...state.answers, answer] }));
+
+        // Sync to MAGO Firestore (fire-and-forget, non-blocking)
+        const userId = useAuthStore.getState().user?.uid || 'anonymous';
+        registrarResposta({
+          userId,
+          questaoId: questionId,
+          selecionada: selected,
+          correta: correct,
+        }).catch(err => console.warn('[MAGO] Failed to sync answer:', err));
+
         return { correct, question };
       },
 
@@ -365,6 +377,7 @@ export const useQuestionsStore = create(
         const maps = {
           materias: {}, assuntos: {}, bancas: {}, anos: {},
           orgaos: {}, cargos: {}, escolaridades: {}, areasFormacao: {},
+          dificuldades: {},
         };
         for (const q of questions) {
           if (q.materia) maps.materias[q.materia] = (maps.materias[q.materia] || 0) + 1;
@@ -378,6 +391,7 @@ export const useQuestionsStore = create(
           if (q.cargo) maps.cargos[q.cargo] = (maps.cargos[q.cargo] || 0) + 1;
           if (q.escolaridade) maps.escolaridades[q.escolaridade] = (maps.escolaridades[q.escolaridade] || 0) + 1;
           if (q.areaFormacao) maps.areasFormacao[q.areaFormacao] = (maps.areasFormacao[q.areaFormacao] || 0) + 1;
+          if (q.dificuldade) maps.dificuldades[q.dificuldade] = (maps.dificuldades[q.dificuldade] || 0) + 1;
         }
         const toSorted = obj =>
           Object.entries(obj).map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count);
@@ -390,6 +404,7 @@ export const useQuestionsStore = create(
           cargos: toSorted(maps.cargos),
           escolaridades: toSorted(maps.escolaridades),
           areasFormacao: toSorted(maps.areasFormacao),
+          dificuldades: toSorted(maps.dificuldades),
         };
       },
     }),

@@ -4,14 +4,13 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useQuestionsStore } from '../../../stores/useQuestionsStore';
 import { useStudyStore } from '../../../stores/useStudyStore';
 import { useGameStore, XP_RULES } from '../../../stores/useGameStore';
+import { DIFICULDADE_COLORS, DIFICULDADE_LABELS } from '../../../shared/constants/dificuldade';
 import toast from 'react-hot-toast';
 import { StudyLayout } from '../components/StudyLayout';
 import { BentoCard, SectionHeader, Badge } from '../components/BentoCard';
 
 const today = () => new Date().toISOString().slice(0, 10);
 const fmtTimer = sec => `${String(Math.floor(sec / 60)).padStart(2, '0')}:${String(sec % 60).padStart(2, '0')}`;
-
-const DIFF = { facil: { label: 'Fácil', color: '#10B981' }, medio: { label: 'Médio', color: '#F59E0B' }, dificil: { label: 'Difícil', color: '#EF4444' } };
 const STATUS_OPTS = [{ key: 'all', label: 'Todas' }, { key: 'unresolved', label: 'Não Resolvidas' }, { key: 'correct', label: 'Acertei' }, { key: 'wrong', label: 'Errei' }];
 const COLORS = ['#8B5CF6', '#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#06B6D4', '#EC4899', '#F97316', '#14B8A6', '#A855F7'];
 const inp = { background: 'rgba(255,255,255,0.04)', borderColor: 'rgba(255,255,255,0.08)', color: 'var(--text-main)' };
@@ -163,7 +162,11 @@ function PracticeMode({ questions, onExit }) {
             <Badge color={accent} variant="solid">{q.materia}</Badge>
             {q.topico && <Badge>{q.topico}</Badge>}
             {q.banca && <Badge>{q.banca}{q.ano ? `/${q.ano}` : ''}</Badge>}
-            {DIFF[q.dificuldade] && <Badge color={DIFF[q.dificuldade].color} variant="solid">{DIFF[q.dificuldade].label}</Badge>}
+            {q.dificuldade && DIFICULDADE_LABELS[q.dificuldade] && (
+              <Badge color={DIFICULDADE_COLORS[q.dificuldade] || '#F59E0B'} variant="solid">
+                {DIFICULDADE_LABELS[q.dificuldade]}
+              </Badge>
+            )}
           </div>
           <div ref={enunciadoRef} onMouseUp={handleMouseUp} className="text-sm" style={{ color: 'var(--text-main)', lineHeight: 1.8, userSelect: 'text', cursor: 'text' }}>{renderHL(q.enunciado, highlights)}</div>
         </div>

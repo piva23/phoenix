@@ -25,19 +25,8 @@ const hexClipStyle = {
   clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)',
 };
 
-const containerVariants = {
-  hidden: {},
-  visible: { transition: { staggerChildren: 0.05, staggerDirection: -1 } },
-};
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 20, scale: 0.8 },
-  visible: { opacity: 1, y: 0, scale: 1, transition: { type: 'spring', stiffness: 350, damping: 22 } },
-  exit: { opacity: 0, y: 15, scale: 0.8, transition: { duration: 0.15 } },
-};
-
 /* ═══════════════════════════════════════════════════════
-   BOTTOM BAR — Unified: Mobile (nav+hex) + Desktop (floating hex)
+   BOTTOM BAR — Unified: Mobile (nav + floating hex) + Desktop (radial hex)
    ════════════════════════════════════════════════════════ */
 
 export default function BottomBar() {
@@ -47,7 +36,6 @@ export default function BottomBar() {
   const openSessionModal = useSessionModalStore(s => s.openModal || s.openSessionModal);
   const { isSessionActive, timeLeft, totalTime, subjectName, topicName } = useActiveSessionUIStore();
 
-  // Desktop: detect screen size
   const [isDesktop, setIsDesktop] = useState(() =>
     typeof window !== 'undefined' ? window.innerWidth >= 1024 : false
   );
@@ -75,8 +63,7 @@ export default function BottomBar() {
 
   const isActive = (path) => location.pathname.startsWith(path);
 
-  // Desktop radial menu items
-  const desktopMenuItems = [
+  const allMenuItems = [
     { path: '/dashboard', icon: LayoutDashboard, label: 'Home' },
     { path: '/calendar', icon: Calendar, label: 'Calendário' },
     { path: '/study', icon: BookOpen, label: 'Estudo' },
@@ -88,7 +75,6 @@ export default function BottomBar() {
     { path: '/settings', icon: Settings, label: 'Config' },
   ];
 
-  // Mobile nav items
   const mobileNavItems = [
     { path: '/dashboard', icon: LayoutDashboard, label: 'Home' },
     { path: '/calendar', icon: Calendar, label: 'Calendário' },
@@ -98,86 +84,140 @@ export default function BottomBar() {
 
   return (
     <>
-      {/* ═══ MOBILE: Bottom Nav + Hex Center ═══ */}
+      {/* ═══ MOBILE: Bottom Nav Bar ═══ */}
       <div
         className="lg:hidden fixed bottom-0 left-0 right-0 z-[89] border-t backdrop-blur-xl"
         style={{
-          background: 'rgba(17, 17, 24, 0.92)',
+          background: 'rgba(17, 17, 24, 0.95)',
           borderColor: 'var(--nav-border)',
           paddingBottom: 'env(safe-area-inset-bottom, 0px)',
         }}
       >
-        <div className="flex items-center justify-center h-20 px-2 max-w-lg mx-auto gap-2">
-          {/* 4 nav items */}
+        <div className="flex items-center justify-around h-[68px] px-4 max-w-lg mx-auto">
           {mobileNavItems.map((item) => {
             const Icon = item.icon;
+            const active = isActive(item.path);
             return (
               <button
                 key={item.path}
                 onClick={() => handleNav(item.path)}
-                className="flex flex-col items-center justify-center gap-1 w-12 h-12 rounded-xl transition-all duration-200 relative"
+                className="flex flex-col items-center justify-center gap-1 w-14 h-14 rounded-2xl transition-all duration-200"
                 style={{
-                  color: isActive(item.path) ? 'var(--nav-active)' : 'var(--text-dim)',
-                  background: isActive(item.path) ? 'rgba(var(--nav-active-rgb), 0.08)' : 'transparent',
+                  color: active ? 'var(--nav-active)' : 'var(--text-dim)',
+                  background: active ? 'rgba(var(--nav-active-rgb), 0.1)' : 'transparent',
                 }}
               >
-                <Icon size={20} className="text-[20px]" />
-                <span className="text-[8px] font-medium leading-none mt-0.5">{item.label}</span>
+                <Icon size={22} strokeWidth={active ? 2.5 : 2} />
+                <span className={`text-[10px] font-medium leading-none ${active ? 'font-bold' : ''}`}>{item.label}</span>
               </button>
             );
           })}
+        </div>
+      </div>
 
-          {/* Hex FAB — center of nav */}
-          <motion.button
-            onClick={handleHexTap}
-            whileTap={{ scale: 0.95 }}
-            className={`w-14 h-14 rounded-full flex items-center justify-center text-primary shadow-xl ${
-              hexOpen
-                ? 'bg-gradient-to-br from-primary to-secondary shadow-lg shadow-primary/30'
-                : 'bg-gradient-to-br from-primary/80 to-secondary/80 shadow-md'
-            }`}
-            style={hexClipStyle}
+      {/* ═══ MOBILE: Hex FAB Flutuante (above bottom nav) ═══ */}
+      <div className="lg:hidden fixed bottom-[84px] right-4 z-[90]">
+        {/* Session badge */}
+        {isSessionActive && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="absolute -top-12 right-0 bg-blue-600/90 backdrop-blur-sm px-3 py-1.5 rounded-full flex items-center gap-2 whitespace-nowrap shadow-lg"
           >
-            <motion.div
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+            </span>
+            <span className="text-[10px] font-bold text-white">{fmtTimer(timeLeft)}</span>
+          </motion.div>
+        )}
+
+        <motion.button
+          onClick={handleHexTap}
+          whileTap={{ scale: 0.9 }}
+          className={`w-12 h-12 flex items-center justify-center text-white shadow-lg transition-all duration-200 ${
+            isSessionActive
+              ? 'bg-blue-600 shadow-blue-500/30'
+              : hexOpen
+                ? 'bg-gradient-to-br from-primary to-secondary shadow-primary/30'
+                : 'bg-gradient-to-br from-primary/80 to-secondary/80 shadow-md'
+          }`}
+          style={hexClipStyle}
+        >
+          {isSessionActive ? (
+            <Activity size={18} strokeWidth={2.5} />
+          ) : (
+            <motion.span
               animate={{ rotate: hexOpen ? 180 : 0 }}
               transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-              className="text-2xl"
+              className="text-lg font-bold"
               style={{ fontFamily: 'serif' }}
             >
               🜁
-            </motion.div>
-          </motion.button>
-        </div>
-
-        {/* Mobile radial menu — opens above nav */}
-        <AnimatePresence>
-          {!isSessionActive && hexOpen && (
-            <motion.div
-              variants={containerVariants}
-              initial="hidden"
-              animate="visible"
-              exit="hidden"
-              className="absolute bottom-full left-0 right-0 z-[99] flex flex-col items-center gap-2 pb-8 pt-4"
-              style={{ background: 'rgba(17, 17, 24, 0.95)', backdropFilter: 'blur(12px)' }}
-            >
-              {desktopMenuItems.map((item) => {
-                const IconComponent = item.icon;
-                return (
-                  <motion.div key={item.path} variants={itemVariants}>
-                    <button
-                      onClick={() => handleNav(item.path)}
-                      style={hexClipStyle}
-                      className="w-11 h-11 flex items-center justify-center card-surface shadow-lg text-white cursor-pointer hover:scale-105 transition-all"
-                    >
-                      <IconComponent size={16} />
-                    </button>
-                  </motion.div>
-                );
-              })}
-            </motion.div>
+            </motion.span>
           )}
-        </AnimatePresence>
+        </motion.button>
       </div>
+
+      {/* ═══ MOBILE: Bottom Sheet Menu ═══ */}
+      <AnimatePresence>
+        {hexOpen && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setHexOpen(false)}
+              className="lg:hidden fixed inset-0 z-[91] bg-black/60 backdrop-blur-sm"
+            />
+            {/* Sheet */}
+            <motion.div
+              initial={{ y: '100%' }}
+              animate={{ y: 0 }}
+              exit={{ y: '100%' }}
+              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+              className="lg:hidden fixed bottom-0 left-0 right-0 z-[92] rounded-t-3xl border-t"
+              style={{
+                background: 'rgba(17, 17, 24, 0.98)',
+                borderColor: 'rgba(255,255,255,0.08)',
+                paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+              }}
+            >
+              {/* Handle */}
+              <div className="flex justify-center pt-3 pb-2">
+                <div className="w-10 h-1 rounded-full" style={{ background: 'rgba(255,255,255,0.15)' }} />
+              </div>
+
+              <div className="px-4 pb-6">
+                <p className="text-[10px] font-bold uppercase tracking-widest mb-3 px-1" style={{ color: 'var(--text-dim)' }}>
+                  Navegação
+                </p>
+                <div className="grid grid-cols-3 gap-2">
+                  {allMenuItems.map((item) => {
+                    const Icon = item.icon;
+                    const active = isActive(item.path);
+                    return (
+                      <button
+                        key={item.path}
+                        onClick={() => handleNav(item.path)}
+                        className="flex flex-col items-center gap-2 py-3 rounded-2xl transition-all duration-200"
+                        style={{
+                          background: active ? 'rgba(var(--nav-active-rgb), 0.12)' : 'rgba(255,255,255,0.03)',
+                          color: active ? 'var(--nav-active)' : 'var(--text-dim)',
+                        }}
+                      >
+                        <Icon size={22} strokeWidth={active ? 2.5 : 1.8} />
+                        <span className="text-[10px] font-semibold leading-none">{item.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       {/* ═══ DESKTOP: Floating Hex FAB + Radial Menu ═══ */}
       {isDesktop && (
@@ -200,26 +240,32 @@ export default function BottomBar() {
           <AnimatePresence>
             {!isSessionActive && hexOpen && (
               <motion.div
-                variants={containerVariants}
-                initial="hidden"
-                animate="visible"
-                exit="hidden"
-                className="absolute bottom-0 left-0 right-0 z-[99] flex flex-col items-center gap-2 pb-12 pt-12"
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                transition={{ type: 'spring', stiffness: 350, damping: 25 }}
+                className="absolute bottom-0 right-0 z-[99] flex flex-col items-end gap-2 pb-20 pr-2"
               >
-                {desktopMenuItems.map((item) => {
-                  const IconComponent = item.icon;
+                {allMenuItems.map((item, i) => {
+                  const Icon = item.icon;
                   return (
-                    <motion.div key={item.path} variants={itemVariants} className="relative group/item flex items-center justify-center">
-                      <div className="absolute right-14 bg-background/95 backdrop-blur-md border border-white/10 text-text-main text-[10px] font-black uppercase tracking-wider py-1.5 px-3 rounded-lg shadow-xl opacity-0 group-hover/item:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap">
+                    <motion.div
+                      key={item.path}
+                      initial={{ opacity: 0, x: 20, scale: 0.8 }}
+                      animate={{ opacity: 1, x: 0, scale: 1 }}
+                      exit={{ opacity: 0, x: 20, scale: 0.8 }}
+                      transition={{ delay: i * 0.03, type: 'spring', stiffness: 400, damping: 25 }}
+                      className="relative group/item flex items-center gap-3"
+                    >
+                      <div className="bg-background/95 backdrop-blur-md border border-white/10 text-text-main text-[10px] font-black uppercase tracking-wider py-1.5 px-3 rounded-lg shadow-xl opacity-0 group-hover/item:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap">
                         {item.label}
                       </div>
                       <button
                         onClick={() => handleNav(item.path)}
                         style={hexClipStyle}
-                        className="w-12 h-12 flex items-center justify-center card-surface shadow-lg text-white cursor-pointer group-hover/item:scale-105 transition-all duration-300"
+                        className="w-11 h-11 flex items-center justify-center card-surface shadow-lg text-white cursor-pointer group-hover/item:scale-110 transition-all duration-200"
                       >
-                        <IconComponent size={18} />
-                        <div className="absolute inset-0 bg-white/[0.02] group-hover/item:bg-transparent transition-colors" />
+                        <Icon size={16} />
                       </button>
                     </motion.div>
                   );
@@ -228,10 +274,10 @@ export default function BottomBar() {
             )}
           </AnimatePresence>
 
-          {/* Hex Toggle Button */}
-          <div className="relative w-16 h-16 flex items-center justify-center">
+          {/* Hex Toggle */}
+          <div className="relative w-14 h-14 flex items-center justify-center">
             {isSessionActive && (
-              <svg className="absolute w-[62px] h-[62px] -rotate-90 pointer-events-none z-20" viewBox="0 0 64 64">
+              <svg className="absolute w-[56px] h-[56px] -rotate-90 pointer-events-none z-20" viewBox="0 0 64 64">
                 <circle cx="32" cy="32" r="29" fill="none" stroke="rgba(255,255,255,0.03)" strokeWidth="2.5" />
                 <circle
                   cx="32" cy="32" r="29" fill="none" stroke="#60A5FA" strokeWidth="2.5" strokeLinecap="round"
@@ -244,29 +290,26 @@ export default function BottomBar() {
             <motion.button
               onClick={handleHexTap}
               style={hexClipStyle}
-              className={`w-14 h-14 flex items-center justify-center text-white cursor-pointer relative z-10 transition-all duration-300 ${
+              className={`w-12 h-12 flex items-center justify-center text-white cursor-pointer relative z-10 transition-all duration-300 ${
                 isSessionActive
-                  ? 'bg-blue-600 shadow-lg shadow-blue-500/40 hover:scale-105'
+                  ? 'bg-blue-600 shadow-lg shadow-blue-500/40'
                   : 'bg-gradient-to-br from-primary to-secondary shadow-xl hover:shadow-2xl hover:shadow-primary/20'
               }`}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
+              whileHover={{ scale: 1.08 }}
+              whileTap={{ scale: 0.92 }}
             >
               {isSessionActive ? (
-                <div className="flex items-center justify-center animate-pulse">
-                  <Activity size={24} strokeWidth={2.5} />
-                </div>
+                <Activity size={20} strokeWidth={2.5} />
               ) : (
-                <motion.div
+                <motion.span
                   animate={{ rotate: hexOpen ? 180 : 0 }}
                   transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-                  className="flex items-center justify-center text-2xl font-bold"
+                  className="text-lg font-bold"
                   style={{ fontFamily: 'serif' }}
                 >
                   🜁
-                </motion.div>
+                </motion.span>
               )}
-              <div className="absolute inset-0 bg-white/5 opacity-0 hover:opacity-100 transition-opacity" />
             </motion.button>
           </div>
         </div>
