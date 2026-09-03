@@ -1,7 +1,6 @@
 import { Outlet } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { Topbar } from './Topbar';
-import HexMenu from '../components/layout/HexMenu';
 import BottomBar from '../components/layout/BottomBar';
 import { useUIStore } from '../stores/useUIStore';
 
@@ -43,10 +42,7 @@ export function MainLayout() {
         </main>
       </div>
 
-      {/* HexMenu — Desktop only (floating FAB) */}
-      <HexMenu />
-
-      {/* BottomBar — Mobile only (integrated nav + hex) */}
+      {/* BottomBar — Mobile (nav+hex) + Desktop (floating hex) */}
       <BottomBar />
     </div>
   );
