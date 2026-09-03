@@ -54,7 +54,7 @@ export default function BottomBar() {
   const isActive = (path) => location.pathname.startsWith(path);
 
   return (
-    <>
+    <div className="lg:hidden">
       {/* Hex/Fab button — always visible on mobile bottom */}
       <motion.button
         onClick={handleHexTap}
@@ -69,9 +69,9 @@ export default function BottomBar() {
         <span className="text-2xl" style={{ fontFamily: 'serif' }}>🜁</span>
       </motion.button>
 
-      {/* Bottom nav — fixed at bottom, visible only on mobile (lg:hidden) */}
+      {/* Bottom nav — fixed at bottom */}
       <div
-        className="fixed bottom-0 left-0 right-0 z-[89] lg:hidden border-t backdrop-blur-xl"
+        className="fixed bottom-0 left-0 right-0 z-[89] border-t backdrop-blur-xl"
         style={{
           background: 'rgba(17, 17, 24, 0.92)',
           borderColor: 'var(--nav-border)',
@@ -127,6 +127,6 @@ export default function BottomBar() {
           )}
         </div>
       </div>
-    </>
+    </div>
   );
 }

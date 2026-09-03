@@ -182,7 +182,7 @@ function HexFAB({ isOpen, setIsOpen }) {
 export default function HexMenu() {
   const [hexOpen, setHexOpen] = useState(false);
   return (
-    <div className="flex">
+    <div className="hidden lg:flex">
       <HexFAB isOpen={hexOpen} setIsOpen={setHexOpen} />
     </div>
   );
