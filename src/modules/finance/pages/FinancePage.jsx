@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Wallet,
@@ -38,6 +39,7 @@ const TABS = [
 
 export function FinancePage() {
   const [tab, setTab] = useState('overview');
+  const [searchParams] = useSearchParams();
 
   const {
     totalIncome,
@@ -140,6 +142,21 @@ export function FinancePage() {
   const safePots = Array.isArray(pots) ? pots : [];
   const safeTransactions = Array.isArray(transactions) ? transactions : [];
   const totalInvested = typeof getTotalInvested === 'function' ? getTotalInvested() : 0;
+
+  // Open expense modal when arriving via Quick Access (?action=expense)
+  React.useEffect(() => {
+    if (searchParams.get('action') === 'expense') {
+      if (safePots.length > 0) {
+        setSelectedPotId(safePots[0].id);
+        setExpenseAmount('');
+        setExpenseDesc('');
+        setActiveModal('expense');
+      } else {
+        setActiveModal('new-pot');
+      }
+    }
+    // runs once on mount
+  }, []);
 
   return (
     <div className="page-container">

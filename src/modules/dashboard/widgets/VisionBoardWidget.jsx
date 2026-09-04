@@ -1,9 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useVisionStore } from '../../../stores/useVisionStore';
-
-import { VisionItemModal } from './VisionItemModal';
-import { VisionManagerModal } from './VisionManagerModal';
+import { useNavigate } from 'react-router-dom';
 
 function getYouTubeId(url) {
   // Regex expandido para aceitar links normais, shorts, embeds e compartilhamentos curtos
@@ -193,10 +191,9 @@ function VisionItem({ item }) {
 export function VisionBoardWidget() {
   const allItems = useVisionStore(s => s.items);
   const items = allItems.filter(i => i.active);
+  const navigate = useNavigate();
   const [index, setIndex] = useState(0);
   const [direction, setDirection] = useState(1);
-  const [addOpen, setAddOpen] = useState(false);
-  const [manageOpen, setManageOpen] = useState(false);
 
   useEffect(() => {
     if (items.length > 0) setIndex(Math.floor(Math.random() * items.length));
@@ -232,18 +229,12 @@ export function VisionBoardWidget() {
           </p>
         </div>
         <button
-          onClick={() => setAddOpen(true)}
+          onClick={() => navigate('/settings')}
           className="px-4 py-2 rounded-xl text-sm font-semibold text-white transition-all hover:opacity-90"
           style={{ background: 'var(--primary)' }}
         >
-          + Adicionar primeiro item
+          ⚙️ Gerenciar nas Configurações
         </button>
-        {addOpen && (
-          <VisionItemModal
-            onClose={() => setAddOpen(false)}
-            activePersonaId={activePersonaId}
-          />
-        )}
       </div>
     );
 
@@ -318,31 +309,6 @@ export function VisionBoardWidget() {
         </div>
       )}
 
-      <div className="absolute top-3 right-3 flex gap-2 z-10">
-        <button
-          onClick={() => setAddOpen(true)}
-          className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all hover:scale-110"
-          style={{
-            background: 'rgba(0,0,0,0.5)',
-            backdropFilter: 'blur(8px)',
-            color: 'white',
-          }}
-        >
-          +
-        </button>
-        <button
-          onClick={() => setManageOpen(true)}
-          className="w-8 h-8 rounded-full flex items-center justify-center text-xs transition-all hover:scale-110"
-          style={{
-            background: 'rgba(0,0,0,0.5)',
-            backdropFilter: 'blur(8px)',
-            color: 'white',
-          }}
-        >
-          ⋯
-        </button>
-      </div>
-
       <div
         className="absolute top-3 left-3 px-2 py-1 rounded-full text-xs font-medium z-10"
         style={{
@@ -353,19 +319,6 @@ export function VisionBoardWidget() {
       >
         {index + 1} / {items.length}
       </div>
-
-      {addOpen && (
-        <VisionItemModal
-          onClose={() => setAddOpen(false)}
-          activePersonaId={activePersonaId}
-        />
-      )}
-      {manageOpen && (
-        <VisionManagerModal
-          onClose={() => setManageOpen(false)}
-          activePersonaId={activePersonaId}
-        />
-      )}
     </div>
   );
 }
