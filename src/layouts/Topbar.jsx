@@ -55,7 +55,7 @@ export function Topbar() {
     <motion.header
       initial={{ y: -20, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      className="sticky top-0 z-[50] flex-shrink-0 w-full backdrop-blur-xl border-b px-4 py-3 sm:px-6 select-none"
+      className="hidden lg:block sticky top-0 z-[50] flex-shrink-0 w-full backdrop-blur-xl border-b px-4 py-3 sm:px-6 select-none"
       style={{
         background: 'rgba(23, 23, 30, 0.7)',
         borderColor: 'var(--nav-border)',

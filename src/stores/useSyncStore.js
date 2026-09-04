@@ -2,6 +2,38 @@ import { create } from 'zustand';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { db } from '../shared/config/firebase';
 
+// Remove functions and non-serializable values recursively so Firestore
+// doesn't reject the payload (setDoc fails on functions).
+function toPlainData(value) {
+  if (value === null || value === undefined) return value;
+  const t = typeof value;
+  // Functions, symbols, and other non-serializable types are dropped
+  if (t === 'function' || t === 'symbol' || t === 'bigint') return undefined;
+  // Date / Firestore Timestamp etc. — keep primitives
+  if (t === 'string' || t === 'number' || t === 'boolean') return value;
+  if (value instanceof Date) return value.toISOString();
+  if (Array.isArray(value)) {
+    const out = [];
+    for (const v of value) {
+      const p = toPlainData(v);
+      if (p !== undefined) out.push(p);
+    }
+    return out;
+  }
+  if (t === 'object') {
+    // Drop objects that aren't plain (e.g. class instances) to avoid weirdness
+    const proto = Object.getPrototypeOf(value);
+    if (proto !== Object.prototype && proto !== null) return undefined;
+    const out = {};
+    for (const key of Object.keys(value)) {
+      const p = toPlainData(value[key]);
+      if (p !== undefined) out[key] = p;
+    }
+    return out;
+  }
+  return undefined;
+}
+
 const SYNC_INTERVALS = {
   '5min': 5 * 60 * 1000,
   '15min': 15 * 60 * 1000,
@@ -88,14 +120,14 @@ export const useSyncStore = create((set, get) => ({
       const { useAchievementStore } = await import('./useAchievementStore');
       const { useGameStore } = await import('./useGameStore');
       
-      const syncData = {
+      const syncData = toPlainData({
         health: useHealthStore.getState().plans,
         study: useStudyStore.getState(),
         finance: useFinanceStore.getState(),
         achievements: useAchievementStore.getState(),
         game: useGameStore.getState(),
         lastSynced: new Date().toISOString(),
-      };
+      });
       
       // Save to Firestore
       const userDocRef = doc(db, 'users', user.uid, 'syncData', 'main');
