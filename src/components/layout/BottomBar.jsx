@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { motion, AnimatePresence, useMotionValue, useTransform, animate } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   LayoutDashboard,
   BookOpen,
@@ -89,15 +89,6 @@ export default function BottomBar() {
   };
 
   const isActive = (path) => location.pathname.startsWith(path);
-
-  /* ── Swipe-down to close (mobile) ── */
-  const swipeY = useMotionValue(0);
-  const sheetOpacity = useTransform(swipeY, [0, 120], [1, 0]);
-  const handleTouchEnd = (_, info) => {
-    if (info.offset.y > 80 || info.velocity.y > 300) {
-      closeHex();
-    }
-  };
 
   return (
     <>
@@ -236,74 +227,6 @@ export default function BottomBar() {
                 })}
               </div>
             </div>
-          </>
-        )}
-      </AnimatePresence>
-
-      {/* ═══════════════════════════════════════════════════════════
-          MOBILE — Bottom sheet (swipe-down alternative)
-          ═══════════════════════════════════════════════════════════ */}
-      <AnimatePresence>
-        {hexOpen && (
-          <>
-            <motion.div
-              key="sheet-backdrop"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={closeHex}
-              className="lg:hidden fixed inset-0 z-[91] bg-black/60"
-            />
-            <motion.div
-              key="sheet"
-              style={{ y: swipeY, opacity: sheetOpacity }}
-              drag="y"
-              dragConstraints={{ top: 0, bottom: 0 }}
-              dragElastic={0.3}
-              onDragEnd={handleTouchEnd}
-              initial={{ y: '100%' }}
-              animate={{ y: 0 }}
-              exit={{ y: '100%' }}
-              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-              className="lg:hidden fixed bottom-0 left-0 right-0 z-[92] rounded-t-3xl border-t"
-              style={{
-                background: 'rgba(17, 17, 24, 0.98)',
-                borderColor: 'rgba(255,255,255,0.08)',
-                paddingBottom: 'env(safe-area-inset-bottom, 0px)',
-                touchAction: 'none',
-              }}
-            >
-              {/* Handle */}
-              <div className="flex justify-center pt-3 pb-2 cursor-grab active:cursor-grabbing">
-                <div className="w-10 h-1 rounded-full" style={{ background: 'rgba(255,255,255,0.2)' }} />
-              </div>
-
-              <div className="px-4 pb-6">
-                <p className="text-[10px] font-bold uppercase tracking-widest mb-3 px-1" style={{ color: 'var(--text-dim)' }}>
-                  Mais
-                </p>
-                <div className="grid grid-cols-3 gap-2">
-                  {EXTRA_ITEMS.map((item) => {
-                    const Icon = item.icon;
-                    const active = isActive(item.path);
-                    return (
-                      <button
-                        key={item.path}
-                        onClick={() => handleNav(item.path)}
-                        className="flex flex-col items-center gap-2 py-3 rounded-2xl transition-all duration-200 active:scale-95"
-                        style={{
-                          background: active ? 'rgba(var(--nav-active-rgb), 0.12)' : 'rgba(255,255,255,0.03)',
-                          color: active ? 'var(--nav-active)' : 'var(--text-dim)',
-                        }}
-                      >
-                        <Icon size={22} strokeWidth={active ? 2.5 : 1.8} />
-                        <span className="text-[10px] font-semibold leading-none">{item.label}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            </motion.div>
           </>
         )}
       </AnimatePresence>
