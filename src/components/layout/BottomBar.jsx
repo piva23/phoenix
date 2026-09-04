@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useMotionValue, useTransform, animate } from 'framer-motion';
 import {
   LayoutDashboard,
   BookOpen,
@@ -21,15 +21,12 @@ function fmtTimer(sec) {
   return `${String(Math.floor(sec / 60)).padStart(2, '0')}:${String(sec % 60).padStart(2, '0')}`;
 }
 
-const hexClip = {
-  clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)',
-};
+const HEX_CLIP = 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)';
 
 /* ═══════════════════════════════════════════════════════
-   BOTTOM BAR — Mobile (5 items + hex last) + Desktop (floating hex)
+   BOTTOM BAR — Mobile (5 items + honeycomb hex) + Desktop (radial hex)
    ════════════════════════════════════════════════════════ */
 
-// Links úteis para a bottom bar mobile
 const NAV_ITEMS = [
   { path: '/dashboard', icon: LayoutDashboard, label: 'Home' },
   { path: '/calendar', icon: Calendar, label: 'Calendário' },
@@ -37,7 +34,6 @@ const NAV_ITEMS = [
   { path: '/health', icon: Dumbbell, label: 'Saúde' },
 ];
 
-// Links extras (abertos pelo hex)
 const EXTRA_ITEMS = [
   { path: '/achievements', icon: Trophy, label: 'Conquistas' },
   { path: '/finance', icon: Wallet, label: 'Finanças' },
@@ -46,8 +42,16 @@ const EXTRA_ITEMS = [
   { path: '/settings', icon: Settings, label: 'Config' },
 ];
 
-// Todos os itens (para radial desktop + bottom sheet mobile)
 const ALL_ITEMS = [...NAV_ITEMS, ...EXTRA_ITEMS];
+
+/* ═══ Honeycomb positions (relative to hex button center) ═══ */
+const HIVE_POSITIONS = [
+  { x: -46, y: -72, delay: 0.00 },   // top-left
+  { x: 0,   y: -88, delay: 0.04 },   // top-center
+  { x: 46,  y: -72, delay: 0.08 },   // top-right
+  { x: -28, y: -44, delay: 0.06 },   // mid-left
+  { x: 28,  y: -44, delay: 0.10 },   // mid-right
+];
 
 export default function BottomBar() {
   const navigate = useNavigate();
@@ -68,8 +72,11 @@ export default function BottomBar() {
   const progressRatio = totalTime > 0 ? timeLeft / totalTime : 0;
   const clampedRatio = Math.max(0, Math.min(1, progressRatio));
 
+  /* ── Close helpers ── */
+  const closeHex = () => setHexOpen(false);
+
   const handleNav = (path) => {
-    setHexOpen(false);
+    closeHex();
     navigate(path);
   };
 
@@ -77,16 +84,25 @@ export default function BottomBar() {
     if (isSessionActive && openSessionModal) {
       openSessionModal();
     } else {
-      setHexOpen(!hexOpen);
+      setHexOpen(prev => !prev);
     }
   };
 
   const isActive = (path) => location.pathname.startsWith(path);
 
+  /* ── Swipe-down to close (mobile) ── */
+  const swipeY = useMotionValue(0);
+  const sheetOpacity = useTransform(swipeY, [0, 120], [1, 0]);
+  const handleTouchEnd = (_, info) => {
+    if (info.offset.y > 80 || info.velocity.y > 300) {
+      closeHex();
+    }
+  };
+
   return (
     <>
       {/* ═══════════════════════════════════════════════════════════
-          MOBILE — Bottom bar com 5 itens (hex é o último)
+          MOBILE — Bottom bar (5 itens, hex é o último)
           ═══════════════════════════════════════════════════════════ */}
       <div
         className="lg:hidden fixed bottom-0 left-0 right-0 z-[89] border-t"
@@ -97,7 +113,6 @@ export default function BottomBar() {
         }}
       >
         <div className="flex items-center justify-around h-[68px] px-2 max-w-lg mx-auto">
-          {/* 4 nav items */}
           {NAV_ITEMS.map((item) => {
             const Icon = item.icon;
             const active = isActive(item.path);
@@ -119,7 +134,7 @@ export default function BottomBar() {
             );
           })}
 
-          {/* Hex — último botão da barra */}
+          {/* Hex — last button */}
           <motion.button
             onClick={handleHexTap}
             whileTap={{ scale: 0.9 }}
@@ -145,19 +160,107 @@ export default function BottomBar() {
       </div>
 
       {/* ═══════════════════════════════════════════════════════════
-          MOBILE — Bottom sheet (extras ao tocar no hex)
+          MOBILE — Honeycomb Hive (flutuante ao redor do hex)
+          ═══════════════════════════════════════════════════════════ */}
+      <AnimatePresence>
+        {hexOpen && (
+          <>
+            {/* Backdrop — covers full screen including bottom bar */}
+            <motion.div
+              key="hive-backdrop"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              onClick={closeHex}
+              className="lg:hidden fixed inset-0 z-[88] bg-black/50"
+            />
+
+            {/* Honeycomb cluster — positioned above the hex button */}
+            <div className="lg:hidden fixed z-[90] pointer-events-none" style={{ bottom: '88px', right: '12px' }}>
+              <div className="relative" style={{ width: '120px', height: '120px' }}>
+                {EXTRA_ITEMS.map((item, i) => {
+                  const pos = HIVE_POSITIONS[i];
+                  if (!pos) return null;
+                  const Icon = item.icon;
+                  const active = isActive(item.path);
+
+                  return (
+                    <motion.button
+                      key={item.path}
+                      initial={{ opacity: 0, scale: 0, x: 0, y: 0 }}
+                      animate={{
+                        opacity: 1,
+                        scale: 1,
+                        x: pos.x,
+                        y: pos.y,
+                      }}
+                      exit={{ opacity: 0, scale: 0, x: 0, y: 0 }}
+                      transition={{
+                        delay: pos.delay,
+                        type: 'spring',
+                        stiffness: 400,
+                        damping: 22,
+                      }}
+                      onClick={() => handleNav(item.path)}
+                      className="absolute pointer-events-auto"
+                      style={{
+                        left: '50%',
+                        top: '50%',
+                        marginLeft: '-22px',
+                        marginTop: '-22px',
+                      }}
+                    >
+                      {/* Hex shape */}
+                      <div
+                        className="w-[44px] h-[44px] flex items-center justify-center shadow-lg transition-all duration-150 active:scale-90"
+                        style={{
+                          clipPath: HEX_CLIP,
+                          background: active
+                            ? 'linear-gradient(135deg, var(--nav-active), var(--primary))'
+                            : 'rgba(255,255,255,0.1)',
+                          backdropFilter: 'blur(8px)',
+                        }}
+                      >
+                        <Icon size={18} strokeWidth={active ? 2.5 : 1.8} style={{ color: active ? '#fff' : 'rgba(255,255,255,0.85)' }} />
+                      </div>
+                      {/* Label */}
+                      <div
+                        className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[8px] font-bold whitespace-nowrap"
+                        style={{ color: 'var(--text-dim)' }}
+                      >
+                        {item.label}
+                      </div>
+                    </motion.button>
+                  );
+                })}
+              </div>
+            </div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* ═══════════════════════════════════════════════════════════
+          MOBILE — Bottom sheet (swipe-down alternative)
           ═══════════════════════════════════════════════════════════ */}
       <AnimatePresence>
         {hexOpen && (
           <>
             <motion.div
+              key="sheet-backdrop"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              onClick={() => setHexOpen(false)}
+              onClick={closeHex}
               className="lg:hidden fixed inset-0 z-[91] bg-black/60"
             />
             <motion.div
+              key="sheet"
+              style={{ y: swipeY, opacity: sheetOpacity }}
+              drag="y"
+              dragConstraints={{ top: 0, bottom: 0 }}
+              dragElastic={0.3}
+              onDragEnd={handleTouchEnd}
               initial={{ y: '100%' }}
               animate={{ y: 0 }}
               exit={{ y: '100%' }}
@@ -167,11 +270,14 @@ export default function BottomBar() {
                 background: 'rgba(17, 17, 24, 0.98)',
                 borderColor: 'rgba(255,255,255,0.08)',
                 paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+                touchAction: 'none',
               }}
             >
-              <div className="flex justify-center pt-3 pb-2">
-                <div className="w-10 h-1 rounded-full" style={{ background: 'rgba(255,255,255,0.15)' }} />
+              {/* Handle */}
+              <div className="flex justify-center pt-3 pb-2 cursor-grab active:cursor-grabbing">
+                <div className="w-10 h-1 rounded-full" style={{ background: 'rgba(255,255,255,0.2)' }} />
               </div>
+
               <div className="px-4 pb-6">
                 <p className="text-[10px] font-bold uppercase tracking-widest mb-3 px-1" style={{ color: 'var(--text-dim)' }}>
                   Mais
@@ -184,7 +290,7 @@ export default function BottomBar() {
                       <button
                         key={item.path}
                         onClick={() => handleNav(item.path)}
-                        className="flex flex-col items-center gap-2 py-3 rounded-2xl transition-all duration-200"
+                        className="flex flex-col items-center gap-2 py-3 rounded-2xl transition-all duration-200 active:scale-95"
                         style={{
                           background: active ? 'rgba(var(--nav-active-rgb), 0.12)' : 'rgba(255,255,255,0.03)',
                           color: active ? 'var(--nav-active)' : 'var(--text-dim)',
@@ -243,26 +349,23 @@ export default function BottomBar() {
                       transition={{ delay: i * 0.04, type: 'spring', stiffness: 400, damping: 25 }}
                       className="flex items-center gap-3"
                     >
-                      {/* Label */}
                       <div className="bg-background/95 backdrop-blur-md border border-white/10 text-[10px] font-bold uppercase tracking-wider py-1.5 px-3 rounded-lg shadow-xl opacity-0 group-hover:opacity-0 group-hover/item:opacity-100 transition-opacity pointer-events-none whitespace-nowrap"
                         style={{ color: active ? 'var(--nav-active)' : 'var(--text-main)' }}
                       >
                         {item.label}
                       </div>
-                      {/* Hex button */}
                       <button
                         onClick={() => handleNav(item.path)}
                         className="relative group/item"
                       >
                         <div
-                          className={`w-11 h-11 flex items-center justify-center shadow-lg transition-all duration-200 group-hover/item:scale-110 group-hover/item:shadow-xl cursor-pointer ${
-                            active ? 'text-white' : 'text-white/80'
-                          }`}
+                          className="w-11 h-11 flex items-center justify-center shadow-lg transition-all duration-200 group-hover/item:scale-110 group-hover/item:shadow-xl cursor-pointer"
                           style={{
-                            ...hexClip,
+                            clipPath: HEX_CLIP,
                             background: active
                               ? 'linear-gradient(135deg, var(--nav-active), var(--primary))'
                               : 'rgba(255,255,255,0.08)',
+                            color: active ? '#fff' : 'rgba(255,255,255,0.8)',
                           }}
                         >
                           <Icon size={16} />
@@ -277,7 +380,6 @@ export default function BottomBar() {
 
           {/* Main hex toggle */}
           <div className="relative w-[68px] h-[68px] flex items-center justify-center">
-            {/* Progress ring (session active) */}
             {isSessionActive && (
               <svg className="absolute w-[64px] h-[64px] -rotate-90 pointer-events-none z-20" viewBox="0 0 64 64">
                 <circle cx="32" cy="32" r="29" fill="none" stroke="rgba(255,255,255,0.03)" strokeWidth="2.5" />
@@ -296,7 +398,7 @@ export default function BottomBar() {
               whileTap={{ scale: 0.92 }}
               className="relative z-10 w-[56px] h-[56px] flex items-center justify-center text-white cursor-pointer transition-all duration-300"
               style={{
-                ...hexClip,
+                clipPath: HEX_CLIP,
                 background: isSessionActive
                   ? 'linear-gradient(135deg, #2563EB, #3B82F6)'
                   : hexOpen
