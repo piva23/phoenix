@@ -1,13 +1,12 @@
 import { useState } from 'react';
 import { useHealthStore, FOOD_DB } from '../../../stores/useHealthStore';
 import { useProjectStore } from '../../../stores/useProjectStore';
-import { STANDARD_HEALTH_PROGRAM, EMPTY_HEALTH_PROGRAM } from '../../../shared/constants/healthPrograms';
+import { STANDARD_HEALTH_PROGRAM } from '../../../shared/constants/healthPrograms';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import {
   Dumbbell,
   Timer,
-  Plus,
   Flame,
   Sparkles,
   Trash2,
@@ -18,6 +17,7 @@ import {
   Layers,
   ChevronDown,
   Zap,
+  Plus,
 } from 'lucide-react';
 
 const DAYS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
@@ -53,7 +53,6 @@ export function PlansTab() {
   const {
     plans = {},
     programs,
-    loadDefaults,
     loadBuiltinPlan,
     updateWorkoutDay,
     updateWaterPlan,
@@ -66,9 +65,6 @@ export function PlansTab() {
     addCircuit,
     removeCircuit,
     updateCircuitMovements,
-    switchProgram,
-    saveProgram,
-    deleteProgram,
   } = useHealthStore();
 
   const projects = useProjectStore(s => s.projects || []);
@@ -135,43 +131,6 @@ export function PlansTab() {
   })();
 
   const activeProgram = savedPrograms[activeProgramId] || STANDARD_HEALTH_PROGRAM;
-
-  const handleSaveAsNew = () => {
-    const name = window.prompt('Nome do novo programa:');
-    if (!name || !name.trim()) return;
-
-    const icon = window.prompt('Ícone do programa (emoji):', '📋') || '📋';
-    const id = saveProgram({
-      name: name.trim(),
-      description: '',
-      icon: icon.trim(),
-    });
-
-    if (id) {
-      toast.success(`Programa "${name.trim()}" salvo com sucesso! 💾`);
-    } else {
-      toast.error('Erro ao salvar programa.');
-    }
-  };
-
-  const handleDeleteProgram = () => {
-    if (!activeProgramId || activeProgram?.isDefault) {
-      toast.error('Não é possível excluir o programa padrão.');
-      return;
-    }
-
-    const confirmed = window.confirm(
-      `Tem certeza que deseja excluir o programa "${activeProgram?.name}"?\n\nEsta ação não pode ser desfeita.`
-    );
-    if (!confirmed) return;
-
-    const ok = deleteProgram(activeProgramId);
-    if (ok) {
-      toast.success('Programa excluído. 🗑️');
-    } else {
-      toast.error('Erro ao excluir programa.');
-    }
-  };
 
   const todayDow = new Date().getDay();
   const [selectedDow, setSelectedDow] = useState(todayDow);
@@ -465,7 +424,7 @@ export function PlansTab() {
   return (
     <div className="space-y-6 pb-24">
       
-      {/* ── PROGRAMS SECTION ── */}
+      {/* ── CARREGADOR DE PLANOS ── */}
       <div className="bg-[#0C0C10]/90 backdrop-blur-xl border border-white/10 rounded-3xl p-4 sm:p-6 shadow-2xl">
         <button
           onClick={() => setProgramsExpanded(!programsExpanded)}
@@ -501,86 +460,52 @@ export function PlansTab() {
               className="overflow-hidden"
             >
               <div className="mt-4 pt-4 border-t border-white/5 space-y-4">
-                {/* Available plans grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {allProgramsList.map(p => {
-                    const isActive = p.id === activeProgramId;
-                    const isSaved = !!savedPrograms[p.id];
-                    return (
-                      <div
-                        key={p.id}
-                        className={`p-4 rounded-2xl border transition-all ${
-                          isActive
-                            ? 'bg-purple-500/10 border-purple-500/30 shadow-lg shadow-purple-900/20'
-                            : 'bg-black/30 border-white/5 hover:border-white/15 hover:bg-white/[0.02]'
-                        }`}
-                      >
-                        <div className="flex items-center gap-3">
-                          <span className="text-2xl">{p.icon || '📋'}</span>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-xs font-black text-white uppercase tracking-wider truncate">
-                              {p.name}
-                            </p>
-                            {p.description && (
-                              <p className="text-[10px] text-gray-500 mt-0.5 truncate">
-                                {p.description}
-                              </p>
-                            )}
-                            <div className="flex items-center gap-2 mt-1.5">
-                              {p.isDefault && (
-                                <span className="px-1.5 py-0.5 rounded-md bg-sky-500/10 border border-sky-500/20 text-[9px] font-bold text-sky-400 uppercase tracking-wider">
-                                  Padrão
-                                </span>
-                              )}
-                              {isActive && (
-                                <span className="px-1.5 py-0.5 rounded-md bg-purple-500/10 border border-purple-500/20 text-[9px] font-bold text-purple-400 uppercase tracking-wider flex items-center gap-1">
-                                  <Zap size={9} /> Ativo
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                          {!isActive && (
-                            <button
-                              onClick={() => {
-                                if (isSaved) {
-                                  const ok = switchProgram(p.id);
-                                  if (ok) toast.success(`Programa "${p.name}" ativado! 🔄`);
-                                  else toast.error('Erro ao trocar programa.');
-                                } else {
-                                  const ok = loadBuiltinPlan(p.id);
-                                  if (ok) toast.success(`Programa "${p.name}" carregado! 📦`);
-                                  else toast.error('Erro ao carregar programa.');
-                                }
-                              }}
-                              className="px-3 py-1.5 rounded-xl bg-purple-500/10 border border-purple-500/20 text-purple-400 text-[10px] font-black uppercase tracking-wider hover:bg-purple-500/20 transition-all cursor-pointer flex-shrink-0"
-                            >
-                              {isSaved ? 'Trocar' : 'Carregar'}
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {/* Action buttons */}
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    onClick={handleSaveAsNew}
-                    className="px-4 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all active:scale-95 flex items-center gap-1.5 shadow-lg shadow-purple-900/30 border border-purple-500/40 cursor-pointer"
-                  >
-                    <Plus size={13} strokeWidth={3} /> Salvar Como Novo
-                  </button>
-
-                  {activeProgram && !activeProgram.isDefault && (
-                    <button
-                      onClick={handleDeleteProgram}
-                      className="px-4 py-2.5 bg-black/40 hover:bg-rose-500/10 border border-rose-500/30 text-rose-400 rounded-xl text-xs font-black uppercase tracking-widest transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer"
+                {allProgramsList.map(p => {
+                  const isActive = p.id === activeProgramId;
+                  return (
+                    <div
+                      key={p.id}
+                      className={`p-4 rounded-2xl border transition-all ${
+                        isActive
+                          ? 'bg-purple-500/10 border-purple-500/30 shadow-lg shadow-purple-900/20'
+                          : 'bg-black/30 border-white/5'
+                      }`}
                     >
-                      <Trash2 size={13} /> Excluir Programa
-                    </button>
-                  )}
-                </div>
+                      <div className="flex items-center gap-3">
+                        <span className="text-2xl">{p.icon || '📋'}</span>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-black text-white uppercase tracking-wider truncate">
+                            {p.name}
+                          </p>
+                          {p.description && (
+                            <p className="text-[10px] text-gray-500 mt-0.5 truncate">
+                              {p.description}
+                            </p>
+                          )}
+                          <div className="flex items-center gap-2 mt-1.5">
+                            {isActive && (
+                              <span className="px-1.5 py-0.5 rounded-md bg-purple-500/10 border border-purple-500/20 text-[9px] font-bold text-purple-400 uppercase tracking-wider flex items-center gap-1">
+                                <Zap size={9} /> Ativo
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        {!isActive && (
+                          <button
+                            onClick={() => {
+                              const ok = loadBuiltinPlan(p.id);
+                              if (ok) toast.success(`Programa "${p.name}" carregado! 📦`);
+                              else toast.error('Erro ao carregar programa.');
+                            }}
+                            className="px-4 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 shadow-lg shadow-purple-900/30 border border-purple-500/40 cursor-pointer flex-shrink-0"
+                          >
+                            Carregar
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </motion.div>
           )}
