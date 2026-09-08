@@ -25,7 +25,7 @@ export const useHealthStore = create(
 
       // ── PROGRAMAS ───────────────────────────────────────────────────────────
       programs: {
-        activeProgramId: 'std_health_v1',
+        activeProgramId: null,
         saved: {},
       },
 

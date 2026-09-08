@@ -112,7 +112,7 @@ export function PlansTab() {
   // ── PROGRAMS SECTION ─────────────────────────────────────────────────────────
   const [programsExpanded, setProgramsExpanded] = useState(true);
 
-  const activeProgramId = programs?.activeProgramId || 'std_health_v1';
+  const activeProgramId = programs?.activeProgramId || null;
   const savedPrograms = programs?.saved || {};
 
   // Build the full programs list: always include the standard if not already saved
@@ -131,7 +131,7 @@ export function PlansTab() {
     return Array.from(map.values());
   })();
 
-  const activeProgram = savedPrograms[activeProgramId] || STANDARD_HEALTH_PROGRAM;
+  const activeProgram = activeProgramId ? (savedPrograms[activeProgramId] || null) : null;
 
   const todayDow = new Date().getDay();
   const [selectedDow, setSelectedDow] = useState(todayDow);
