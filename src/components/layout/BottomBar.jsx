@@ -63,6 +63,10 @@ export default function BottomBar() {
   const openSessionModal = useSessionModalStore(s => s.openModal || s.openSessionModal);
   const { isSessionActive } = useActiveSessionUIStore();
 
+  // Hide global BottomBar on study routes — StudyLayout provides its own nav
+  const isStudyRoute = location.pathname.startsWith('/study');
+  if (isStudyRoute) return null;
+
   const handleHexTap = () => {
     if (isSessionActive && openSessionModal) {
       openSessionModal();

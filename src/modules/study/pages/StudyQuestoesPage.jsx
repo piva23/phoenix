@@ -566,10 +566,11 @@ export default function StudyQuestoesPage() {
             <span className="transition-transform" style={{ transform: showFilters ? 'rotate(0)' : 'rotate(-90deg)' }}>▼</span>Filtros{activeCount > 0 && <Badge color="var(--primary)" variant="solid">{activeCount}</Badge>}
           </button>
           <AnimatePresence>{showFilters && (
-            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden">
-              <div className="p-4 rounded-2xl border backdrop-blur-xl space-y-3 relative z-20" style={{ background: 'rgba(255,255,255,0.03)', borderColor: 'rgba(255,255,255,0.06)' }}>
+            <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.2 }} className="relative z-50">
+              <div className="p-4 rounded-2xl border backdrop-blur-xl space-y-3" style={{ background: 'rgba(255,255,255,0.03)', borderColor: 'rgba(255,255,255,0.06)' }}>
                 <input value={filters.keyword} onChange={e => updFilter('keyword', e.target.value)} placeholder="🔍 Palavra-chave..." className="w-full px-3 py-2.5 rounded-xl text-sm border outline-none backdrop-blur-sm" style={inp} />
-                <div className="flex flex-wrap gap-2">
+                {/* MultiSelect buttons — horizontal scroll on mobile */}
+                <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1 -mx-1 px-1">
                   <MultiSelect label="Disciplina" icon="📖" options={filterValues.materias} selected={filters.materias} onChange={v => updFilter('materias', v)} />
                   <MultiSelect label="Assunto" icon="📝" options={filterValues.assuntos} selected={filters.assuntos} onChange={v => updFilter('assuntos', v)} />
                   <MultiSelect label="Banca" icon="🏛️" options={filterValues.bancas} selected={filters.bancas} onChange={v => updFilter('bancas', v)} />
