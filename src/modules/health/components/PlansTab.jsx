@@ -1,25 +1,23 @@
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import { useHealthStore, FOOD_DB } from '../../../stores/useHealthStore';
 import { useProjectStore } from '../../../stores/useProjectStore';
-import { STANDARD_HEALTH_PROGRAM } from '../../../shared/constants/healthPrograms';
+import { STANDARD_HEALTH_PROGRAM, EMPTY_HEALTH_PROGRAM } from '../../../shared/constants/healthPrograms';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
-import { 
-  Dumbbell, 
-  Timer, 
-  Plus, 
-  Flame, 
-  Sparkles, 
-  Trash2, 
-  Pencil, 
-  Droplets, 
-  Pill, 
-  Utensils, 
-  Layers, 
-  Upload,
+import {
+  Dumbbell,
+  Timer,
+  Plus,
+  Flame,
+  Sparkles,
+  Trash2,
+  Pencil,
+  Droplets,
+  Pill,
+  Utensils,
+  Layers,
   ChevronDown,
-  Download,
-  FileDown
+  Zap,
 } from 'lucide-react';
 
 const DAYS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
@@ -56,7 +54,6 @@ export function PlansTab() {
     plans = {},
     programs,
     loadDefaults,
-    importHealthJSON,
     updateWorkoutDay,
     updateWaterPlan,
     updateMealPlan,
@@ -71,8 +68,6 @@ export function PlansTab() {
     switchProgram,
     saveProgram,
     deleteProgram,
-    importProgram,
-    exportProgram,
   } = useHealthStore();
 
   const projects = useProjectStore(s => s.projects || []);
@@ -116,11 +111,8 @@ export function PlansTab() {
   // Subaba administrativa selecionada: 'workout' | 'meals' | 'habits' | 'meds' | 'water'
   const [adminTab, setAdminTab] = useState('workout');
 
-  const fileInputRef = useRef(null);
-
   // ── PROGRAMS SECTION ─────────────────────────────────────────────────────────
   const [programsExpanded, setProgramsExpanded] = useState(true);
-  const programImportRef = useRef(null);
 
   const activeProgramId = programs?.activeProgramId || 'std_health_v1';
   const savedPrograms = programs?.saved || {};
@@ -143,18 +135,6 @@ export function PlansTab() {
 
   const activeProgram = savedPrograms[activeProgramId] || STANDARD_HEALTH_PROGRAM;
 
-  const handleSwitchProgram = (e) => {
-    const programId = e.target.value;
-    if (programId === activeProgramId) return;
-
-    const ok = switchProgram(programId);
-    if (ok) {
-      toast.success(`Programa "${savedPrograms[programId]?.name || programId}" ativado! 🔄`);
-    } else {
-      toast.error('Erro ao trocar programa.');
-    }
-  };
-
   const handleSaveAsNew = () => {
     const name = window.prompt('Nome do novo programa:');
     if (!name || !name.trim()) return;
@@ -170,58 +150,6 @@ export function PlansTab() {
       toast.success(`Programa "${name.trim()}" salvo com sucesso! 💾`);
     } else {
       toast.error('Erro ao salvar programa.');
-    }
-  };
-
-  const handleExportProgram = () => {
-    if (!activeProgramId) return;
-    const json = exportProgram(activeProgramId);
-    if (!json) {
-      toast.error('Erro ao exportar programa.');
-      return;
-    }
-
-    const blob = new Blob([json], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${activeProgram?.name || 'programa'}_${new Date().toISOString().slice(0, 10)}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-    toast.success('Programa exportado! 📤');
-  };
-
-  const handleImportProgramFile = (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      try {
-        const content = event.target?.result;
-        const id = importProgram(content);
-        if (id) {
-          toast.success('Programa importado com sucesso! 📥');
-        } else {
-          toast.error('Formato de JSON inválido para programa.');
-        }
-      } catch {
-        toast.error('Erro ao ler arquivo de programa.');
-      }
-    };
-    reader.readAsText(file);
-    e.target.value = '';
-  };
-
-  const handleImportProgramJSON = () => {
-    const json = window.prompt('Cole o JSON do programa:');
-    if (!json || !json.trim()) return;
-
-    const id = importProgram(json.trim());
-    if (id) {
-      toast.success('Programa importado com sucesso! 📥');
-    } else {
-      toast.error('Formato de JSON inválido para programa.');
     }
   };
 
@@ -242,29 +170,6 @@ export function PlansTab() {
     } else {
       toast.error('Erro ao excluir programa.');
     }
-  };
-
-  // Manipulador de importação de arquivo JSON
-  const handleImportFile = (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      try {
-        const content = event.target?.result;
-        const ok = importHealthJSON(content);
-        if (ok) {
-          toast.success('Planos e rotinas importados com sucesso! 📥', { icon: '✨' });
-        } else {
-          toast.error('Formato de JSON inválido.');
-        }
-      } catch (err) {
-        toast.error('Erro ao ler arquivo JSON.');
-      }
-    };
-    reader.readAsText(file);
-    e.target.value = '';
   };
 
   const todayDow = new Date().getDay();
@@ -571,7 +476,7 @@ export function PlansTab() {
             </span>
             <div className="text-left">
               <h3 className="text-sm font-black text-white uppercase tracking-wider">
-                Programas de Saúde
+                Carregador de Planos
               </h3>
               {activeProgram && (
                 <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
@@ -595,57 +500,55 @@ export function PlansTab() {
               className="overflow-hidden"
             >
               <div className="mt-4 pt-4 border-t border-white/5 space-y-4">
-                {/* Program selector */}
-                <div>
-                  <label className="text-[10px] font-black text-gray-500 uppercase tracking-widest block mb-1.5">
-                    Programa Ativo
-                  </label>
-                  <select
-                    value={activeProgramId}
-                    onChange={handleSwitchProgram}
-                    className="w-full px-4 py-3 rounded-xl bg-black/40 border border-white/10 text-xs font-bold text-white outline-none focus:border-purple-500 cursor-pointer appearance-none"
-                    style={{
-                      backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%239CA3AF' viewBox='0 0 16 16'%3E%3Cpath d='M8 11L3 6h10z'/%3E%3C/svg%3E")`,
-                      backgroundRepeat: 'no-repeat',
-                      backgroundPosition: 'right 12px center',
-                    }}
-                  >
-                    {allProgramsList.map(p => (
-                      <option key={p.id} value={p.id}>
-                        {p.icon} {p.name} {p.isDefault ? '(Padrão)' : ''}
-                      </option>
-                    ))}
-                  </select>
+                {/* Available plans grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {allProgramsList.map(p => {
+                    const isActive = p.id === activeProgramId;
+                    return (
+                      <button
+                        key={p.id}
+                        onClick={() => {
+                          if (!isActive) {
+                            const ok = switchProgram(p.id);
+                            if (ok) toast.success(`Programa "${p.name}" ativado! 🔄`);
+                            else toast.error('Erro ao trocar programa.');
+                          }
+                        }}
+                        className={`p-4 rounded-2xl border text-left transition-all cursor-pointer ${
+                          isActive
+                            ? 'bg-purple-500/10 border-purple-500/30 shadow-lg shadow-purple-900/20'
+                            : 'bg-black/30 border-white/5 hover:border-white/15 hover:bg-white/[0.02]'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <span className="text-2xl">{p.icon || '📋'}</span>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-black text-white uppercase tracking-wider truncate">
+                              {p.name}
+                            </p>
+                            {p.description && (
+                              <p className="text-[10px] text-gray-500 mt-0.5 truncate">
+                                {p.description}
+                              </p>
+                            )}
+                            <div className="flex items-center gap-2 mt-1.5">
+                              {p.isDefault && (
+                                <span className="px-1.5 py-0.5 rounded-md bg-sky-500/10 border border-sky-500/20 text-[9px] font-bold text-sky-400 uppercase tracking-wider">
+                                  Padrão
+                                </span>
+                              )}
+                              {isActive && (
+                                <span className="px-1.5 py-0.5 rounded-md bg-purple-500/10 border border-purple-500/20 text-[9px] font-bold text-purple-400 uppercase tracking-wider flex items-center gap-1">
+                                  <Zap size={9} /> Ativo
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })}
                 </div>
-
-                {/* Active program info */}
-                {activeProgram && (
-                  <div className="p-3 rounded-xl bg-black/30 border border-white/5 flex items-center gap-3">
-                    <span className="text-2xl">{activeProgram.icon || '📋'}</span>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-black text-white uppercase tracking-wider truncate">
-                        {activeProgram.name}
-                      </p>
-                      {activeProgram.description && (
-                        <p className="text-[10px] text-gray-500 mt-0.5 truncate">
-                          {activeProgram.description}
-                        </p>
-                      )}
-                      <div className="flex items-center gap-2 mt-1">
-                        {activeProgram.isDefault && (
-                          <span className="px-1.5 py-0.5 rounded-md bg-sky-500/10 border border-sky-500/20 text-[9px] font-bold text-sky-400 uppercase tracking-wider">
-                            Padrão
-                          </span>
-                        )}
-                        {activeProgram.createdAt && (
-                          <span className="text-[9px] text-gray-600 font-mono">
-                            Criado: {new Date(activeProgram.createdAt).toLocaleDateString('pt-BR')}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                )}
 
                 {/* Action buttons */}
                 <div className="flex flex-wrap gap-2">
@@ -656,27 +559,6 @@ export function PlansTab() {
                     <Plus size={13} strokeWidth={3} /> Salvar Como Novo
                   </button>
 
-                  <button
-                    onClick={handleExportProgram}
-                    className="px-4 py-2.5 bg-black/40 hover:bg-blue-500/10 border border-blue-500/30 text-blue-300 rounded-xl text-xs font-black uppercase tracking-widest transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer"
-                  >
-                    <FileDown size={13} /> Exportar JSON
-                  </button>
-
-                  <button
-                    onClick={() => programImportRef.current?.click()}
-                    className="px-4 py-2.5 bg-black/40 hover:bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 rounded-xl text-xs font-black uppercase tracking-widest transition-all active:scale-95 flex items-center gap-1.5 cursor-pointer"
-                  >
-                    <Download size={13} /> Importar JSON
-                  </button>
-                  <input
-                    type="file"
-                    ref={programImportRef}
-                    accept=".json"
-                    onChange={handleImportProgramFile}
-                    className="hidden"
-                  />
-
                   {activeProgram && !activeProgram.isDefault && (
                     <button
                       onClick={handleDeleteProgram}
@@ -686,56 +568,21 @@ export function PlansTab() {
                     </button>
                   )}
                 </div>
-
-                {/* Quick import via paste */}
-                <button
-                  onClick={handleImportProgramJSON}
-                  className="w-full py-2.5 rounded-xl border border-dashed border-white/10 hover:border-white/20 bg-white/5 text-gray-400 text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer"
-                >
-                  📋 Colar JSON de Programa (Área de Transferência)
-                </button>
               </div>
             </motion.div>
           )}
         </AnimatePresence>
       </div>
 
-      {/* HEADER DE ADMINISTRAÇÃO & BOTÃO DE IMPORTAR JSON */}
-      <div className="bg-[#0C0C10]/90 backdrop-blur-xl border border-white/10 rounded-3xl p-6 shadow-2xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+      {/* HEADER DE ADMINISTRAÇÃO */}
+      <div className="bg-[#0C0C10]/90 backdrop-blur-xl border border-white/10 rounded-3xl p-6 shadow-2xl">
         <div>
           <h2 className="text-xl font-black text-white uppercase tracking-wider flex items-center gap-2">
             ⚙️ Painel de Administração & Setup
           </h2>
           <p className="text-xs text-gray-400 mt-1">
-            Configure seus planos de treino, dietas, rotinas e importe estruturas via JSON.
+            Configure seus planos de treino, dietas, rotinas e suplementação.
           </p>
-        </div>
-
-        <div className="flex items-center gap-2 flex-wrap">
-          <input
-            type="file"
-            ref={fileInputRef}
-            accept=".json"
-            onChange={handleImportFile}
-            className="hidden"
-          />
-          <button
-            onClick={() => {
-              if (loadDefaults) {
-                loadDefaults();
-                toast.success('Plano padrão carregado com sucesso! 🏥', { icon: '📦' });
-              }
-            }}
-            className="px-5 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-black uppercase tracking-widest rounded-2xl transition-all active:scale-95 shadow-lg shadow-emerald-900/30 border border-emerald-500/40 flex items-center gap-2 cursor-pointer"
-          >
-            <span className="text-sm">📦</span> Carregar Plano Padrão
-          </button>
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            className="px-5 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs font-black uppercase tracking-widest rounded-2xl transition-all active:scale-95 shadow-lg shadow-purple-900/30 border border-purple-500/40 flex items-center gap-2 cursor-pointer"
-          >
-            <Upload size={14} /> Importar JSON 📥
-          </button>
         </div>
       </div>
 
@@ -794,17 +641,6 @@ export function PlansTab() {
           }`}
         >
           <Droplets size={14} /> Hidratação
-        </button>
-
-        <button
-          onClick={() => setAdminTab('json')}
-          className={`flex-shrink-0 px-4 py-2.5 rounded-xl text-xs font-bold transition-all duration-300 flex items-center gap-2 uppercase tracking-wider cursor-pointer ${
-            adminTab === 'json'
-              ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg shadow-purple-900/30'
-              : 'text-gray-400 hover:text-white hover:bg-white/5'
-          }`}
-        >
-          <Upload size={14} /> JSON Data
         </button>
       </div>
 
@@ -1131,86 +967,6 @@ export function PlansTab() {
                 </div>
               </div>
             )}
-          </motion.div>
-        )}
-
-        {/* SUBABA: JSON DATA IMPORT/EXPORT */}
-        {adminTab === 'json' && (
-          <motion.div
-            key="admin-json"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            className="bg-[#0C0C10]/80 backdrop-blur-xl border border-white/10 rounded-3xl p-6 shadow-2xl space-y-6"
-          >
-            <div>
-              <h3 className="text-lg font-black text-white uppercase tracking-wider mb-2">Editor Avançado JSON</h3>
-              <p className="text-xs text-gray-400">
-                Cole o seu JSON com a estrutura esperada e clique em injetar.
-                Abaixo está a estrutura exigida pelo Módulo de Saúde.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-3">
-                <span className="text-[10px] font-black text-sky-400 uppercase tracking-widest block">Estrutura Esperada</span>
-                <pre className="bg-black/50 border border-white/5 p-4 rounded-xl text-[10px] text-green-400 overflow-x-auto max-h-[400px] font-mono shadow-inner custom-scrollbar">
-                  <code>{`{
-  "workout": {
-    "1": {
-      "label": "Treino de Seg",
-      "exercises": [
-        { "id": "ex_1", "name": "Supino", "sets": 3, "reps": "10", "carga": "40kg" }
-      ]
-    }
-  },
-  "mealPlan": [
-    {
-      "id": "m_1", "time": "12:00", "label": "Almoço", "icon": "🍽️",
-      "items": [
-        { "id": "mi_1", "name": "Arroz", "foodKey": "arroz", "kcal": 130, "prot": 2.5, "carb": 28, "fat": 0.3, "qty": 1 }
-      ]
-    }
-  ],
-  "habits": [
-    { "id": "h_1", "name": "Ler 10 pág", "type": "build", "icon": "📚" }
-  ],
-  "meds": [
-    { "id": "med_1", "name": "Vitamina C", "time": "08:00", "icon": "💊" }
-  ],
-  "water": {
-    "dailyGoalMl": 2500,
-    "buttons": [{ "ml": 250, "label": "💧 250ml" }]
-  }
-}`}</code>
-                </pre>
-              </div>
-
-              <div className="space-y-3 flex flex-col">
-                <span className="text-[10px] font-black text-purple-400 uppercase tracking-widest block">Injetar Novo JSON</span>
-                <textarea 
-                  id="json-import-textarea"
-                  className="flex-1 min-h-[300px] w-full bg-black/40 border border-white/10 rounded-xl p-4 text-xs font-mono text-white placeholder-gray-600 outline-none focus:border-purple-500 custom-scrollbar resize-none"
-                  placeholder='Cole seu objeto JSON aqui...'
-                />
-                <button
-                  onClick={() => {
-                    const txt = document.getElementById('json-import-textarea')?.value;
-                    if (!txt) return toast.error('Cole o JSON primeiro');
-                    const ok = importHealthJSON(txt);
-                    if (ok) {
-                      toast.success('JSON Injetado com sucesso! 🚀');
-                      document.getElementById('json-import-textarea').value = '';
-                    } else {
-                      toast.error('O JSON contém erros de formato.');
-                    }
-                  }}
-                  className="w-full py-4 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-lg shadow-purple-900/30 border border-purple-500/40 active:scale-95"
-                >
-                  Injetar no Estado
-                </button>
-              </div>
-            </div>
           </motion.div>
         )}
 
