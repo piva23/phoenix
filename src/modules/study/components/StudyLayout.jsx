@@ -16,15 +16,6 @@ const TABS = [
   { path: '/study/redacao', label: 'Redação', icon: '✍️' },
 ];
 
-// Bottom nav: only the 5 most important tabs
-const BOTTOM_TABS = [
-  { path: '/study/today', label: 'Hoje', icon: '⚡' },
-  { path: '/study/subjects', label: 'Matérias', icon: '📖' },
-  { path: '/study/questoes', label: 'Questões', icon: '❓' },
-  { path: '/study/revisions', label: 'Revisões', icon: '🔁', badge: true },
-  { path: '/study/concursos', label: 'Provas', icon: '🏛️' },
-];
-
 export function StudyLayout({ children, title, subtitle }) {
   const location = useLocation();
   const getPendingToday = useRevisionStore(s => s.getPendingToday);
@@ -57,9 +48,7 @@ export function StudyLayout({ children, title, subtitle }) {
 
       {/* Desktop Tab bar (hidden on mobile) */}
       <div className="mb-6 hidden md:block">
-        <div
-          className="flex gap-1 p-1.5 rounded-2xl backdrop-blur-xl bg-white/[0.03] border border-white/[0.06]"
-        >
+        <div className="flex gap-1 p-1.5 rounded-2xl backdrop-blur-xl bg-white/[0.03] border border-white/[0.06]">
           {visibleTabs.map(tab => {
             const isActive = activeTab?.path === tab.path;
             return (
@@ -67,9 +56,7 @@ export function StudyLayout({ children, title, subtitle }) {
                 key={tab.path}
                 to={tab.path}
                 className="relative flex-1 flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl text-[11px] font-bold uppercase tracking-wider transition-colors whitespace-nowrap select-none min-w-0"
-                style={{
-                  color: isActive ? '#10B981' : 'var(--text-dim)',
-                }}
+                style={{ color: isActive ? '#10B981' : 'var(--text-dim)' }}
               >
                 {isActive && (
                   <motion.div
@@ -102,21 +89,21 @@ export function StudyLayout({ children, title, subtitle }) {
       {/* Content */}
       {children}
 
-      {/* Mobile Bottom Nav (fixed) */}
+      {/* Mobile Bottom Nav (fixed, scrollable, ALL tabs) */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 z-40" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
-        <div className="bg-[#0C0C10]/95 backdrop-blur-xl border-t border-white/[0.08] px-2 pt-1.5 pb-2">
-          <div className="flex items-center justify-around">
-            {BOTTOM_TABS.map(tab => {
+        <div className="bg-[#0C0C10]/95 backdrop-blur-xl border-t border-white/[0.08] pt-1.5 pb-2">
+          <div className="flex items-center gap-1 px-1.5 overflow-x-auto scrollbar-hide">
+            {visibleTabs.map(tab => {
               const isActive = activeTab?.path === tab.path;
               return (
                 <NavLink
                   key={tab.path}
                   to={tab.path}
-                  className="relative flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-xl transition-all select-none"
+                  className="relative flex flex-col items-center gap-0.5 py-1 px-2.5 rounded-xl transition-all select-none flex-shrink-0 min-w-[52px]"
                   style={{ color: isActive ? '#10B981' : 'var(--text-dim)' }}
                 >
-                  <span className="text-lg leading-none">{tab.icon}</span>
-                  <span className="text-[9px] font-bold uppercase tracking-wider">{tab.label}</span>
+                  <span className="text-base leading-none">{tab.icon}</span>
+                  <span className="text-[8px] font-bold uppercase tracking-wider whitespace-nowrap">{tab.label}</span>
                   {isActive && (
                     <motion.div
                       layoutId="studyBottomNav"

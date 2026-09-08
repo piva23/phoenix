@@ -52,7 +52,7 @@ const REVISION_STAGES = [
 
 function StreakTile({ streak, xp }) {
   return (
-    <div className="card-glass p-3 md:p-3.5 rounded-2xl flex flex-col gap-1">
+    <div className="col-span-1 md:col-span-4 card-glass p-3 md:p-3.5 rounded-2xl flex flex-col gap-1">
       <div className="flex items-center justify-between">
         <span className="text-[9px] md:text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-dim)' }}>
           Streak
@@ -85,7 +85,7 @@ function StreakTile({ streak, xp }) {
 function TodayTile({ minutes }) {
   const pct = Math.min((minutes / 240) * 100, 100);
   return (
-    <div className="card-glass p-3 md:p-3.5 rounded-2xl flex flex-col gap-1">
+    <div className="col-span-1 md:col-span-4 card-glass p-3 md:p-3.5 rounded-2xl flex flex-col gap-1">
       <div className="flex items-center justify-between">
         <span className="text-[9px] md:text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-dim)' }}>
           Hoje
@@ -110,7 +110,7 @@ function TodayTile({ minutes }) {
 function ProvaTile({ prova, days }) {
   if (!prova) {
     return (
-      <div className="card-glass p-3 md:p-3.5 rounded-2xl flex flex-col gap-1">
+      <div className="col-span-1 md:col-span-4 card-glass p-3 md:p-3.5 rounded-2xl flex flex-col gap-1">
         <div className="flex items-center justify-between">
           <span className="text-[9px] md:text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-dim)' }}>
             Próxima Prova
@@ -127,7 +127,7 @@ function ProvaTile({ prova, days }) {
   const color = days <= 7 ? '#EF4444' : days <= 30 ? '#F59E0B' : '#10B981';
 
   return (
-    <div className="card-glass p-3 md:p-3.5 rounded-2xl flex flex-col gap-1">
+    <div className="col-span-1 md:col-span-4 card-glass p-3 md:p-3.5 rounded-2xl flex flex-col gap-1">
       <div className="flex items-center justify-between">
         <span className="text-[9px] md:text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-dim)' }}>
           Próxima Prova
@@ -547,50 +547,58 @@ export default function StudyTodayPage() {
 
             {/* Search inside edital section */}
             <div className="relative w-full">
-              <span className="absolute left-3 top-2.5 text-xs" style={{ color: 'var(--text-dim)' }}>🔍</span>
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs" style={{ color: 'var(--text-dim)' }}>🔍</span>
               <input
                 type="text"
-                placeholder="Pesquisar no edital..."
-                className="w-full pl-8 pr-3 py-2.5 rounded-xl text-xs outline-none transition-all backdrop-blur-xl bg-white/[0.04] border border-white/[0.08] focus:border-white/[0.2]"
+                placeholder="Pesquisar matéria..."
+                className="w-full pl-8 pr-3 py-2 rounded-xl text-xs outline-none transition-all backdrop-blur-xl bg-white/[0.04] border border-white/[0.08] focus:border-white/[0.2]"
                 style={{ color: 'var(--text-main)' }}
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
               />
             </div>
 
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-2">
               {filteredSubjects.length === 0 ? (
-                <BentoCard span="full" className="text-center py-8">
+                <div className="text-center py-8 rounded-2xl border border-dashed border-white/10">
                   <div className="text-2xl mb-2">📚</div>
                   <div className="text-xs font-bold" style={{ color: 'var(--text-main)' }}>
                     Nenhuma matéria encontrada
                   </div>
-                  <div className="text-[10px] mt-1" style={{ color: 'var(--text-dim)' }}>
-                    Cadastre novas matérias na aba Matérias
-                  </div>
-                </BentoCard>
+                </div>
               ) : (
-                filteredSubjects.map(subject => (
-                  <SubjectAccordion
-                    key={subject.id}
-                    subject={subject}
-                    isOpen={!!openSubjects[subject.id]}
-                    onToggle={() => toggleSubject(subject.id)}
-                    onNavigate={navigate}
-                  />
-                ))
+                <>
+                  {filteredSubjects.slice(0, 5).map(subject => (
+                    <SubjectAccordion
+                      key={subject.id}
+                      subject={subject}
+                      isOpen={!!openSubjects[subject.id]}
+                      onToggle={() => toggleSubject(subject.id)}
+                      onNavigate={navigate}
+                    />
+                  ))}
+                  {filteredSubjects.length > 5 && !searchQuery && (
+                    <button
+                      onClick={() => navigate('/study/subjects')}
+                      className="text-center py-2 text-[10px] font-bold uppercase tracking-wider transition-all hover:bg-white/[0.03] rounded-xl"
+                      style={{ color: 'var(--accent)' }}
+                    >
+                      Ver todas as {filteredSubjects.length} matérias →
+                    </button>
+                  )}
+                </>
               )}
             </div>
           </div>
 
           {/* Right: Revisões */}
-          <div className="col-span-12 lg:col-span-5 space-y-5">
+          <div className="col-span-12 lg:col-span-5 space-y-4">
             {/* Revisões Pendentes */}
             <div className="space-y-3">
               <SectionHeader title="Revisões Pendentes" count={revisionStats.total} icon="🔄" />
 
-              {/* Filters */}
-              <div className="flex gap-1.5 flex-wrap">
+              {/* Filters — horizontal scroll on mobile */}
+              <div className="flex gap-1.5 overflow-x-auto scrollbar-hide pb-1 -mx-1 px-1">
                 {[
                   { key: 'all', label: 'Todas', count: revisionStats.total, color: '#06B6D4' },
                   { key: 'overdue', label: 'Atrasadas', count: revisionStats.overdue, color: '#EF4444' },
@@ -600,7 +608,7 @@ export default function StudyTodayPage() {
                   <button
                     key={f.key}
                     onClick={() => setRevisionFilter(f.key)}
-                    className="px-2 py-1 rounded-lg text-[9px] font-bold uppercase tracking-wider transition-all border"
+                    className="flex-shrink-0 px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all border whitespace-nowrap"
                     style={
                       revisionFilter === f.key
                         ? { color: f.color, background: `${f.color}15`, borderColor: `${f.color}40` }
