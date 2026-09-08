@@ -1,5 +1,6 @@
 import { useHealthStore } from '../../../stores/useHealthStore';
 import { useGameStore } from '../../../stores/useGameStore';
+import { useProjectStore } from '../../../stores/useProjectStore';
 import toast from 'react-hot-toast';
 import { Flame, CheckCircle2, ShieldAlert } from 'lucide-react';
 
@@ -16,10 +17,13 @@ export function HabitosView() {
   } = useHealthStore();
 
   const dispatchXP = useGameStore(s => s.dispatchXP);
+  const projects = useProjectStore(s => s.projects || []);
   const todayStr = new Date().toISOString().split('T')[0];
 
   const buildHabits = (plans.habits || []).filter(h => h.type === 'build');
   const quitHabits = (plans.habits || []).filter(h => h.type === 'quit');
+
+  const getProjectById = (id) => projects.find(p => p.id === id);
 
   return (
     <div className="space-y-6 pb-20">
@@ -98,6 +102,21 @@ export function HabitosView() {
                         <span className="text-[9px] text-gray-500 font-bold uppercase tracking-wider block mt-0.5">
                           {h.reward ? `🎁 ${h.reward}` : 'Meta Diária'}
                         </span>
+                        {h.projectId && (() => {
+                          const proj = getProjectById(h.projectId);
+                          return proj ? (
+                            <span
+                              className="inline-flex items-center gap-1 text-[9px] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded-md border mt-1"
+                              style={{
+                                color: proj.cor || '#A855F7',
+                                borderColor: `${proj.cor || '#A855F7'}44`,
+                                background: `${proj.cor || '#A855F7'}15`,
+                              }}
+                            >
+                              {proj.icone} {proj.nome}
+                            </span>
+                          ) : null;
+                        })()}
                       </div>
                     </div>
                     <div className={`w-6 h-6 rounded-xl border-2 flex items-center justify-center transition-all ${
@@ -135,6 +154,21 @@ export function HabitosView() {
                         <span className="text-[9px] text-rose-300/80 font-bold uppercase tracking-wider block">
                           {isFail ? 'Recaída registrada hoje' : 'Dia Limpo em Andamento'}
                         </span>
+                        {q.projectId && (() => {
+                          const proj = getProjectById(q.projectId);
+                          return proj ? (
+                            <span
+                              className="inline-flex items-center gap-1 text-[9px] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded-md border mt-1"
+                              style={{
+                                color: proj.cor || '#A855F7',
+                                borderColor: `${proj.cor || '#A855F7'}44`,
+                                background: `${proj.cor || '#A855F7'}15`,
+                              }}
+                            >
+                              {proj.icone} {proj.nome}
+                            </span>
+                          ) : null;
+                        })()}
                       </div>
                     </div>
                     <button
