@@ -504,17 +504,11 @@ export function PlansTab() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {allProgramsList.map(p => {
                     const isActive = p.id === activeProgramId;
+                    const isSaved = !!savedPrograms[p.id];
                     return (
-                      <button
+                      <div
                         key={p.id}
-                        onClick={() => {
-                          if (!isActive) {
-                            const ok = switchProgram(p.id);
-                            if (ok) toast.success(`Programa "${p.name}" ativado! 🔄`);
-                            else toast.error('Erro ao trocar programa.');
-                          }
-                        }}
-                        className={`p-4 rounded-2xl border text-left transition-all cursor-pointer ${
+                        className={`p-4 rounded-2xl border transition-all ${
                           isActive
                             ? 'bg-purple-500/10 border-purple-500/30 shadow-lg shadow-purple-900/20'
                             : 'bg-black/30 border-white/5 hover:border-white/15 hover:bg-white/[0.02]'
@@ -544,8 +538,26 @@ export function PlansTab() {
                               )}
                             </div>
                           </div>
+                          {!isActive && (
+                            <button
+                              onClick={() => {
+                                if (isSaved) {
+                                  const ok = switchProgram(p.id);
+                                  if (ok) toast.success(`Programa "${p.name}" ativado! 🔄`);
+                                  else toast.error('Erro ao trocar programa.');
+                                } else {
+                                  // First time: load defaults then switch
+                                  loadDefaults();
+                                  toast.success(`Programa "${p.name}" carregado! 📦`);
+                                }
+                              }}
+                              className="px-3 py-1.5 rounded-xl bg-purple-500/10 border border-purple-500/20 text-purple-400 text-[10px] font-black uppercase tracking-wider hover:bg-purple-500/20 transition-all cursor-pointer flex-shrink-0"
+                            >
+                              {isSaved ? 'Trocar' : 'Carregar'}
+                            </button>
+                          )}
                         </div>
-                      </button>
+                      </div>
                     );
                   })}
                 </div>
