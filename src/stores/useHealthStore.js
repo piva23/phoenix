@@ -92,7 +92,7 @@ export const useHealthStore = create(
 
               return {
                 id: h.id,
-                name: routine, // manter compatibilidade com plans
+                name: h.name, // preserva nome do JSON (NoB, NoLust, etc.)
                 type: h.type || 'build',
                 icon: h.icon || '🔥',
                 trigger,
@@ -158,10 +158,18 @@ export const useHealthStore = create(
               time = "18:00";
             }
             return {
-              id: h.id, name: routine, type: h.type || 'build', icon: h.icon || '🔥',
-              trigger, routine, reward, time,
-              projectId: h.projectId || null, goalDays: h.goalDays || 30,
-              startDate: h.startDate || today(), endDate: h.endDate || null,
+              id: h.id,
+              name: h.name,          // preserva nome do JSON (NoB, NoLust, etc.)
+              type: h.type || 'build',
+              icon: h.icon || '🔥',
+              trigger,
+              routine,               // descrição detalhada da ação
+              reward,
+              time,
+              projectId: h.projectId || null,
+              goalDays: h.goalDays || 30,
+              startDate: h.startDate || today(),
+              endDate: h.endDate || null,
             };
           }),
           meds: (standardPlan.meds || []).map(m => {

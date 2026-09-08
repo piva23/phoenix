@@ -97,8 +97,13 @@ export function HabitosView() {
                       </span>
                       <div>
                         <span className={`text-xs font-black uppercase tracking-wide block ${done ? 'line-through opacity-75' : ''}`}>
-                          {h.name || h.routine}
+                          {h.name}
                         </span>
+                        {h.routine && h.routine !== h.name && (
+                          <span className="text-[10px] text-gray-400 block mt-0.5 leading-tight">
+                            {h.routine}
+                          </span>
+                        )}
                         <span className="text-[9px] text-gray-500 font-bold uppercase tracking-wider block mt-0.5">
                           {h.reward ? `🎁 ${h.reward}` : 'Meta Diária'}
                         </span>
