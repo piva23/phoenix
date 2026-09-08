@@ -1,20 +1,28 @@
 import { useState } from 'react';
-import { TodayHealthView } from '../views/TodayHealthView';
-import { PlansTab } from '../components/PlansTab';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PageHeader } from '../../../components/layout/PageHeader';
+import { Droplets, Flame, Utensils, BarChart3, Settings } from 'lucide-react';
+
+import { HidratacaoView } from '../views/HidratacaoView';
+import { HabitosView } from '../views/HabitosView';
+import { DietaTreinoView } from '../views/DietaTreinoView';
+import { HistoricoView } from '../views/HistoricoView';
+import { PlansTab } from '../components/PlansTab';
 
 const TABS = [
-  { id: 'today', label: '⚡ Hoje (Execução)' },
-  { id: 'admin', label: '⚙️ Administração (Setup)' },
+  { id: 'hidratacao',  label: 'Hidratação',       icon: Droplets,   color: '#38BDF8' },
+  { id: 'habitos',     label: 'Hábitos',          icon: Flame,      color: '#A855F7' },
+  { id: 'dieta',       label: 'Dieta & Treino',   icon: Utensils,   color: '#10B981' },
+  { id: 'historico',   label: 'Histórico',        icon: BarChart3,  color: '#F59E0B' },
+  { id: 'config',      label: 'Config',           icon: Settings,   color: '#6B6A7A' },
 ];
 
 export function HealthPage() {
-  const [tab, setTab] = useState('today');
+  const [tab, setTab] = useState('hidratacao');
 
   return (
     <div className="page-container">
-      {/* ── HEADER ─────────────────────────────────────────────────────────── */}
+      {/* ── HEADER (clean, not hidden on mobile) ─────────────────────────── */}
       <PageHeader
         icon="💪"
         title="Health OS"
@@ -24,34 +32,32 @@ export function HealthPage() {
           month: 'long',
           year: 'numeric',
         })}
-      >
-        {/* ── TABS PRINCIPAIS (HOJE VS ADMINISTRAÇÃO) ──────────────────────── */}
-        <div className="flex gap-1.5 p-1.5 rounded-2xl card-surface sm:w-auto w-full">
-          {TABS.map(t => (
+      />
+
+      {/* ── TAB BAR (horizontal scrollable, below header) ────────────────── */}
+      <div className="flex gap-2 overflow-x-auto scrollbar-hide p-1.5 card-surface mb-6">
+        {TABS.map(t => {
+          const Icon = t.icon;
+          const isActive = tab === t.id;
+          return (
             <button
               key={t.id}
               onClick={() => setTab(t.id)}
-              className={`flex-1 sm:flex-initial sm:px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-300 relative cursor-pointer ${
-                tab === t.id
-                  ? 'text-white shadow-lg shadow-purple-900/30'
-                  : 'text-text-dim hover:text-text-muted hover:bg-white/5'
+              className={`flex-shrink-0 px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-300 flex items-center gap-2 cursor-pointer ${
+                isActive
+                  ? 'bg-gradient-to-r from-primary to-indigo-600 text-white shadow-lg shadow-primary/25'
+                  : 'text-text-dim hover:text-white hover:bg-white/5'
               }`}
             >
-              {tab === t.id && (
-                <motion.div
-                  layoutId="activeTopTab"
-                  className="absolute inset-0 bg-gradient-to-r from-purple-600 via-indigo-600 to-purple-600 rounded-xl"
-                  transition={{ type: 'spring', stiffness: 380, damping: 30 }}
-                />
-              )}
-              <span className="relative z-10">{t.label}</span>
+              <Icon size={14} style={{ color: isActive ? 'inherit' : t.color }} />
+              {t.label}
             </button>
-          ))}
-        </div>
-      </PageHeader>
+          );
+        })}
+      </div>
 
-      {/* ── CONTEÚDO DA PÁGINA ────────────────────────────────────────────── */}
-      <main className="px-5 overflow-x-hidden">
+      {/* ── CONTENT ──────────────────────────────────────────────────────── */}
+      <main className="overflow-x-hidden">
         <AnimatePresence mode="wait">
           <motion.div
             key={tab}
@@ -60,8 +66,11 @@ export function HealthPage() {
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.2 }}
           >
-            {tab === 'today' && <TodayHealthView />}
-            {tab === 'admin' && <PlansTab />}
+            {tab === 'hidratacao' && <HidratacaoView />}
+            {tab === 'habitos' && <HabitosView />}
+            {tab === 'dieta' && <DietaTreinoView />}
+            {tab === 'historico' && <HistoricoView />}
+            {tab === 'config' && <PlansTab />}
           </motion.div>
         </AnimatePresence>
       </main>

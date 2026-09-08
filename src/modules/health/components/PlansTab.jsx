@@ -55,6 +55,7 @@ export function PlansTab() {
   const {
     plans = {},
     programs,
+    loadDefaults,
     importHealthJSON,
     updateWorkoutDay,
     updateWaterPlan,
@@ -710,7 +711,7 @@ export function PlansTab() {
           </p>
         </div>
 
-        <div>
+        <div className="flex items-center gap-2 flex-wrap">
           <input
             type="file"
             ref={fileInputRef}
@@ -718,6 +719,17 @@ export function PlansTab() {
             onChange={handleImportFile}
             className="hidden"
           />
+          <button
+            onClick={() => {
+              if (loadDefaults) {
+                loadDefaults();
+                toast.success('Plano padrão carregado com sucesso! 🏥', { icon: '📦' });
+              }
+            }}
+            className="px-5 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-black uppercase tracking-widest rounded-2xl transition-all active:scale-95 shadow-lg shadow-emerald-900/30 border border-emerald-500/40 flex items-center gap-2 cursor-pointer"
+          >
+            <span className="text-sm">📦</span> Carregar Plano Padrão
+          </button>
           <button
             onClick={() => fileInputRef.current?.click()}
             className="px-5 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs font-black uppercase tracking-widest rounded-2xl transition-all active:scale-95 shadow-lg shadow-purple-900/30 border border-purple-500/40 flex items-center gap-2 cursor-pointer"

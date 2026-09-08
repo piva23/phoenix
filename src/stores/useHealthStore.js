@@ -1,8 +1,8 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import healthDb from '../modules/health/healthDb.json';
+import standardPlan from '../modules/health/standardPlan.json';
 
-export const FOOD_DB = healthDb.foodDb || {};
+export const FOOD_DB = standardPlan.foodDb || {};
 
 // O sistema nasce zerado. Se quiser o seu plano, chame loadDefaults() via UI.
 const EMPTY_PLANS = {
@@ -53,15 +53,15 @@ export const useHealthStore = create(
       loadDefaults: () =>
         set({
           plans: {
-            goals: healthDb.goals,
+            goals: standardPlan.goals,
             water: {
-              dailyGoalMl: healthDb.goals?.waterDailyMl,
-              buttons: healthDb.waterButtons,
+              dailyGoalMl: standardPlan.goals?.waterDailyMl,
+              buttons: standardPlan.waterButtons,
             },
-            workout: healthDb.workoutPlan,
-            mealPlan: healthDb.mealPlan,
-            circuits: healthDb.circuits,
-            habits: (healthDb.habits || []).map(h => {
+            workout: standardPlan.workoutPlan,
+            mealPlan: standardPlan.mealPlan,
+            circuits: standardPlan.circuits,
+            habits: (standardPlan.habits || []).map(h => {
               // Converte hábitos para a lógica de Hábitos Atómicos
               let trigger = "Ao acordar";
               let routine = h.name;
@@ -105,7 +105,7 @@ export const useHealthStore = create(
                 endDate: h.endDate || null,
               };
             }),
-            meds: (healthDb.meds || []).map(m => {
+            meds: (standardPlan.meds || []).map(m => {
               // Garante que medicamentos tenham horário formatado para o Glow
               let time = m.time;
               if (m.time === 'Manhã') time = '08:00';
