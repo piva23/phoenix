@@ -852,6 +852,20 @@ export const useHealthStore = create(
         return JSON.stringify(program, null, 2);
       },
     }),
-    { name: 'phoenix-health' }
+    {
+      name: 'phoenix-health',
+      version: 2,
+      migrate: (persistedState, version) => {
+        // Versão 1 → 2: limpar dados antigos com nomes hardcoded
+        if (version < 2) {
+          return {
+            ...persistedState,
+            plans: EMPTY_PLANS,
+            programs: { activeProgramId: null, saved: {} },
+          };
+        }
+        return persistedState;
+      },
+    }
   )
 );

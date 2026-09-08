@@ -1,11 +1,14 @@
 import { useMemo } from 'react';
 import { useHealthStore } from '../../../stores/useHealthStore';
+import toast from 'react-hot-toast';
 
 const DAY_LETTERS = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'];
 
 export function HabitsWeekGrid() {
   const habits = useHealthStore(s => s.plans.habits || []);
   const habitLog = useHealthStore(s => s.habitLog);
+  const logHabit = useHealthStore(s => s.logHabit);
+  const recalcStreaks = useHealthStore(s => s.recalcStreaks);
 
   const last7 = useMemo(
     () =>
@@ -25,6 +28,8 @@ export function HabitsWeekGrid() {
       </div>
     );
   }
+
+  const today = new Date().toISOString().slice(0, 10);
 
   return (
     <div
@@ -54,10 +59,24 @@ export function HabitsWeekGrid() {
                 const val = habitLog[d]?.[h.id];
                 const logged = val !== undefined;
                 const success = h.type === 'quit' ? val !== false : val === true;
+                const isToday = d === today;
                 return (
-                  <span
+                  <button
                     key={d}
-                    className="w-4 h-4 rounded-full flex-shrink-0"
+                    onClick={() => {
+                      if (!isToday) return;
+                      // build: marca como feito; quit: só registra recaída
+                      if (h.type === 'build') {
+                        logHabit(h.id, !logged || val === false ? true : false);
+                        recalcStreaks();
+                        if (!logged || val === false) {
+                          toast.success(`"${h.name}" concluído! ✨`);
+                        }
+                      }
+                    }}
+                    className={`w-4 h-4 rounded-full flex-shrink-0 transition-all ${
+                      isToday ? 'cursor-pointer hover:scale-125' : 'cursor-default'
+                    }`}
                     style={{
                       background: !logged
                         ? 'var(--bg-surface-2)'
