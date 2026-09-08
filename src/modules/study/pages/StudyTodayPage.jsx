@@ -52,100 +52,100 @@ const REVISION_STAGES = [
 
 function StreakTile({ streak, xp }) {
   return (
-    <BentoCard span="4/12" className="flex flex-col gap-1">
+    <div className="card-glass p-3 md:p-3.5 rounded-2xl flex flex-col gap-1">
       <div className="flex items-center justify-between">
-        <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-dim)' }}>
+        <span className="text-[9px] md:text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-dim)' }}>
           Streak
         </span>
         <motion.span
-          className="text-xl"
+          className="text-base md:text-xl"
           animate={{ scale: [1, 1.2, 1] }}
           transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
         >
           🔥
         </motion.span>
       </div>
-      <div className="flex items-baseline gap-2">
-        <span className="text-3xl font-black" style={{ color: '#F59E0B' }}>
+      <div className="flex items-baseline gap-1.5 md:gap-2">
+        <span className="text-xl md:text-3xl font-black" style={{ color: '#F59E0B' }}>
           {streak || 0}
         </span>
-        <span className="text-xs font-medium" style={{ color: 'var(--text-dim)' }}>
+        <span className="text-[10px] md:text-xs font-medium" style={{ color: 'var(--text-dim)' }}>
           dias
         </span>
       </div>
       {xp > 0 && (
-        <span className="text-[10px] font-bold" style={{ color: 'var(--accent)' }}>
+        <span className="text-[9px] md:text-[10px] font-bold" style={{ color: 'var(--accent)' }}>
           +{xp} XP hoje
         </span>
       )}
-    </BentoCard>
+    </div>
   );
 }
 
 function TodayTile({ minutes }) {
   const pct = Math.min((minutes / 240) * 100, 100);
   return (
-    <BentoCard span="4/12" className="flex flex-col gap-1">
+    <div className="card-glass p-3 md:p-3.5 rounded-2xl flex flex-col gap-1">
       <div className="flex items-center justify-between">
-        <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-dim)' }}>
+        <span className="text-[9px] md:text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-dim)' }}>
           Hoje
         </span>
-        <span className="text-xl">⏱️</span>
+        <span className="text-base md:text-xl">⏱️</span>
       </div>
-      <div className="flex items-center gap-3">
-        <ProgressRing value={pct} size={44} stroke={4} color="#10B981" />
+      <div className="flex items-center gap-2 md:gap-3">
+        <ProgressRing value={pct} size={36} stroke={3} color="#10B981" />
         <div>
-          <span className="text-lg font-black" style={{ color: 'var(--text-main)' }}>
+          <span className="text-sm md:text-lg font-black" style={{ color: 'var(--text-main)' }}>
             {minutesToHuman(minutes)}
           </span>
-          <p className="text-[10px]" style={{ color: 'var(--text-dim)' }}>
+          <p className="text-[9px] md:text-[10px]" style={{ color: 'var(--text-dim)' }}>
             meta: 4h
           </p>
         </div>
       </div>
-    </BentoCard>
+    </div>
   );
 }
 
 function ProvaTile({ prova, days }) {
   if (!prova) {
     return (
-      <BentoCard span="4/12" className="flex flex-col gap-1">
+      <div className="card-glass p-3 md:p-3.5 rounded-2xl flex flex-col gap-1">
         <div className="flex items-center justify-between">
-          <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-dim)' }}>
+          <span className="text-[9px] md:text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-dim)' }}>
             Próxima Prova
           </span>
-          <span className="text-xl">🎯</span>
+          <span className="text-base md:text-xl">🎯</span>
         </div>
-        <span className="text-xs" style={{ color: 'var(--text-dim)' }}>
-          Nenhuma prova agendada
+        <span className="text-[10px] md:text-xs" style={{ color: 'var(--text-dim)' }}>
+          Nenhuma prova
         </span>
-      </BentoCard>
+      </div>
     );
   }
 
   const color = days <= 7 ? '#EF4444' : days <= 30 ? '#F59E0B' : '#10B981';
 
   return (
-    <BentoCard span="4/12" className="flex flex-col gap-1">
+    <div className="card-glass p-3 md:p-3.5 rounded-2xl flex flex-col gap-1">
       <div className="flex items-center justify-between">
-        <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-dim)' }}>
+        <span className="text-[9px] md:text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-dim)' }}>
           Próxima Prova
         </span>
-        <span className="text-xl">🎯</span>
+        <span className="text-base md:text-xl">🎯</span>
       </div>
-      <div className="flex items-baseline gap-2">
-        <span className="text-3xl font-black" style={{ color }}>
+      <div className="flex items-baseline gap-1.5 md:gap-2">
+        <span className="text-xl md:text-3xl font-black" style={{ color }}>
           {days}
         </span>
-        <span className="text-xs font-medium" style={{ color: 'var(--text-dim)' }}>
+        <span className="text-[10px] md:text-xs font-medium" style={{ color: 'var(--text-dim)' }}>
           dias
         </span>
       </div>
-      <span className="text-[10px] font-bold truncate" style={{ color }}>
+      <span className="text-[9px] md:text-[10px] font-bold truncate" style={{ color }}>
         {prova.nome}
       </span>
-    </BentoCard>
+    </div>
   );
 }
 
@@ -504,10 +504,10 @@ export default function StudyTodayPage() {
   };
 
   return (
-    <StudyLayout>
-      <div className="flex flex-col pb-10 space-y-5">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <StudyLayout title="Hoje" subtitle={new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}>
+      <div className="flex flex-col pb-24 md:pb-10 space-y-5">
+        {/* Header (desktop) */}
+        <div className="hidden md:flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-extrabold tracking-tight" style={{ color: 'var(--text-main)' }}>
               Hoje
@@ -519,7 +519,7 @@ export default function StudyTodayPage() {
         </div>
 
         {/* KPI Row */}
-        <div className="grid grid-cols-12 gap-4">
+        <div className="grid grid-cols-3 gap-3 md:grid-cols-12 md:gap-4">
           <StreakTile streak={streak} xp={todayXP} />
           <TodayTile minutes={todayMinutes} />
           <ProvaTile prova={nextProva} days={nextProva ? daysUntil(nextProva.dataProva) : null} />

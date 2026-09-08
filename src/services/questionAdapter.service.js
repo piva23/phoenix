@@ -1,5 +1,5 @@
 import { questionsDb, isQuestionsConfigured } from '../shared/config/firebaseQuestions';
-import { collection, getDocs, query, where, orderBy, limit as firestoreLimit } from 'firebase/firestore';
+import { collection, getDocs, query, where, orderBy, limit as firestoreLimit, startAfter } from 'firebase/firestore';
 import { ACTIVE_STATUSES, LETTER_TO_INDEX } from '../shared/constants/dificuldade';
 
 // ═══════════════════════════════════════════════════════════════
@@ -24,11 +24,11 @@ export const questionAdapter = {
   },
 
   /**
-   * Fetch all active questions from MAGO Firestore
-   * @param {number} count - Max questions to fetch
+   * Fetch ALL active questions from MAGO Firestore using pagination
+   * @param {number} count - Unused, kept for compat. Fetches everything.
    * @returns {Promise<Array>} Raw Firestore questions
    */
-  async fetchAll(count = 500) {
+  async fetchAll() {
     if (!isQuestionsConfigured() || !questionsDb) {
       console.warn('[MAGO] Questions DB not configured');
       return [];
@@ -37,51 +37,64 @@ export const questionAdapter = {
     if (cachedQuestions) return cachedQuestions;
 
     try {
-      const q = query(
-        collection(questionsDb, 'questoes'),
-        where('status', 'in', ACTIVE_STATUSES),
-        firestoreLimit(count)
-      );
-      const snap = await getDocs(q);
-      const questions = [];
+      const PAGE_SIZE = 500;
+      let lastDoc = null;
+      let allQuestions = [];
+      let page = 0;
 
-      snap.forEach((docSnap) => {
-        const data = docSnap.data();
-        // Only multiple choice for quiz
-        if (data.tipo === 'multipla_escolha') {
-          questions.push({
-            id: docSnap.id,
-            enunciado: data.enunciado || '',
-            alternativas: data.alternativas || [],
-            gabarito: data.gabarito || 'A',
-            tipo: data.tipo,
-            materia: data.materia || 'Geral',
-            assunto: data.assunto || '',
-            topico: data.topico || '',
-            subtopico: data.subtopico || null,
-            tags: data.tags || [],
-            dificuldade: data.dificuldade || 'medio',
-            status: data.status,
-            explicacao: data.explicacao || '',
-            banca: data.banca || '',
-            orgao: data.orgao || '',
-            cargo: data.cargo || '',
-            carreira: data.carreira || '',
-            escolaridade: data.escolaridade || '',
-            areaFormacao: data.areaFormacao || '',
-            prova: data.prova || '',
-            edital: data.edital || '',
-            ano: data.ano || null,
-            regiao: data.regiao || '',
-            codigo: data.codigo || '',
-            esfera: data.esfera || null,
-            xp: data.xp || 10,
-          });
-        }
-      });
+      while (true) {
+        page++;
+        const constraints = [
+          where('status', 'in', ACTIVE_STATUSES),
+          firestoreLimit(PAGE_SIZE),
+        ];
+        if (lastDoc) constraints.push(startAfter(lastDoc));
 
-      cachedQuestions = questions;
-      return questions;
+        const q = query(collection(questionsDb, 'questoes'), ...constraints);
+        const snap = await getDocs(q);
+
+        snap.forEach((docSnap) => {
+          const data = docSnap.data();
+          if (data.tipo === 'multipla_escolha') {
+            allQuestions.push({
+              id: docSnap.id,
+              enunciado: data.enunciado || '',
+              alternativas: data.alternativas || [],
+              gabarito: data.gabarito || 'A',
+              tipo: data.tipo,
+              materia: data.materia || 'Geral',
+              assunto: data.assunto || '',
+              topico: data.topico || '',
+              subtopico: data.subtopico || null,
+              tags: data.tags || [],
+              dificuldade: data.dificuldade || 'medio',
+              status: data.status,
+              explicacao: data.explicacao || '',
+              banca: data.banca || '',
+              orgao: data.orgao || '',
+              cargo: data.cargo || '',
+              carreira: data.carreira || '',
+              escolaridade: data.escolaridade || '',
+              areaFormacao: data.areaFormacao || '',
+              prova: data.prova || '',
+              edital: data.edital || '',
+              ano: data.ano || null,
+              regiao: data.regiao || '',
+              codigo: data.codigo || '',
+              esfera: data.esfera || null,
+              xp: data.xp || 10,
+            });
+          }
+        });
+
+        const docs = snap.docs;
+        if (docs.length < PAGE_SIZE) break; // last page
+        lastDoc = docs[docs.length - 1];
+      }
+
+      console.log(`[MAGO] Fetched ${allQuestions.length} questions in ${page} page(s)`);
+      cachedQuestions = allQuestions;
+      return allQuestions;
     } catch (error) {
       console.error('[MAGO] Error fetching questions:', error);
       throw error;
