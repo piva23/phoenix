@@ -54,6 +54,7 @@ export function PlansTab() {
     plans = {},
     programs,
     loadDefaults,
+    loadBuiltinPlan,
     updateWorkoutDay,
     updateWaterPlan,
     updateMealPlan,
@@ -546,9 +547,9 @@ export function PlansTab() {
                                   if (ok) toast.success(`Programa "${p.name}" ativado! 🔄`);
                                   else toast.error('Erro ao trocar programa.');
                                 } else {
-                                  // First time: load defaults then switch
-                                  loadDefaults();
-                                  toast.success(`Programa "${p.name}" carregado! 📦`);
+                                  const ok = loadBuiltinPlan(p.id);
+                                  if (ok) toast.success(`Programa "${p.name}" carregado! 📦`);
+                                  else toast.error('Erro ao carregar programa.');
                                 }
                               }}
                               className="px-3 py-1.5 rounded-xl bg-purple-500/10 border border-purple-500/20 text-purple-400 text-[10px] font-black uppercase tracking-wider hover:bg-purple-500/20 transition-all cursor-pointer flex-shrink-0"

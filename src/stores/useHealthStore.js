@@ -119,6 +119,88 @@ export const useHealthStore = create(
           },
         }),
 
+      // Carrega um plano built-in (do JSON) e ativa
+      loadBuiltinPlan: (programId) => {
+        const { programs } = get();
+        // Se já está salvo, apenas ativa
+        if (programs.saved[programId]) {
+          set({ programs: { ...programs, activeProgramId: programId } });
+          return true;
+        }
+        // Senão, monta o plano a partir do JSON e salva
+        const builtPlans = {
+          goals: standardPlan.goals,
+          water: {
+            dailyGoalMl: standardPlan.goals?.waterDailyMl,
+            buttons: standardPlan.waterButtons,
+          },
+          workout: standardPlan.workoutPlan,
+          mealPlan: standardPlan.mealPlan,
+          circuits: standardPlan.circuits,
+          habits: (standardPlan.habits || []).map(h => {
+            let trigger = "Ao acordar";
+            let routine = h.name;
+            let reward = "Ganhar +50 XP e evoluir";
+            let time = "08:00";
+            if (h.id === 'h1' || h.name.toLowerCase().includes('nob') || h.name.toLowerCase().includes('fumar')) {
+              trigger = "Quando sentir estresse ou tédio";
+              routine = "Substituir cigarro/vape por respiração profunda";
+              reward = "Pulmões limpos e clareza mental (+50 XP)";
+              time = "10:00";
+            } else if (h.id === 'h_nolust' || h.name.toLowerCase().includes('lust')) {
+              trigger = "Ao navegar tarde na internet";
+              routine = "Fechar abas sugestivas e abrir um livro";
+              reward = "Foco inabalável e pureza mental (+50 XP)";
+              time = "22:00";
+            } else if (h.id === 'h_nopm' || h.name.toLowerCase().includes('pm')) {
+              trigger = "Ao deitar na cama com o celular";
+              routine = "Desligar o celular e meditar por 5 minutos";
+              reward = "Sono restaurador e autodomínio (+50 XP)";
+              time = "23:00";
+            } else if (h.id === 'h2' || h.name.toLowerCase().includes('correr') || h.name.toLowerCase().includes('cardio')) {
+              trigger = "Ao vestir o calçado esportivo";
+              routine = "Correr 2km na esteira ou ar livre";
+              reward = "Pico de dopamina natural e saúde cardiovascular (+50 XP)";
+              time = "18:00";
+            }
+            return {
+              id: h.id, name: routine, type: h.type || 'build', icon: h.icon || '🔥',
+              trigger, routine, reward, time,
+              projectId: h.projectId || null, goalDays: h.goalDays || 30,
+              startDate: h.startDate || today(), endDate: h.endDate || null,
+            };
+          }),
+          meds: (standardPlan.meds || []).map(m => {
+            let time = m.time;
+            if (m.time === 'Manhã') time = '08:00';
+            else if (m.time === 'Almoço') time = '13:00';
+            else if (m.time === 'Noite') time = '21:00';
+            return { ...m, time };
+          }),
+        };
+
+        set(state => ({
+          plans: { ...builtPlans },
+          programs: {
+            ...state.programs,
+            activeProgramId: programId,
+            saved: {
+              ...state.programs.saved,
+              [programId]: {
+                id: programId,
+                name: 'Standard Health Program',
+                description: 'Programa padrão de saúde com treinos, dieta, hábitos e suplementação pré-configurados.',
+                icon: '🏥',
+                isDefault: true,
+                createdAt: '2026-09-01T00:00:00.000Z',
+                plans: { ...builtPlans },
+              },
+            },
+          },
+        }));
+        return true;
+      },
+
       // ── LOGS GENÉRICOS (Ação de Hoje e Desfazer) ────────────────────────────
       addLog: (category, entry) =>
         set(state => {
