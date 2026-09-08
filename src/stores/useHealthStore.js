@@ -119,15 +119,9 @@ export const useHealthStore = create(
           },
         }),
 
-      // Carrega um plano built-in (do JSON) e ativa
+      // Carrega um plano built-in (do JSON) e ativa — sempre sobrescreve
       loadBuiltinPlan: (programId) => {
-        const { programs } = get();
-        // Se já está salvo, apenas ativa
-        if (programs.saved[programId]) {
-          set({ programs: { ...programs, activeProgramId: programId } });
-          return true;
-        }
-        // Senão, monta o plano a partir do JSON e salva
+        // Monta o plano a partir do JSON
         const builtPlans = {
           goals: standardPlan.goals,
           water: {
@@ -199,6 +193,12 @@ export const useHealthStore = create(
           },
         }));
         return true;
+      },
+
+      // Reseta tudo e carrega o plano padrão do JSON (limpa localStorage)
+      resetToBuiltinPlan: () => {
+        localStorage.removeItem('phoenix-health');
+        window.location.reload();
       },
 
       // ── LOGS GENÉRICOS (Ação de Hoje e Desfazer) ────────────────────────────

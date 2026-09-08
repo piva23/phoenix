@@ -54,6 +54,7 @@ export function PlansTab() {
     plans = {},
     programs,
     loadBuiltinPlan,
+    resetToBuiltinPlan,
     updateWorkoutDay,
     updateWaterPlan,
     updateMealPlan,
@@ -491,16 +492,28 @@ export function PlansTab() {
                           </div>
                         </div>
                         {!isActive && (
-                          <button
-                            onClick={() => {
-                              const ok = loadBuiltinPlan(p.id);
-                              if (ok) toast.success(`Programa "${p.name}" carregado! 📦`);
-                              else toast.error('Erro ao carregar programa.');
-                            }}
-                            className="px-4 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 shadow-lg shadow-purple-900/30 border border-purple-500/40 cursor-pointer flex-shrink-0"
-                          >
-                            Carregar
-                          </button>
+                          <div className="flex gap-1.5 flex-shrink-0">
+                            <button
+                              onClick={() => {
+                                const ok = loadBuiltinPlan(p.id);
+                                if (ok) toast.success(`Programa "${p.name}" carregado! 📦`);
+                                else toast.error('Erro ao carregar programa.');
+                              }}
+                              className="px-4 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 shadow-lg shadow-purple-900/30 border border-purple-500/40 cursor-pointer"
+                            >
+                              Carregar
+                            </button>
+                            <button
+                              onClick={() => {
+                                if (window.confirm('Isso vai apagar todos os dados de saúde salvos e recarregar o plano padrão do JSON. Continuar?')) {
+                                  resetToBuiltinPlan();
+                                }
+                              }}
+                              className="px-3 py-2 rounded-xl bg-black/40 hover:bg-rose-500/10 border border-rose-500/30 text-rose-400 text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 cursor-pointer"
+                            >
+                              Resetar
+                            </button>
+                          </div>
                         )}
                       </div>
                     </div>
