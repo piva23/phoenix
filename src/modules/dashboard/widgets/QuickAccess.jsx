@@ -1,18 +1,27 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Droplets, HeartPulse, PlusCircle, BookOpen, CheckCircle2 } from 'lucide-react';
+import { Droplets, Flame, Utensils, Dumbbell, PlusCircle, BookOpen } from 'lucide-react';
 
 const ITEMS = [
-  { label: 'Hábitos',     icon: CheckCircle2, color: '#10B981', path: '/health' },
-  { label: 'Água',        icon: Droplets,     color: '#38BDF8', path: '/health?tab=agua' },
-  { label: 'Saúde',       icon: HeartPulse,   color: '#EF4444', path: '/health' },
-  { label: '+ Despesa',   icon: PlusCircle,   color: '#EC4899', path: '/finance?action=expense' },
-  { label: 'Estudo',      icon: BookOpen,     color: '#8B5CF6', path: '/study/today' },
+  { label: 'Água',        icon: Droplets,   color: '#38BDF8', modal: 'hidratacao' },
+  { label: 'Hábitos',     icon: Flame,      color: '#A855F7', modal: 'habitos' },
+  { label: 'Dieta',       icon: Utensils,   color: '#10B981', modal: 'dieta' },
+  { label: 'Treino',      icon: Dumbbell,   color: '#F59E0B', path: '/health?tab=treino' },
+  { label: '+ Despesa',   icon: PlusCircle, color: '#EC4899', path: '/finance?action=expense' },
+  { label: 'Estudo',      icon: BookOpen,   color: '#8B5CF6', path: '/study/today' },
 ];
 
-export function QuickAccess() {
+export function QuickAccess({ onAction }) {
   const navigate = useNavigate();
+
+  const handleClick = (item) => {
+    if (item.modal && onAction) {
+      onAction(item.modal);
+    } else if (item.path) {
+      navigate(item.path);
+    }
+  };
 
   return (
     <div className="select-none">
@@ -28,7 +37,7 @@ export function QuickAccess() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.05, type: 'spring', stiffness: 300, damping: 22 }}
-              onClick={() => navigate(item.path)}
+              onClick={() => handleClick(item)}
               whileTap={{ scale: 0.94 }}
               className="flex flex-col items-center justify-center gap-2 min-w-[86px] px-4 py-4 rounded-2xl card-surface hover:bg-white/[0.04] hover:border-white/15 transition-all cursor-pointer flex-shrink-0"
             >

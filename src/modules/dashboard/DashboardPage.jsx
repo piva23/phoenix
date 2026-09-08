@@ -9,6 +9,7 @@ import { PanoramaRings } from './widgets/PanoramaRings';
 import { VisionBoardWidget } from './widgets/VisionBoardWidget';
 import { QuickAccess } from './widgets/QuickAccess';
 import { DashboardSettingsModal } from './components/DashboardSettingsModal';
+import { HealthQuickModal } from './components/HealthQuickModal';
 import { motion } from 'framer-motion';
 
 const WEEKDAYS = [
@@ -19,6 +20,7 @@ const WEEKDAYS = [
 export function DashboardPage() {
   const name = useGameStore(s => s.name);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [healthModalTab, setHealthModalTab] = useState(null);
 
   const now = new Date();
   const dateStr = `${WEEKDAYS[now.getDay()]}, ${now.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long' })}`;
@@ -52,7 +54,7 @@ export function DashboardPage() {
       <VisionBoardWidget />
 
       {/* ── 3. ACESSO RÁPIDO ───────────────────────────────────────────────── */}
-      <QuickAccess />
+      <QuickAccess onAction={(tab) => setHealthModalTab(tab)} />
 
       {/* ── 4. TIMELINE — card compacto ────────────────────────────────────── */}
       <TimelineFeed />
@@ -75,6 +77,13 @@ export function DashboardPage() {
       <DashboardSettingsModal
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
+      />
+
+      {/* Health Quick Modal */}
+      <HealthQuickModal
+        isOpen={healthModalTab !== null}
+        onClose={() => setHealthModalTab(null)}
+        initialTab={healthModalTab || 'hidratacao'}
       />
 
     </div>

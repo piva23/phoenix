@@ -1,24 +1,44 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PageHeader } from '../../../components/layout/PageHeader';
-import { Droplets, Flame, Utensils, BarChart3, Settings } from 'lucide-react';
+import { Droplets, Flame, Utensils, Dumbbell, BarChart3, Settings } from 'lucide-react';
 
 import { HidratacaoView } from '../views/HidratacaoView';
 import { HabitosView } from '../views/HabitosView';
-import { DietaTreinoView } from '../views/DietaTreinoView';
+import { DietaView } from '../views/DietaView';
+import { TreinoView } from '../views/TreinoView';
 import { HistoricoView } from '../views/HistoricoView';
 import { PlansTab } from '../components/PlansTab';
 
 const TABS = [
   { id: 'hidratacao',  label: 'Hidratação',       icon: Droplets,   color: '#38BDF8' },
   { id: 'habitos',     label: 'Hábitos',          icon: Flame,      color: '#A855F7' },
-  { id: 'dieta',       label: 'Dieta & Treino',   icon: Utensils,   color: '#10B981' },
-  { id: 'historico',   label: 'Histórico',        icon: BarChart3,  color: '#F59E0B' },
+  { id: 'dieta',       label: 'Dieta',            icon: Utensils,   color: '#10B981' },
+  { id: 'treino',      label: 'Treino',           icon: Dumbbell,   color: '#F59E0B' },
+  { id: 'historico',   label: 'Histórico',        icon: BarChart3,  color: '#F97316' },
   { id: 'config',      label: 'Config',           icon: Settings,   color: '#6B6A7A' },
 ];
 
-export function HealthPage() {
-  const [tab, setTab] = useState('hidratacao');
+const VALID_TABS = TABS.map(t => t.id);
+
+export function HealthPage({ initialTab }) {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const urlTab = searchParams.get('tab');
+  const [tab, setTab] = useState(
+    initialTab && VALID_TABS.includes(initialTab) ? initialTab
+      : urlTab && VALID_TABS.includes(urlTab) ? urlTab
+      : 'hidratacao'
+  );
+
+  // Sync URL when tab changes
+  useEffect(() => {
+    if (tab !== 'hidratacao') {
+      setSearchParams({ tab }, { replace: true });
+    } else {
+      setSearchParams({}, { replace: true });
+    }
+  }, [tab, setSearchParams]);
 
   return (
     <div className="page-container">
@@ -68,7 +88,8 @@ export function HealthPage() {
           >
             {tab === 'hidratacao' && <HidratacaoView />}
             {tab === 'habitos' && <HabitosView />}
-            {tab === 'dieta' && <DietaTreinoView />}
+            {tab === 'dieta' && <DietaView />}
+            {tab === 'treino' && <TreinoView />}
             {tab === 'historico' && <HistoricoView />}
             {tab === 'config' && <PlansTab />}
           </motion.div>
