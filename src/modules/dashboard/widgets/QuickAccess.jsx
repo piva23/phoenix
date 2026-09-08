@@ -7,7 +7,7 @@ const ITEMS = [
   { label: 'Água',        icon: Droplets,   color: '#38BDF8', modal: 'hidratacao' },
   { label: 'Hábitos',     icon: Flame,      color: '#A855F7', modal: 'habitos' },
   { label: 'Dieta',       icon: Utensils,   color: '#10B981', modal: 'dieta' },
-  { label: 'Treino',      icon: Dumbbell,   color: '#F59E0B', path: '/health?tab=treino' },
+  { label: 'Treino',      icon: Dumbbell,   color: '#F59E0B', modal: 'treino' },
   { label: '+ Despesa',   icon: PlusCircle, color: '#EC4899', path: '/finance?action=expense' },
   { label: 'Estudo',      icon: BookOpen,   color: '#8B5CF6', path: '/study/today' },
 ];

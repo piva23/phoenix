@@ -11,6 +11,7 @@ import LoadingScreen from '../shared/components/LoadingScreen';
 import { useGameStore } from '../stores/useGameStore';
 import { useSyncStore } from '../stores/useSyncStore';
 import { useAuthStore } from '../stores/useAuthStore';
+import { useHealthStore } from '../stores/useHealthStore';
 
 // Auth (não lazy — necessário para proteção de rotas)
 import LoginPage from '../modules/auth/LoginPage';
@@ -92,6 +93,18 @@ function AppRoutes() {
 
 export default function App() {
   useQuestionListener();
+
+  // Auto-load health plan if store is empty
+  useEffect(() => {
+    try {
+      const { plans, programs } = useHealthStore.getState();
+      const hasHabits = (plans?.habits || []).length > 0;
+      const hasWorkout = plans?.workout && Object.keys(plans.workout).length > 0;
+      if (!hasHabits && !hasWorkout && !programs?.activeProgramId) {
+        useHealthStore.getState().loadBuiltinPlan('std_health_v1');
+      }
+    } catch (_) {}
+  }, []);
 
   // No carregamento: expira missões diárias/semanais vencidas e gera novas
   // (reset diário de missões mesmo sem dispatchXP).

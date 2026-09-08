@@ -854,10 +854,9 @@ export const useHealthStore = create(
     }),
     {
       name: 'phoenix-health',
-      version: 2,
+      version: 3,
       migrate: (persistedState, version) => {
-        // Versão 1 → 2: limpar dados antigos com nomes hardcoded
-        if (version < 2) {
+        if (version < 3) {
           return {
             ...persistedState,
             plans: EMPTY_PLANS,
