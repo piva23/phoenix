@@ -420,13 +420,12 @@ export default function StudyQuestoesPage() {
   useEffect(() => { if (!hasSynced.current && questions.length === 0 && !syncing) { hasSynced.current = true; doSync(); } }, [questions.length, syncing]);
   useEffect(() => { if (urlMateria) { setFilters(p => ({ ...p, materias: [decodeURIComponent(urlMateria)] })); setTab('questoes'); } }, [urlMateria]);
   useEffect(() => {
-    if (!questions.length) return; const unlinked = questions.filter(q => !q.subjectId); if (!unlinked.length) return;
+    if (!questions.length) return;
+    const unlinked = questions.filter(q => !q.subjectId);
+    if (!unlinked.length || !subjects.length) return;
     const newM = linkQuestionsToSubjects(subjects);
-    if (newM.length) {
-      setUnmatchedMaterias(newM);
-      const m = {}; newM.forEach((n, i) => { m[n] = findSubjectByName(n)?.id || addSubject({ name: n, color: COLORS[i % COLORS.length] }); }); applySubjectLinks(m);
-    }
-  }, [questions.length]);
+    if (newM.length) setUnmatchedMaterias(newM);
+  }, [questions.length, subjects.length]);
 
   // Close merge dropdown on outside click
   useEffect(() => {
