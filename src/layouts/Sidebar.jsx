@@ -65,7 +65,7 @@ export function Sidebar() {
           className="w-10 h-10 rounded-xl flex items-center justify-center text-lg flex-shrink-0 transition-shadow duration-300 group-hover:shadow-[0_0_20px_rgba(16,185,129,0.25)]"
           style={{ background: 'linear-gradient(135deg, #10B981, #06B6D4)' }}
         >
-          <span className="text-white font-black text-sm" style={{ fontFamily: 'Georgia, serif' }}>P</span>
+          🜁
         </div>
         <AnimatePresence>
           {sidebarOpen && (

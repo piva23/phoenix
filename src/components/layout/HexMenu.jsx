@@ -173,10 +173,10 @@ function HexFAB({ isOpen, setIsOpen }) {
             <motion.div
               animate={{ rotate: isOpen ? 180 : 0 }}
               transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-              className="flex items-center justify-center text-xl lg:text-2xl font-black"
-              style={{ fontFamily: 'Georgia, serif' }}
+              className="flex items-center justify-center text-xl lg:text-2xl font-bold"
+              style={{ fontFamily: 'serif' }}
             >
-              P
+              🜁
             </motion.div>
           )}
           <div className="absolute inset-0 bg-white/5 opacity-0 hover:opacity-100 transition-opacity" />

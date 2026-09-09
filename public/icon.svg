@@ -7,6 +7,6 @@
   </defs>
   <!-- Hexagon shape -->
   <polygon points="256,8 492,136 492,376 256,504 20,376 20,136" fill="url(#g)"/>
-  <!-- Letter P -->
-  <text x="256" y="330" font-size="320" text-anchor="middle" fill="white" font-family="Georgia, serif" font-weight="900">P</text>
+  <!-- Alchemical symbol -->
+  <text x="256" y="340" font-size="300" text-anchor="middle" fill="white" font-family="serif" font-weight="700">&#x1F701;</text>
 </svg>

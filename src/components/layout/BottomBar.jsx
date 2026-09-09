@@ -210,10 +210,10 @@ export default function BottomBar() {
                 <motion.span
                   animate={{ rotate: hexOpen ? 180 : 0 }}
                   transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-                  className="text-lg font-black"
-                  style={{ fontFamily: 'Georgia, serif' }}
+                  className="text-lg font-bold"
+                  style={{ fontFamily: 'serif' }}
                 >
-                  P
+                  🜁
                 </motion.span>
               )}
             </motion.button>

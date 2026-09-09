@@ -12,12 +12,12 @@ import { HistoricoView } from '../views/HistoricoView';
 import { PlansTab } from '../components/PlansTab';
 
 const TABS = [
-  { id: 'hidratacao',  label: 'Hidratação',       icon: Droplets,   color: '#38BDF8' },
-  { id: 'habitos',     label: 'Hábitos',          icon: Flame,      color: '#A855F7' },
-  { id: 'dieta',       label: 'Dieta',            icon: Utensils,   color: '#10B981' },
-  { id: 'treino',      label: 'Treino',           icon: Dumbbell,   color: '#F59E0B' },
-  { id: 'historico',   label: 'Histórico',        icon: BarChart3,  color: '#F97316' },
-  { id: 'config',      label: 'Config',           icon: Settings,   color: '#6B6A7A' },
+  { id: 'hidratacao', label: 'Hidratação', icon: Droplets, color: '#38BDF8' },
+  { id: 'habitos', label: 'Hábitos', icon: Flame, color: '#A855F7' },
+  { id: 'dieta', label: 'Dieta', icon: Utensils, color: '#10B981' },
+  { id: 'treino', label: 'Treino', icon: Dumbbell, color: '#F59E0B' },
+  { id: 'historico', label: 'Histórico', icon: BarChart3, color: '#F97316' },
+  { id: 'config', label: 'Config', icon: Settings, color: '#6B6A7A' },
 ];
 
 const VALID_TABS = TABS.map(t => t.id);
@@ -28,7 +28,7 @@ export function HealthPage({ initialTab }) {
   const [tab, setTab] = useState(
     initialTab && VALID_TABS.includes(initialTab) ? initialTab
       : urlTab && VALID_TABS.includes(urlTab) ? urlTab
-      : 'hidratacao'
+        : 'hidratacao'
   );
 
   // Sync URL when tab changes
@@ -45,7 +45,7 @@ export function HealthPage({ initialTab }) {
       {/* ── HEADER (clean, not hidden on mobile) ─────────────────────────── */}
       <PageHeader
         icon="💪"
-        title="Health OS"
+        title="Saúde"
         subtitle={new Date().toLocaleDateString('pt-BR', {
           weekday: 'long',
           day: 'numeric',
@@ -63,11 +63,10 @@ export function HealthPage({ initialTab }) {
             <button
               key={t.id}
               onClick={() => setTab(t.id)}
-              className={`flex-shrink-0 px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-300 flex items-center gap-2 cursor-pointer ${
-                isActive
+              className={`flex-shrink-0 px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-300 flex items-center gap-2 cursor-pointer ${isActive
                   ? 'bg-gradient-to-r from-primary to-indigo-600 text-white shadow-lg shadow-primary/25'
                   : 'text-text-dim hover:text-white hover:bg-white/5'
-              }`}
+                }`}
             >
               <Icon size={14} style={{ color: isActive ? 'inherit' : t.color }} />
               {t.label}
