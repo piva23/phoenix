@@ -141,7 +141,8 @@ export const useSyncStore = create((set, get) => ({
     }
   },
 
-  // Load from cloud
+  // Load from cloud — only restore if local store is empty
+  // (respects manual local data deletion)
   loadFromCloud: async () => {
     try {
       const { getAuth } = await import('firebase/auth');
@@ -156,30 +157,45 @@ export const useSyncStore = create((set, get) => ({
       
       const data = docSnap.data();
       
-      // Restore each store
+      // Restore each store ONLY if local data is empty
       if (data.health) {
         const { useHealthStore } = await import('./useHealthStore');
-        useHealthStore.setState({ plans: data.health });
+        const local = useHealthStore.getState();
+        if (!local.plans || Object.keys(local.plans).length === 0) {
+          useHealthStore.setState({ plans: data.health });
+        }
       }
       if (data.study) {
         const { useStudyStore } = await import('./useStudyStore');
-        useStudyStore.setState(data.study);
+        const local = useStudyStore.getState();
+        if (!local.subjects || local.subjects.length === 0) {
+          useStudyStore.setState(data.study);
+        }
       }
       if (data.finance) {
         const { useFinanceStore } = await import('./useFinanceStore');
-        useFinanceStore.setState(data.finance);
+        const local = useFinanceStore.getState();
+        if (!local.transactions || local.transactions.length === 0) {
+          useFinanceStore.setState(data.finance);
+        }
       }
       if (data.achievements) {
         const { useAchievementStore } = await import('./useAchievementStore');
-        useAchievementStore.setState(data.achievements);
+        const local = useAchievementStore.getState();
+        if (!local.unlocked || Object.keys(local.unlocked).length === 0) {
+          useAchievementStore.setState(data.achievements);
+        }
       }
       if (data.game) {
         const { useGameStore } = await import('./useGameStore');
-        useGameStore.setState(data.game);
+        const local = useGameStore.getState();
+        if (!local.quests || local.quests.length === 0) {
+          useGameStore.setState(data.game);
+        }
       }
       
       set({ lastSynced: data.lastSynced });
-      console.log('[sync] Cloud data loaded, last synced:', data.lastSynced);
+      console.log('[sync] Cloud data loaded (only empty stores), last synced:', data.lastSynced);
       return true;
     } catch (e) {
       console.error('[sync] Load from cloud failed:', e);
