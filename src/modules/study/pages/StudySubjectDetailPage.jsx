@@ -217,7 +217,7 @@ export default function StudySubjectDetailPage() {
       <StudyLayout>
         <div className="flex flex-col items-center justify-center h-64 text-text-muted">
           <p>Matéria não encontrada.</p>
-          <button onClick={() => navigate('/study/subjects')} className="mt-6 px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-[var(--primary)]">Voltar</button>
+          <button onClick={() => navigate('/study?tab=subjects')} className="mt-6 px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-[var(--primary)]">Voltar</button>
         </div>
       </StudyLayout>
     );
@@ -284,7 +284,7 @@ export default function StudySubjectDetailPage() {
       <div className="flex flex-col pb-10">
         {/* Breadcrumbs */}
         <div className="flex items-center gap-2 text-xs text-text-dim mb-4 p-3 rounded-xl bg-white/5 backdrop-blur-sm border border-white/5">
-          <button onClick={() => navigate('/study/subjects')} className="hover:text-[var(--primary)] font-medium transition-colors">Matérias</button>
+          <button onClick={() => navigate('/study?tab=subjects')} className="hover:text-[var(--primary)] font-medium transition-colors">Matérias</button>
           <span>/</span>
           <span className="font-bold text-text-main truncate">{subject.name}</span>
         </div>

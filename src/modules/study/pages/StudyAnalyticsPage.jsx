@@ -256,7 +256,7 @@ export default function StudyAnalyticsPage() {
               </AlertBanner>
             )}
             {blockAlert?.detected && blockSubject && (
-              <AlertBanner type="warning" onAction={() => navigate('/study/today')} actionLabel="Ver ciclo">
+              <AlertBanner type="warning" onAction={() => navigate('/study?tab=today')} actionLabel="Ver ciclo">
                 <strong>Prática em bloco detectada.</strong> Últimas 5 sessões: <strong>{blockSubject.name}</strong>. Prática mesclada = 2× retenção (Rohrer).
               </AlertBanner>
             )}

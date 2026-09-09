@@ -35,7 +35,7 @@ function BlockCard({ block, onDragStart }) {
     if (openSessionModal) {
       openSessionModal({ subjectId: block.subjectId });
     } else {
-      navigate('/study/today');
+      navigate('/study?tab=today');
     }
   }
 

@@ -518,7 +518,7 @@ export default function StudyTodayPage() {
           <div className="flex items-center gap-2 text-xs">
             <span className="font-bold" style={{ color: 'var(--text-dim)' }}>Ciclo:</span>
             <a
-              href="/study/cycle"
+              href="/study?tab=cycle"
               className="font-bold px-2 py-0.5 rounded-lg transition-all hover:bg-white/[0.06]"
               style={{ color: 'var(--accent)', background: 'rgba(168,85,247,0.1)' }}
             >
@@ -567,7 +567,7 @@ export default function StudyTodayPage() {
                   ))}
                   {filteredSubjects.length > 5 && !searchQuery && (
                     <button
-                      onClick={() => navigate('/study/subjects')}
+                      onClick={() => navigate('/study?tab=subjects')}
                       className="text-center py-2 text-[10px] font-bold uppercase tracking-wider transition-all hover:bg-white/[0.03] rounded-xl"
                       style={{ color: 'var(--accent)' }}
                     >

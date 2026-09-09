@@ -312,7 +312,7 @@ function ConcursoDetailView({ concurso, onBack, onAprovado, onChangeStatus }) {
             <div className="rounded-2xl border overflow-hidden" style={BD}>
               <div className="p-4 flex items-center justify-between border-b" style={{ ...BD, ...BG2 }}>
                 <span className="font-bold text-sm text-text-main">📝 Simulados ({realSimulados.length})</span>
-                <button onClick={() => navigate('/study/simulados')} className="text-xs px-3 py-1.5 rounded-lg font-bold border hover:bg-white/5" style={{ borderColor: 'rgba(255,255,255,0.1)', color: 'var(--text-main)' }}>+ Novo</button>
+                <button onClick={() => navigate('/study?tab=simulados')} className="text-xs px-3 py-1.5 rounded-lg font-bold border hover:bg-white/5" style={{ borderColor: 'rgba(255,255,255,0.1)', color: 'var(--text-main)' }}>+ Novo</button>
               </div>
               {!realSimulados.length ? <div className="p-6 text-center text-xs text-text-dim italic">Nenhum simulado vinculado a este concurso.</div> : (<>
                 {evolution.length > 1 && <div className="px-4 pt-4" style={{ height: 160 }}><ResponsiveContainer width="100%" height="100%"><LineChart data={evolution} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>

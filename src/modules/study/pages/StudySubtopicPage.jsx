@@ -149,7 +149,7 @@ export function StudySubtopicPage() {
         <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
           <span className="text-4xl">⚠️</span>
           <p className="text-sm" style={{ color: 'var(--text-dim)' }}>Aula não encontrada.</p>
-          <button onClick={() => navigate('/study/subjects')} className="px-5 py-2 rounded-xl text-sm font-bold text-white" style={{ background: 'var(--primary)' }}>
+          <button onClick={() => navigate('/study?tab=subjects')} className="px-5 py-2 rounded-xl text-sm font-bold text-white" style={{ background: 'var(--primary)' }}>
             Voltar para Matérias
           </button>
         </div>
@@ -165,7 +165,7 @@ export function StudySubtopicPage() {
 
         {/* ── Breadcrumb ── */}
         <div className="flex items-center gap-2 text-xs p-3 rounded-xl bg-white/[0.03] border border-white/[0.06] backdrop-blur-sm">
-          <button onClick={() => navigate('/study/subjects')} className="hover:text-[var(--primary)] font-medium transition-colors" style={{ color: 'var(--text-dim)' }}>Matérias</button>
+          <button onClick={() => navigate('/study?tab=subjects')} className="hover:text-[var(--primary)] font-medium transition-colors" style={{ color: 'var(--text-dim)' }}>Matérias</button>
           <span style={{ color: 'var(--text-dim)' }}>/</span>
           <button onClick={() => navigate(`/study/subjects/${subjectId}`)} className="hover:text-white transition-colors" style={{ color: accent }}>{subject?.name}</button>
           <span style={{ color: 'var(--text-dim)' }}>/</span>

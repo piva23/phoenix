@@ -32,6 +32,7 @@ const HealthPage = lazy(() => import('../modules/health/pages/HealthPage'));
 const FinancePage = lazy(() => import('../modules/finance/pages/FinancePage'));
 
 // Study — lazy loaded
+const StudyPage = lazy(() => import('../modules/study/pages/StudyPage'));
 const StudyTodayPage = lazy(() => import('../modules/study/pages/StudyTodayPage'));
 const StudySubjectsPage = lazy(() => import('../modules/study/pages/StudySubjectsPage'));
 const StudySubjectDetailPage = lazy(() => import('../modules/study/pages/StudySubjectDetailPage'));
@@ -66,23 +67,10 @@ function AppRoutes() {
             <Route path="analytics" element={<AnalyticsPage />} />
             <Route path="settings" element={<SettingsPage />} />
 
-            {/* Study */}
-            <Route path="study" element={<Navigate to="/study/today" replace />} />
-            <Route path="study/today" element={<StudyTodayPage />} />
-
-            <Route path="study/concursos" element={<StudyConcursosPage />} />
-            <Route path="study/subjects" element={<StudySubjectsPage />} />
-            <Route path="study/subjects/:subjectId" element={<StudySubjectDetailPage />} />
-            <Route path="study/subjects/:subjectId/:topicId/:subtopicId" element={<StudySubtopicPage />} />
-            <Route path="study/cycle" element={<StudyCyclePage />} />
-            <Route path="study/session" element={<StudySessionPage />} />
-            <Route path="study/revisions" element={<StudyRevisionsPage />} />
-            <Route path="study/redacao" element={<StudyRedacaoPage />} />
-            <Route path="study/analytics" element={<StudyAnalyticsPage />} />
-            <Route path="study/simulados" element={<StudySimuladosPage />} />
-            <Route path="study/questoes" element={<StudyQuestoesPage />} />
-            <Route path="study/questoes/:materia" element={<StudyQuestoesPage />} />
-            <Route path="study/techniques" element={<StudyTechniquesPage />} />
+            {/* Study — single entry point with local tab state */}
+            <Route path="study" element={<StudyPage />} />
+            <Route path="study/subjects/:subjectId" element={<StudyPage />} />
+            <Route path="study/subjects/:subjectId/:topicId/:subtopicId" element={<StudyPage />} />
 
           </Route>
         </Route>
