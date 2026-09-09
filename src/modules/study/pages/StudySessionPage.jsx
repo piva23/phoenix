@@ -219,10 +219,7 @@ export default function StudySessionPage() {
   return (
     <StudyLayout>
       <div className="flex flex-col max-h-[calc(100vh-80px)] overflow-y-auto custom-scrollbar pr-1 pb-10 space-y-5">
-        <div>
-          <h1 className="text-2xl font-extrabold tracking-tight text-zinc-100">Histórico de Sessões</h1>
-          <p className="text-sm mt-1 text-zinc-500">Cada sessão registrada é residuo cognitivo acumulado.</p>
-        </div>
+        <p className="text-sm text-zinc-500">Cada sessão registrada é resíduo cognitivo acumulado.</p>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <BentoCard className="text-center">

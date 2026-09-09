@@ -206,10 +206,7 @@ export default function StudyAnalyticsPage() {
       <div className="flex flex-col max-h-[calc(100vh-80px)] overflow-y-auto custom-scrollbar pr-1 pb-10 space-y-6 animate-fade-in">
         {/* Header */}
         <div className="flex items-start justify-between gap-4 flex-wrap">
-          <div>
-            <h1 className="text-2xl font-extrabold tracking-tight" style={{ color: 'var(--text-main)' }}>Analytics</h1>
-            <p className="text-sm mt-1" style={{ color: 'var(--text-dim)' }}>Diagnóstico completo da sua preparação.</p>
-          </div>
+          <p className="text-sm" style={{ color: 'var(--text-dim)' }}>Diagnóstico completo da sua preparação.</p>
           <div className="flex gap-2 flex-wrap">
             <div className="flex gap-1 p-1 rounded-xl backdrop-blur-md bg-white/[0.04] border border-white/[0.08]">
               {PERIODS.map(p => (

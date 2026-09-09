@@ -506,18 +506,6 @@ export default function StudyTodayPage() {
   return (
     <StudyLayout title="Hoje" subtitle={new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}>
       <div className="flex flex-col pb-24 md:pb-10 space-y-5">
-        {/* Header (desktop) */}
-        <div className="hidden md:flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-extrabold tracking-tight" style={{ color: 'var(--text-main)' }}>
-              Hoje
-            </h1>
-            <p className="text-sm mt-1" style={{ color: 'var(--text-dim)' }}>
-              {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}
-            </p>
-          </div>
-        </div>
-
         {/* KPI Row */}
         <div className="grid grid-cols-3 gap-3 md:grid-cols-12 md:gap-4">
           <StreakTile streak={streak} xp={todayXP} />

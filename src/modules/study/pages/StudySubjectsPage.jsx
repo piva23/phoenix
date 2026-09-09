@@ -139,14 +139,9 @@ export default function StudySubjectsPage() {
     <StudyLayout>
       <div className="flex flex-col pb-10 space-y-5">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-extrabold tracking-tight" style={{ color: 'var(--text-main)' }}>
-              Matérias
-            </h1>
-            <p className="text-sm mt-1" style={{ color: 'var(--text-dim)' }}>
-              {subjects.length} matérias cadastradas
-            </p>
-          </div>
+          <p className="text-sm" style={{ color: 'var(--text-dim)' }}>
+            {subjects.length} matérias cadastradas
+          </p>
           <div className="flex gap-2">
             <input
               value={search}

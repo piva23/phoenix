@@ -355,10 +355,7 @@ export default function StudyRevisionsPage() {
     <StudyLayout>
       <div className="flex flex-col max-h-[calc(100vh-80px)] overflow-y-auto custom-scrollbar pr-1 pb-10 space-y-5">
         <div className="flex items-start justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-extrabold tracking-tight text-zinc-100">Revisões</h1>
-            <p className="text-sm mt-1 text-zinc-500">Espaçamento inteligente R1→R6 — cada revisão fortalece a memória de longo prazo.</p>
-          </div>
+          <p className="text-sm text-zinc-500">Espaçamento inteligente R1→R6 — cada revisão fortalece a memória de longo prazo.</p>
           <button onClick={() => setManagerOpen(true)} className="px-3 py-2 rounded-xl text-xs font-bold border transition-all whitespace-nowrap hover:bg-white/5" style={{ borderColor: 'rgba(255,255,255,0.1)', color: '#e2e8f0' }}>🗂 Gerenciar</button>
         </div>
 

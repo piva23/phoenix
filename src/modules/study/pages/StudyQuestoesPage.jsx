@@ -510,8 +510,7 @@ export default function StudyQuestoesPage() {
     <StudyLayout>
       <div className="flex flex-col max-h-[calc(100vh-80px)] overflow-y-auto custom-scrollbar pr-1 pb-10">
         <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="flex items-start justify-between gap-4 flex-wrap mb-4">
-          <div><h1 className="text-2xl font-extrabold tracking-tight" style={{ color: 'var(--text-main)' }}>Banco de Questões</h1>
-            <p className="text-sm mt-1" style={{ color: 'var(--text-dim)' }}>{filtered.length} questões {activeCount > 0 ? '(filtrado)' : ''} · {materiaStats.length} disciplinas</p></div>
+          <p className="text-sm" style={{ color: 'var(--text-dim)' }}>{filtered.length} questões {activeCount > 0 ? '(filtrado)' : ''} · {materiaStats.length} disciplinas</p>
           <div className="flex gap-2 items-center">
             {/* Merge conflict bell icon */}
             {unmatchedMaterias.length > 0 && (

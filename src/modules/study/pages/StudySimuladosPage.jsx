@@ -354,10 +354,7 @@ export default function StudySimuladosPage() {
     <StudyLayout>
       <div className="flex flex-col max-h-[calc(100vh-80px)] overflow-y-auto custom-scrollbar pr-1 pb-10 space-y-5">
         <div className="flex items-start justify-between gap-4 flex-wrap">
-          <div>
-            <h1 className="text-2xl font-extrabold tracking-tight text-white/95">Simulados</h1>
-            <p className="text-sm mt-1 text-white/40">{simulados.length} simulados registrados</p>
-          </div>
+          <p className="text-sm text-white/40">{simulados.length} simulados registrados</p>
           <div className="flex gap-2">
             {concursos.length > 0 && (
               <select value={filterConcurso} onChange={e => setFilterConcurso(e.target.value)} className="px-3 py-2 rounded-xl text-xs border border-white/[0.08] outline-none bg-white/[0.04] text-white/80">
