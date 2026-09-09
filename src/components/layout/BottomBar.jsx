@@ -15,6 +15,10 @@ import {
 import { useSessionModalStore } from '../../stores/useSessionModalStore';
 import { useActiveSessionUIStore } from '../../stores/useActiveSessionUIStore';
 
+const hexClipStyle = {
+  clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)',
+};
+
 /* ═══════════════════════════════════════════════════════
    NAV ITEMS — Bottom Bar
    ═══════════════════════════════════════════════════════ */
@@ -108,18 +112,14 @@ export default function BottomBar() {
             className="fixed bottom-[76px] left-0 right-0 z-[91] flex flex-col items-center gap-2.5 px-4 pb-2 lg:hidden"
           >
             {/* Session button */}
-            <motion.div variants={itemVariants}>
+            <motion.div variants={itemVariants} className="flex items-center justify-center">
               <button
-                onClick={() => { if (openSessionModal) openSessionModal(); setHexOpen(false); }}
-                className="flex items-center gap-2 px-4 py-2.5 rounded-full border text-xs font-bold shadow-lg backdrop-blur-xl transition-colors"
-                style={{
-                  background: 'rgba(16,185,129,0.12)',
-                  borderColor: 'rgba(16,185,129,0.25)',
-                  color: '#10B981',
-                }}
+                onClick={() => { if(openSessionModal) openSessionModal(); setHexOpen(false); }}
+                style={hexClipStyle}
+                className="flex items-center gap-2 px-4 py-2.5 bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-xs font-bold shadow-lg"
               >
                 <BookOpen size={14} />
-                Sessão de Estudo
+                Sessão
               </button>
             </motion.div>
             {/* Extra items in a row */}
@@ -130,13 +130,10 @@ export default function BottomBar() {
                   <button
                     key={item.path}
                     onClick={() => handleExtra(item.path)}
-                    className="w-11 h-11 flex items-center justify-center rounded-2xl border shadow-lg backdrop-blur-xl transition-all active:scale-95"
-                    style={{
-                      background: 'rgba(15,15,20,0.85)',
-                      borderColor: 'rgba(255,255,255,0.08)',
-                    }}
+                    style={hexClipStyle}
+                    className={`w-11 h-12 flex items-center justify-center card-surface shadow-lg ${item.color}`}
                   >
-                    <Icon size={18} className={item.color} />
+                    <Icon size={16} />
                   </button>
                 );
               })}
@@ -195,7 +192,8 @@ export default function BottomBar() {
             )}
             <motion.button
               onClick={handleHexTap}
-              className={`w-11 h-12 flex items-center justify-center text-white relative z-10 transition-all duration-200 rounded-2xl ${
+              style={hexClipStyle}
+              className={`w-11 h-12 flex items-center justify-center text-white relative z-10 transition-all duration-200 ${
                 isSessionActive
                   ? 'bg-blue-600 shadow-lg shadow-blue-500/30'
                   : hexOpen
@@ -210,11 +208,12 @@ export default function BottomBar() {
                 </div>
               ) : (
                 <motion.span
-                  animate={{ rotate: hexOpen ? 45 : 0 }}
+                  animate={{ rotate: hexOpen ? 180 : 0 }}
                   transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-                  className="text-lg font-bold"
+                  className="text-lg font-black"
+                  style={{ fontFamily: 'Georgia, serif' }}
                 >
-                  +
+                  P
                 </motion.span>
               )}
             </motion.button>
