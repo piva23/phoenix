@@ -3,7 +3,6 @@ import { useStudyStore } from '../../stores/useStudyStore';
 import toast from 'react-hot-toast';
 
 export function useQuestionListener() {
-  const addSubject = useStudyStore(s => s.addSubject);
   const addTopic = useStudyStore(s => s.addTopic);
   const addSubtopic = useStudyStore(s => s.addSubtopic);
   const addFlashcard = useStudyStore(s => s.addFlashcard);
@@ -17,33 +16,18 @@ export function useQuestionListener() {
 
       if (!pergunta) return;
 
-      // 1. Procurar ou criar a Matéria (Subject)
-      let state = useStudyStore.getState();
-      let subject = state.subjects.find(
+      // 1. Procurar a Matéria (Subject) — NÃO criar automaticamente
+      // Se não existe, o flashcard fica sem subject vinculado
+      const state = useStudyStore.getState();
+      const subject = state.subjects.find(
         s => s.name?.toLowerCase().trim() === (disciplina || '').toLowerCase().trim()
       );
-
-      let targetSubjectId;
-      if (subject) {
-        targetSubjectId = subject.id;
-      } else {
-        // Se a matéria não existe, procura ou cria a "Caixa de Entrada de Gaps"
-        let inboxSubject = state.subjects.find(
-          s => s.name === 'Caixa de Entrada de Gaps'
-        );
-        if (!inboxSubject) {
-          const newId = `subj_inbox_${Date.now()}`;
-          addSubject({
-            id: newId,
-            name: 'Caixa de Entrada de Gaps',
-            color: '#EF4444',
-            emoji: '📥'
-          });
-          targetSubjectId = newId;
-        } else {
-          targetSubjectId = inboxSubject.id;
-        }
+      if (!subject) {
+        toast(`Questão sem matéria vinculada: "${disciplina || 'desconhecida'}"`, { icon: '📭' });
+        return;
       }
+
+      const targetSubjectId = subject.id;
 
       // Re-ler estado do Zustand para pegar dados atualizados do subject criado
       state = useStudyStore.getState();
@@ -117,5 +101,5 @@ export function useQuestionListener() {
 
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
-  }, [addSubject, addTopic, addSubtopic, addFlashcard]);
+  }, [addTopic, addSubtopic, addFlashcard]);
 }
