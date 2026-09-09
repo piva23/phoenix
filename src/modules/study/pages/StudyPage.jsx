@@ -89,8 +89,8 @@ export default function StudyPage() {
         })}
       />
 
-      {/* ── TAB BAR (horizontal scrollable, same as Health) ─────────────── */}
-      <div className="flex gap-2 overflow-x-auto scrollbar-hide p-1.5 card-surface mb-6">
+      {/* ── TAB BAR (wrap on desktop, scroll on mobile) ─────────────────── */}
+      <div className="flex flex-wrap lg:flex-nowrap gap-2 p-1.5 card-surface mb-6">
         {TABS.filter(t => !t.hidden).map(t => {
           const Icon = t.icon;
           const isActive = tab === t.id;
@@ -98,7 +98,7 @@ export default function StudyPage() {
             <button
               key={t.id}
               onClick={() => setTab(t.id)}
-              className={`flex-shrink-0 px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-300 flex items-center gap-2 cursor-pointer ${
+              className={`px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-300 flex items-center gap-2 cursor-pointer ${
                 isActive
                   ? 'bg-gradient-to-r from-primary to-indigo-600 text-white shadow-lg shadow-primary/25'
                   : 'text-text-dim hover:text-white hover:bg-white/5'
