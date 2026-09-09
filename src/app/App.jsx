@@ -106,9 +106,8 @@ export default function App() {
     const checkAndSync = (prevUser) => {
       const { user } = useAuthStore.getState();
       if (user && !prevUser) {
-        // User logged in — start auto sync and load cloud data
+        // User logged in — start auto sync only (NO auto-restore)
         useSyncStore.getState().startAutoSync();
-        useSyncStore.getState().loadFromCloud();
       } else if (!user && prevUser) {
         // User logged out — stop auto sync
         useSyncStore.getState().stopAutoSync();
@@ -117,10 +116,9 @@ export default function App() {
 
     let prevUser = useAuthStore.getState().user;
 
-    // If already logged in, start sync immediately
+    // If already logged in, start sync only
     if (prevUser) {
       useSyncStore.getState().startAutoSync();
-      useSyncStore.getState().loadFromCloud();
     }
 
     const unsubscribe = useAuthStore.subscribe((state) => {
