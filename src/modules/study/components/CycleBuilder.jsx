@@ -97,18 +97,26 @@ export function CycleBuilder({ onSave, onClose, editCycle = null }) {
   }
 
   // distribui proporcionalmente baseado no editalWeight das matérias
+  // Se o ciclo está vinculado a um concurso, puxa os pesos da estratégia atual
   function autoDistribute() {
     if (items.length === 0) return;
-    const totalW =
-      items.reduce((a, i) => {
-        const subj = subjects.find(s => s.id === i.subjectId);
-        return a + (subj?.editalWeight || 1);
-      }, 0) || items.length;
+
+    // Buscar pesos do concurso vinculado (se existir)
+    const concurso = concursoId ? concursos.find(c => c.id === concursoId) : null;
+    const concursoDisciplinas = concurso?.disciplinas || [];
+
+    const totalW = items.reduce((a, i) => {
+      // Prioridade: peso do concurso > editalWeight da matéria > 1
+      const disc = concursoDisciplinas.find(d => d.subjectId === i.subjectId);
+      if (disc) return a + (disc.weight || 1);
+      const subj = subjects.find(s => s.id === i.subjectId);
+      return a + (subj?.editalWeight || 1);
+    }, 0) || items.length;
 
     setItems(prev =>
       prev.map(i => {
-        const subj = subjects.find(s => s.id === i.subjectId);
-        const w = subj?.editalWeight || 1;
+        const disc = concursoDisciplinas.find(d => d.subjectId === i.subjectId);
+        const w = disc ? (disc.weight || 1) : (subjects.find(s => s.id === i.subjectId)?.editalWeight || 1);
         const h = Math.max(0.5, Math.round((w / totalW) * totalHoras * 2) / 2);
         return { ...i, horasPorRodada: h };
       })
