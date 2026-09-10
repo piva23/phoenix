@@ -96,27 +96,43 @@ export function CycleBuilder({ onSave, onClose, editCycle = null }) {
     );
   }
 
-  // distribui proporcionalmente baseado no editalWeight das matérias
-  // Se o ciclo está vinculado a um concurso, puxa os pesos da estratégia atual
+  // distribui proporcionalmente baseado no % edital (coluna final da estratégia)
+  // Se o ciclo está vinculado a um concurso, calcula o % edital das disciplinas
   function autoDistribute() {
     if (items.length === 0) return;
 
-    // Buscar pesos do concurso vinculado (se existir)
+    // Buscar concurso vinculado e calcular % edital real
     const concurso = concursoId ? concursos.find(c => c.id === concursoId) : null;
     const concursoDisciplinas = concurso?.disciplinas || [];
 
+    // Calcular % edital para cada disciplina do concurso
+    let totalPoints = 0;
+    const discPctMap = {};
+    concursoDisciplinas.forEach(d => {
+      const pts = (d.questions || 0) * (d.weight || 1);
+      totalPoints += pts;
+      discPctMap[d.subjectId || d.id] = { points: pts, questions: d.questions || 0, weight: d.weight || 1 };
+    });
+    // Calcular percentuais
+    Object.keys(discPctMap).forEach(key => {
+      discPctMap[key].percent = totalPoints > 0 ? (discPctMap[key].points / totalPoints) * 100 : 0;
+    });
+
     const totalW = items.reduce((a, i) => {
-      // Prioridade: peso do concurso > editalWeight da matéria > 1
-      const disc = concursoDisciplinas.find(d => d.subjectId === i.subjectId);
-      if (disc) return a + (disc.weight || 1);
+      // Prioridade: % edital do concurso > editalWeight da matéria > 1
+      if (discPctMap[i.subjectId]) return a + discPctMap[i.subjectId].percent;
       const subj = subjects.find(s => s.id === i.subjectId);
       return a + (subj?.editalWeight || 1);
     }, 0) || items.length;
 
     setItems(prev =>
       prev.map(i => {
-        const disc = concursoDisciplinas.find(d => d.subjectId === i.subjectId);
-        const w = disc ? (disc.weight || 1) : (subjects.find(s => s.id === i.subjectId)?.editalWeight || 1);
+        let w;
+        if (discPctMap[i.subjectId]) {
+          w = discPctMap[i.subjectId].percent;
+        } else {
+          w = subjects.find(s => s.id === i.subjectId)?.editalWeight || 1;
+        }
         const h = Math.max(0.5, Math.round((w / totalW) * totalHoras * 2) / 2);
         return { ...i, horasPorRodada: h };
       })
