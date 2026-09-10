@@ -189,26 +189,83 @@ function ConcursoDetailView({ concurso, onBack, onAprovado, onChangeStatus }) {
       const answered = (sub.correct || 0) + (sub.wrong || 0); tc += sub.correct || 0; ta += answered;
       return { ...sub, points, answered, accuracy: answered > 0 ? (((sub.correct || 0) / answered) * 100).toFixed(1) : 0 };
     });
-    const subjects = proc.map(sub => {
+    const enriched = proc.map(sub => {
       const pct = tp > 0 ? (sub.points / tp) * 100 : 0;
       return { ...sub, percent: pct.toFixed(1), cycleBlocks: (tp > 0 ? (pct / 100) * metaCiclos : 0).toFixed(1) };
     });
-    return { subjects, totalQuestions: tq, totalPoints: tp, totalCorrect: tc, totalAnswered: ta, globalAccuracy: ta > 0 ? ((tc / ta) * 100).toFixed(1) : 0 };
+    return { subjects: enriched, totalQuestions: tq, totalPoints: tp, totalCorrect: tc, totalAnswered: ta, globalAccuracy: ta > 0 ? ((tc / ta) * 100).toFixed(1) : 0 };
   }, [disciplinas, metaCiclos]);
 
-  function handleImportToCycle() {
-    if (!stats.subjects.length) return toast.error('Adicione disciplinas ao edital antes de importar.');
-    const dw = 240, tw = stats.subjects.reduce((a, s) => a + Number(s.percent), 0) || 100;
+  // ── AUTO-LINK: vincula disciplinas ↔ matérias por nome ──────────────────
+  function handleAutoLink() {
+    let linked = 0;
+    const updated = disciplinas.map(d => {
+      if (d.subjectId) return d;
+      const match = subjects.find(s => s.name.toLowerCase().trim() === d.name.toLowerCase().trim())
+        || subjects.find(s => s.name.toLowerCase().includes(d.name.toLowerCase()) || d.name.toLowerCase().includes(s.name.toLowerCase()));
+      if (match) { linked++; return { ...d, subjectId: match.id }; }
+      return d;
+    });
+    if (linked > 0) {
+      updateConcurso(concurso.id, { disciplinas: updated });
+      toast.success(`${linked} disciplina(s) vinculada(s)!`);
+    } else {
+      toast('Nenhum match encontrado. Crie as matérias primeiro.', { icon: '🔍' });
+    }
+  }
+
+  // ── CRIAR MATÉRIAS: cria subjects das disciplinas não-vinculadas ────────
+  function handleCreateSubjects() {
     const colors = ['#8B5CF6', '#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#06B6D4', '#EC4899', '#F97316', '#14B8A6', '#A855F7'];
+    let created = 0;
+    const updated = disciplinas.map((d, idx) => {
+      if (d.subjectId) return d;
+      const existing = subjects.find(s => s.name.toLowerCase().trim() === d.name.toLowerCase().trim())
+        || subjects.find(s => s.name.toLowerCase().includes(d.name.toLowerCase()) || d.name.toLowerCase().includes(s.name.toLowerCase()));
+      if (existing) { return { ...d, subjectId: existing.id }; }
+      const newId = `subj_conc_${Date.now()}_${idx}_${Math.random().toString(36).slice(2, 8)}`;
+      addSubjectToStore({
+        id: newId, name: d.name, color: colors[idx % colors.length],
+        weeklyGoalMinutes: 180, editalWeight: Math.round(Number(stats.subjects.find(s => s.id === d.id)?.percent || 0)),
+        priority: 'media', icon: '📖',
+      });
+      const found = useStudyStore.getState().subjects.find(s => s.name.toLowerCase() === d.name.toLowerCase());
+      created++;
+      return { ...d, subjectId: found?.id || newId };
+    });
+    updateConcurso(concurso.id, { disciplinas: updated });
+    toast.success(`${created} matéria(s) criada(s)!`);
+  }
+
+  // ── GERAR CICLO: cria ciclo com horas distribuídas pelos pesos ──────────
+  function handleImportToCycle() {
+    if (!stats.subjects.length) return toast.error('Adicione disciplinas ao edital antes de gerar o ciclo.');
+    const totalPercent = stats.subjects.reduce((a, s) => a + Number(s.percent), 0) || 100;
+    const totalHours = metaCiclos;
+    const colors = ['#8B5CF6', '#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#06B6D4', '#EC4899', '#F97316', '#14B8A6', '#A855F7'];
+
     const items = stats.subjects.map((sub, idx) => {
       let m = sub.subjectId ? subjects.find(s => s.id === sub.subjectId) : null;
       if (!m) m = subjects.find(s => s.name.toLowerCase().includes(sub.name.toLowerCase()) || sub.name.toLowerCase().includes(s.name.toLowerCase()));
-      if (!m) { addSubjectToStore({ id: `subj_conc_${Date.now()}_${idx}_${Math.random().toString(36).slice(2, 8)}`, name: sub.name, color: colors[idx % colors.length], weeklyGoalMinutes: 180, editalWeight: Math.round(Number(sub.percent)), priority: 'media', icon: '📖' }); m = useStudyStore.getState().subjects.find(s => s.name.toLowerCase() === sub.name.toLowerCase()); }
-      const wp = Number(sub.percent), hd = (dw / 60) * (wp / tw);
-      return { id: `ci_${Date.now()}_${idx}`, subjectId: m?.id || null, subjectName: sub.name, subjectColor: m?.color || colors[idx % colors.length], weightPct: Math.round(wp), horasPorRodada: Math.max(Math.round(hd * 7 * 10) / 10, 0.5), minutosFeitos: 0, completedThisRound: false, ordem: idx };
+      if (!m) {
+        const newId = `subj_conc_${Date.now()}_${idx}_${Math.random().toString(36).slice(2, 8)}`;
+        addSubjectToStore({ id: newId, name: sub.name, color: colors[idx % colors.length], weeklyGoalMinutes: 180, editalWeight: Math.round(Number(sub.percent)), priority: 'media', icon: '📖' });
+        m = useStudyStore.getState().subjects.find(s => s.name.toLowerCase() === sub.name.toLowerCase());
+      }
+      if (m) useStudyStore.getState().updateSubject(m.id, { editalWeight: Math.round(Number(sub.percent)) });
+      const wp = Number(sub.percent);
+      const horas = Math.max(0.5, Math.round((wp / totalPercent) * totalHours * 10) / 10);
+      return { id: `ci_${Date.now()}_${idx}`, subjectId: m?.id || null, subjectName: sub.name, subjectColor: m?.color || colors[idx % colors.length], weightPct: Math.round(wp), horasPorRodada: horas, minutosFeitos: 0, completedThisRound: false, ordem: idx };
     });
-    addCycle({ nome: `Ciclo — ${concurso.nome}`, concursoId: concurso.id, totalHoras: Math.round(items.reduce((a, i) => a + i.horasPorRodada, 0)) || 24, items });
-    const c = useCycleStore.getState().cycles.at(-1); if (c) useCycleStore.getState().setActiveCycle(c.id);
+
+    const existingCycle = cycles.find(c => c.concursoId === concurso.id);
+    if (existingCycle) {
+      if (!window.confirm(`Já existe um ciclo para "${concurso.nome}". Substituir?`)) return;
+      useCycleStore.getState().deleteCycle(existingCycle.id);
+    }
+    addCycle({ nome: `Ciclo — ${concurso.nome}`, concursoId: concurso.id, totalHoras: Math.round(items.reduce((a, i) => a + i.horasPorRodada, 0)) || totalHours, items });
+    const c = useCycleStore.getState().cycles.at(-1);
+    if (c) useCycleStore.getState().setActiveCycle(c.id);
     toast.success(`Ciclo criado com ${items.length} disciplinas e ativado!`);
   }
 
@@ -274,12 +331,14 @@ function ConcursoDetailView({ concurso, onBack, onAprovado, onChangeStatus }) {
       <BentoCard span="full" padding={false}>
         {activeTab === 'edital' && (
           <div className="overflow-x-auto">
-            <div className="p-4 flex items-center justify-between border-b" style={{ ...BD, ...BG2 }}>
+            <div className="p-4 flex items-center justify-between border-b flex-wrap gap-2" style={{ ...BD, ...BG2 }}>
               <span className="font-bold text-sm text-text-main">Mapeamento e Pesos</span>
-              <div className="flex gap-2">
-                <button onClick={handleImportFromCycle} className="text-xs px-3 py-1.5 rounded-lg font-bold border hover:bg-white/5" style={{ borderColor: 'rgba(255,255,255,0.1)', color: 'var(--text-main)' }}>⬇️ Importar do Ciclo</button>
-                <button onClick={handleImportToCycle} className="text-xs px-3 py-1.5 rounded-lg font-bold border hover:bg-white/5" style={{ borderColor: 'rgba(255,255,255,0.1)', color: 'var(--text-main)' }}>🔄 Importar para o Ciclo</button>
-                <button onClick={addSubject} className="text-xs px-3 py-1.5 rounded-lg font-bold text-white hover:opacity-90" style={{ background: 'var(--primary)' }}>+ Nova Disciplina</button>
+              <div className="flex gap-2 flex-wrap">
+                <button onClick={handleAutoLink} className="text-xs px-3 py-1.5 rounded-lg font-bold border hover:bg-white/5" style={{ borderColor: 'rgba(255,255,255,0.1)', color: '#10B981' }}>🔗 Vincular</button>
+                <button onClick={handleCreateSubjects} className="text-xs px-3 py-1.5 rounded-lg font-bold border hover:bg-white/5" style={{ borderColor: 'rgba(255,255,255,0.1)', color: '#F59E0B' }}>📥 Criar Matérias</button>
+                <button onClick={handleImportFromCycle} className="text-xs px-3 py-1.5 rounded-lg font-bold border hover:bg-white/5" style={{ borderColor: 'rgba(255,255,255,0.1)', color: 'var(--text-main)' }}>⬇️ Do Ciclo</button>
+                <button onClick={handleImportToCycle} className="text-xs px-3 py-1.5 rounded-lg font-bold border hover:bg-white/5" style={{ borderColor: 'rgba(255,255,255,0.1)', color: 'var(--text-main)' }}>🔄 Gerar Ciclo</button>
+                <button onClick={addSubject} className="text-xs px-3 py-1.5 rounded-lg font-bold text-white hover:opacity-90" style={{ background: 'var(--primary)' }}>+ Disciplina</button>
               </div>
             </div>
             <table className="w-full text-left text-sm whitespace-nowrap">
@@ -288,11 +347,21 @@ function ConcursoDetailView({ concurso, onBack, onAprovado, onChangeStatus }) {
               </tr></thead>
               <tbody className="divide-y" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
                 {!stats.subjects.length && <tr><td colSpan="7" className="p-8 text-center text-text-dim text-xs">Adicione disciplinas ao edital para calcular sua estratégia.</td></tr>}
-                {stats.subjects.map(sub => (
+                {stats.subjects.map(sub => {
+                  const linked = !!sub.subjectId;
+                  const matchFound = !linked && subjects.some(s => s.name.toLowerCase().includes(sub.name.toLowerCase()) || sub.name.toLowerCase().includes(s.name.toLowerCase()));
+                  return (
                   <tr key={sub.id} className="hover:bg-white/[0.03] transition-colors">
-                    <td className="p-3"><SubjectLinkPicker subjectId={sub.subjectId} subjects={subjects}
-                      onLink={(id, name) => updateConcurso(concurso.id, { disciplinas: disciplinas.map(d => d.id === sub.id ? { ...d, subjectId: id, name } : d) })}
-                      onCreateAndLink={name => { const nid = `subj_conc_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`; addSubjectToStore({ id: nid, name, color: ['#8B5CF6', '#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#06B6D4', '#EC4899', '#F97316'][disciplinas.length % 8], weeklyGoalMinutes: 180, priority: 'media', icon: '📖' }); updateConcurso(concurso.id, { disciplinas: disciplinas.map(d => d.id === sub.id ? { ...d, subjectId: nid, name } : d) }); }} /></td>
+                    <td className="p-3">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs shrink-0" title={linked ? 'Matéria vinculada' : matchFound ? 'Possível match' : 'Sem matéria'}>
+                          {linked ? '🟢' : matchFound ? '🟡' : '⚪'}
+                        </span>
+                        <SubjectLinkPicker subjectId={sub.subjectId} subjects={subjects}
+                          onLink={(id, name) => updateConcurso(concurso.id, { disciplinas: disciplinas.map(d => d.id === sub.id ? { ...d, subjectId: id, name } : d) })}
+                          onCreateAndLink={name => { const nid = `subj_conc_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`; addSubjectToStore({ id: nid, name, color: ['#8B5CF6', '#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#06B6D4', '#EC4899', '#F97316'][disciplinas.length % 8], weeklyGoalMinutes: 180, priority: 'media', icon: '📖' }); updateConcurso(concurso.id, { disciplinas: disciplinas.map(d => d.id === sub.id ? { ...d, subjectId: nid, name } : d) }); }} />
+                      </div>
+                    </td>
                     <td className={td}><input type="number" value={sub.questions} onChange={e => updateSubject(sub.id, 'questions', e.target.value)} className="w-12 bg-transparent text-center outline-none border-b border-dashed" style={{ borderColor: 'rgba(255,255,255,0.15)' }} /></td>
                     <td className={td}><input type="number" step="0.5" value={sub.weight} onChange={e => updateSubject(sub.id, 'weight', e.target.value)} className="w-12 bg-transparent text-center outline-none border-b border-dashed font-bold" style={{ borderColor: 'rgba(255,255,255,0.15)', color: '#F59E0B' }} /></td>
                     <td className={`${td} font-black text-text-main`}>{sub.points}</td>
@@ -301,7 +370,8 @@ function ConcursoDetailView({ concurso, onBack, onAprovado, onChangeStatus }) {
                     <td className={`${td} font-black`} style={{ color: 'var(--primary)' }}>{sub.cycleBlocks}</td>
                     <td className={td}><button onClick={() => removeSubject(sub.id)} className="text-red-500 hover:text-red-400 font-bold px-2">✕</button></td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>

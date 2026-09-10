@@ -29,7 +29,7 @@ const fadeUp = {
 
 const stagger = { animate: { transition: { staggerChildren: 0.06 } } };
 
-function ActiveCycleHero({ cycle, onOpen, onAdvance }) {
+function ActiveCycleHero({ cycle, onOpen, onAdvance, onExportToConcurso }) {
   const subjects = useStudyStore(s => s.subjects);
   const sessions = useSessionStore(s => s.sessions);
   const concursos = useConcursoStore(s => s.concursos);
@@ -149,13 +149,20 @@ function ActiveCycleHero({ cycle, onOpen, onAdvance }) {
 
       <div className="flex items-center gap-3 pt-4 mt-4 border-t border-white/[0.06]">
         <div className="flex flex-wrap gap-2 flex-1">
-          {items.map((item, idx) => (
+          {items.map((item, idx) => {
+            // Cross-cycle: quais concursos incluem esta matéria?
+            const benefitConcursos = concursos.filter(c =>
+              (c.disciplinas || []).some(d => d.subjectId === item.subjectId)
+            );
+            return (
             <span key={idx} className="flex items-center gap-1 min-h-[28px] text-[10px] px-2 py-0.5 rounded-full" style={{ background: `${item.color}15`, color: item.color }}>
               <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: item.color }} />
               {item.subj?.name?.slice(0, 12) || item.subjectName?.slice(0, 12) || '—'}
               {item.questionCount > 0 && <span className="opacity-70"> · {item.questionCount}q</span>}
+              {benefitConcursos.length > 1 && <span title={benefitConcursos.map(c => c.nome).join(', ')} className="opacity-60"> · {benefitConcursos.length}c</span>}
             </span>
-          ))}
+            );
+          })}
         </div>
       </div>
 
@@ -189,6 +196,15 @@ function ActiveCycleHero({ cycle, onOpen, onAdvance }) {
         >
           Ver detalhes →
         </button>
+        {concurso && (
+          <button
+            onClick={e => { e.stopPropagation(); onExportToConcurso(cycle); }}
+            className="min-h-[44px] px-3 py-1.5 rounded-lg text-xs font-bold border border-white/10 shrink-0 hover:bg-white/5"
+            style={{ color: '#F59E0B' }}
+          >
+            📤 Exportar p/ Concurso
+          </button>
+        )}
       </div>
     </BentoCard>
   );
@@ -285,6 +301,9 @@ function RoundsHistoryChart({ cycle }) {
 export default function StudyCyclePage() {
   const { cycles, activeCycleId, addCycle, updateCycle, deleteCycle, setActiveCycle, advanceRound, generateWeeklyPlan } = useCycleStore();
   const allSessions = useSessionStore(s => s.sessions);
+  const concursos = useConcursoStore(s => s.concursos);
+  const updateConcurso = useConcursoStore(s => s.updateConcurso);
+  const subjects = useStudyStore(s => s.subjects);
   const [view, setView] = useState('list');
   const [detailId, setDetailId] = useState(null);
   const [editCycleData, setEditCycleData] = useState(null);
@@ -335,6 +354,33 @@ export default function StudyCyclePage() {
     deleteCycle(id);
     if (detailId === id) setView('list');
     toast.success('Ciclo excluído.');
+  }
+
+  // ── EXPORTAR CICLO → CONCURSO: copia items como disciplinas ─────────────
+  function handleExportToConcurso(cycle) {
+    if (!cycle.concursoId) {
+      toast('Ciclo não está vinculado a nenhum concurso.', { icon: '⚠️' });
+      return;
+    }
+    const concurso = concursos.find(c => c.id === cycle.concursoId);
+    if (!concurso) return toast.error('Concurso não encontrado.');
+    const existing = new Set((concurso.disciplinas || []).map(d => d.subjectId).filter(Boolean));
+    const newRows = cycle.items
+      .filter(i => i.subjectId && !existing.has(i.subjectId))
+      .map((i, idx) => ({
+        id: `${Date.now()}_${idx}`,
+        name: i.subjectName || subjects.find(s => s.id === i.subjectId)?.name || 'Matéria',
+        subjectId: i.subjectId,
+        questions: 10,
+        min: 5,
+        weight: i.weightPct || 1,
+        difficulty: 'Médio',
+        correct: 0,
+        wrong: 0,
+      }));
+    if (!newRows.length) return toast.error('Todas as matérias do ciclo já estão no concurso.');
+    updateConcurso(concurso.id, { disciplinas: [...(concurso.disciplinas || []), ...newRows] });
+    toast.success(`${newRows.length} matéria(s) exportada(s) para "${concurso.nome}"!`);
   }
 
   return (
@@ -402,6 +448,7 @@ export default function StudyCyclePage() {
                     cycle={activeCycle}
                     onOpen={() => { setDetailId(activeCycle.id); setView('detail'); }}
                     onAdvance={() => { advanceRound(activeCycle.id); toast.success(`Rodada ${activeCycle.rodadaAtual + 1} iniciada!`); }}
+                    onExportToConcurso={handleExportToConcurso}
                   />
                 </motion.div>
               )}
