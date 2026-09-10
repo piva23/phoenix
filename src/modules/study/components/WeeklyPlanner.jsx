@@ -30,6 +30,27 @@ function BlockCard({ block, onDragStart }) {
   const openSessionModal = useSessionModalStore(s => s.openModal);
   const navigate = useNavigate();
 
+  // Usa subjectName como identificador quando subjectId for null (ex: redação)
+  const dragId = block.subjectId || block.subjectName || 'block';
+
+  function handleClick(e) {
+    e.stopPropagation();
+    if (openSessionModal) {
+      openSessionModal({ subjectId: block.subjectId });
+    } else {
+      navigate('/study?tab=today');
+    }
+  }
+
+  // Horas disponíveis para seleção rápida
+  const hourOptions = [0.5, 1, 1.5, 2, 3, 4, 5].map(h => ({
+    value: h,
+    label: `${h}h${h % 1 === 0 ? '' : `${(h % 1) * 60}min`}`
+  }));
+
+  // Seletor de horas visível apenas em desktop (sm: block, lg: hidden)
+  const [editingHours, setEditingHours] = useState(null);
+
   function handleClick(e) {
     e.stopPropagation();
     if (openSessionModal) {
@@ -43,9 +64,9 @@ function BlockCard({ block, onDragStart }) {
     <div
       draggable
       onDragStart={(e) => {
-        e.dataTransfer.setData('application/json', JSON.stringify({ subjectId: block.subjectId }));
+        e.dataTransfer.setData('application/json', JSON.stringify({ subjectId: block.subjectId, subjectName: block.subjectName }));
         e.dataTransfer.effectAllowed = 'move';
-        onDragStart?.(block.subjectId);
+        onDragStart?.(dragId);
       }}
       onClick={handleClick}
       className="group relative rounded-lg border p-2 cursor-grab active:cursor-grabbing transition-all duration-200 hover:scale-[1.03] hover:shadow-lg hover:shadow-black/20 select-none"
@@ -72,6 +93,49 @@ function BlockCard({ block, onDragStart }) {
         <span className="text-[8px] opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: 'var(--text-dim)' }}>
           ↕
         </span>
+        {/* Seletor de horas em desktop */}
+        {editingHours === null && window.innerWidth >= 768 ? (
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setEditingHours(block.hours)}
+              className="px-1.5 py-0.5 rounded text-[8px] font-bold text-white hover:bg-primary/20 transition-colors"
+              style={{ background: block.color, color: 'white' }}
+              title="Definir horas">
+                ✎
+            </button>
+            <select
+              onChange={(e) => {
+                const hours = parseFloat(e.target.value);
+                // Atualiza o bloco no estado local
+                setEditingHours(null);
+                // Note: Para salvar, seria necessário chamar a função moveBlock/atualizar ciclo
+                // Por enquanto, apenas atualiza o estado de edição
+                console.log('Horas selecionadas:', hours);
+              }}
+              className="px-2 py-0.5 rounded text-[8px] outline-none bg-white/[0.03] text-sm"
+              style={{ minWidth: 50 }}
+            >
+              {hourOptions.map(opt => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+          </div>
+        ) : editingHours !== null && (
+          <div className="flex items-center gap-1">
+            <span className="text-[9px] font-mono" style={{ color: 'var(--text-dim)' }}>
+              {minutesToHuman(block.hours * 60)}
+            </span>
+            <button
+              onClick={() => setEditingHours(null)}
+              className="px-1.5 py-0.5 rounded text-[8px] font-bold text-white hover:bg-primary/20 transition-colors"
+              style={{ background: block.color, color: 'white' }}
+              title="Cancelar">
+                ✕
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -223,10 +287,10 @@ export function WeeklyPlanner({ cycle }) {
     if (draggingId) setDraggingId(null);
     let fromDay = null;
     Object.entries(weeklyPlan).forEach(([day, blocks]) => {
-      if (blocks.some(b => b.subjectId === subjectId)) fromDay = Number(day);
+      if (blocks.some(b => b.subjectId === subjectId || b.subjectName === subjectId)) fromDay = Number(day);
     });
     if (fromDay === toDay || fromDay === null) return;
-    moveBlock(cycle.id, fromDay, toDay, subjectId);
+    moveBlock(cycle.id, fromDay, toDay, subjectId, subjectId ? undefined : weeklyPlan[Object.keys(weeklyPlan).find(k => weeklyPlan[k].some(b => b.subjectName === subjectId))]?.[0]?.subjectName || '');
   }
 
   // Sincronizar com calendário — gera eventos para os próximos N dias

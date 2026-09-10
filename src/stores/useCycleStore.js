@@ -260,7 +260,7 @@ export const useCycleStore = create(
           }),
         })),
 
-      moveBlock: (cycleId, fromDay, toDay, subjectId) =>
+moveBlock: (cycleId, fromDay, toDay, subjectId, subjectName) =>
         set(state => ({
           cycles: state.cycles.map(c => {
             if (c.id !== cycleId || !c.weeklyPlan) return c;
@@ -268,8 +268,10 @@ export const useCycleStore = create(
             const fromBlocks = [...(plan[fromDay] || [])];
             const toBlocks = [...(plan[toDay] || [])];
 
-            // Encontrar e remover do dia origem
-            const blockIdx = fromBlocks.findIndex(b => b.subjectId === subjectId);
+            // Encontrar e remover do dia origem - usa subjectId ou subjectName
+            const blockIdx = fromBlocks.findIndex(
+              b => b.subjectId === subjectId || b.subjectName === subjectName
+            );
             if (blockIdx === -1) return c;
             const [block] = fromBlocks.splice(blockIdx, 1);
 
@@ -278,7 +280,7 @@ export const useCycleStore = create(
             plan[fromDay] = fromBlocks;
             plan[toDay] = toBlocks;
 
-            return { ...c, weeklyPlan: plan };
+            return c;
           }),
         })),
 
