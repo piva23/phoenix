@@ -218,7 +218,7 @@ export const useCycleStore = create(
           ),
         })),
 
-      generateWeeklyPlan: (cycleId) =>
+generateWeeklyPlan: (cycleId, configuredHours) =>
         set(state => ({
           cycles: state.cycles.map(c => {
             if (c.id !== cycleId) return c;
@@ -228,10 +228,11 @@ export const useCycleStore = create(
             const items = c.items || [];
             if (items.length === 0) return c;
 
-            // Enriquecer itens com horas
+            // Usar horas configuradas se fornecidas, senão usar horasPorRodada
+            const hoursConfig = configuredHours || {};
             const enriched = items.map(item => ({
               ...item,
-              hours: item.horasPorRodada || 1,
+              hours: hoursConfig[item.subjectId] || (item.horasPorRodada || 1),
             }));
 
             // Ordenar por horas (maior primeiro)
@@ -242,21 +243,55 @@ export const useCycleStore = create(
             days.forEach(d => { plan[d] = []; });
             const dayLoad = {};
             days.forEach(d => { dayLoad[d] = 0; });
-            const MAX_HOURS = 5;
 
-            // Distribuição gulosa: item vai pro dia de menor carga
-            sorted.forEach(item => {
-              const lightest = days.reduce((a, b) => dayLoad[a] <= dayLoad[b] ? a : b);
-              plan[lightest].push({
-                subjectId: item.subjectId,
-                subjectName: item.subjectName || item.subj?.name || '—',
-                hours: item.hours,
-                color: item.subjectColor || '#8B5CF6',
+            // Se há horas configuradas, distribuir proporcionalmente
+            if (configuredHours && Object.keys(configuredHours).length > 0) {
+              // Calcular total de horas configuradas vs total de items
+              const totalConfigured = Object.values(configuredHours).reduce((a, b) => a + b, 0);
+              const totalItemHours = items.reduce((a, item) => a + (item.horasPorRodada || 1), 0);
+              const ratio = totalConfigured > 0 ? totalConfigured / totalItemHours : 1;
+
+              // Distribuir itens pelos dias, aplicando a razão e arredondando
+              sorted.forEach(item => {
+                const lightest = days.reduce((a, b) => dayLoad[a] <= dayLoad[b] ? a : b);
+                const roundedHours = Math.round(item.hours * ratio);
+                plan[lightest].push({
+                  subjectId: item.subjectId,
+                  subjectName: item.subjectName || item.subj?.name || '—',
+                  hours: roundedHours,
+                  color: item.subjectColor || '#8B5CF6',
+                });
+                dayLoad[lightest] += roundedHours;
               });
-              dayLoad[lightest] += item.hours;
-            });
 
-            return { ...c, weeklyPlan: plan };
+              // Ajustar para garantir que totalizem o configurado
+              const currentTotal = Object.values(plan).flat().reduce((a) => a + (a.hours || 0), 0);
+              const difference = Object.values(configuredHours).reduce((a, b) => a + b, 0) - currentTotal;
+
+              // Se houver diferença, ajustar o último bloco do último dia
+              if (difference !== 0) {
+                const lastDay = days[days.length - 1];
+                const lastBlocks = plan[lastDay] || [];
+                if (lastBlocks.length > 0) {
+                  lastBlocks[lastBlocks.length - 1].hours += difference;
+                }
+              }
+            } else {
+              // Distribuição gulosa original (sem horas configuradas)
+              const MAX_HOURS = 5;
+              sorted.forEach(item => {
+                const lightest = days.reduce((a, b) => dayLoad[a] <= dayLoad[b] ? a : b);
+                plan[lightest].push({
+                  subjectId: item.subjectId,
+                  subjectName: item.subjectName || item.subj?.name || '—',
+                  hours: item.hours,
+                  color: item.subjectColor || '#8B5CF6',
+                });
+                dayLoad[lightest] += item.hours;
+              });
+            }
+
+            return c;
           }),
         })),
 

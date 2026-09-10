@@ -307,6 +307,8 @@ export default function StudyCyclePage() {
   const [view, setView] = useState('list');
   const [detailId, setDetailId] = useState(null);
   const [editCycleData, setEditCycleData] = useState(null);
+  const [configuredHours, setConfiguredHours] = useState({});
+  const [isConfiguring, setIsConfiguring] = useState(false);
 
   const activeCycles = cycles.filter(c => activeCycleIds.includes(c.id));
   const activeCycle = activeCycles[0] || null;
@@ -464,16 +466,79 @@ export default function StudyCyclePage() {
                           <div className="text-[11px] mt-1" style={{ color: 'var(--text-dim)' }}>Distribua automaticamente os blocos de estudo nos dias da semana</div>
                         </div>
                         <button
-                          onClick={() => { generateWeeklyPlan(cycle.id); toast.success('Plano semanal gerado!'); }}
+                          onClick={() => setIsConfiguring(true)}
                           className="px-4 py-2 rounded-xl text-sm font-bold text-white"
                           style={{ background: 'linear-gradient(135deg, #10B981, #6366F1)' }}
                         >
-                          Gerar Plano Semanal
+                          <span className="text-[10px]">⚙️</span>
+                          Configurar Horas
+                        </button>
+                        <button
+                          onClick={() => generateWeeklyPlan(cycle.id, {})}
+                          className="px-4 py-2 rounded-xl text-sm font-bold text-white shrink-0"
+                          style={{ background: 'linear-gradient(135deg, #10B981, #6366F1)' }}
+                        >
+                          Gerar Plano Semanal Rápido
                         </button>
                       </div>
                     ) : (
-                      <WeeklyPlanner cycle={cycle} />
-                    )}
+                      <div className="flex items-center gap-2">
+                        {isConfiguring ? (
+                          <div className="fixed inset-0 z-[999] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
+                            <div className="bg-white rounded-xl p-6 shadow-2xl max-w-md w-full">
+                              <h3 className="text-xl font-bold text-text-main mb-4">Horas por Matéria</h3>
+                              <p className="text-sm text-text-dim mb-4">Defina quantas horas por semana cada matéria terá no planner:</p>
+                              <div className="space-y-3" ref={ref => { if (ref) ref.scrollIntoView(); }}>
+                                {subjects.map(subject => {
+                                  const currentHours = configuredHours[subject.id] || (subject.horasPorRodada || 1);
+                                  return (
+                                    <div key={subject.id} className="flex items-center gap-3">
+                                      <span className="text-[10px] font-medium" style={{ color: 'var(--text-main)' }}>{subject.name}</span>
+                                      <select
+                                        value={configuredHours[subject.id] || subject.horasPorRodada || 1}
+                                        onChange={(e) => {
+                                          const hours = parseFloat(e.target.value);
+                                          const newConfig = { ...configuredHours };
+                                          newConfig[subject.id] = hours;
+                                          setConfiguredHours(newConfig);
+                                        }}
+                                        className="px-2 py-1 rounded text-[10px] outline-none bg-white/[0.03] text-sm w-20"
+                                      >
+                                        <option value={0.5}>0.5h</option>
+                                        <option value={1}>1h</option>
+                                        <option value={1.5}>1.5h</option>
+                                        <option value={2}>2h</option>
+                                        <option value={3}>3h</option>
+                                        <option value={4}>4h</option>
+                                        <option value={5}>5h</option>
+                                      </select>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                              <div className="mt-6 flex gap-3">
+                                <button
+                                  onClick={() => setIsConfiguring(false)}
+                                  className="px-4 py-2 rounded-lg text-sm font-bold text-gray-600 hover:bg-gray-100 transition-colors"
+                                >
+                                  Cancelar
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    setIsConfiguring(false);
+                                    generateWeeklyPlan(cycle.id, configuredHours);
+                                    toast.success('Plano semanal gerado!');
+                                  }}
+                                  className="px-4 py-2 rounded-xl text-sm font-bold text-white"
+                                  style={{ background: 'linear-gradient(135deg, #10B981, #6366F1)' }}
+                                >
+                                  Gerar Plano Semanal
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                          </div>
+                        )}
                   </BentoCard>
                 </motion.div>
               ))}
