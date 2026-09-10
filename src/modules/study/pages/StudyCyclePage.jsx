@@ -537,6 +537,13 @@ export default function StudyCyclePage() {
                               </div>
                             </div>
                           ) : (
+                            <div className="flex items-center gap-2">
+                              <button onClick={() => setIsConfiguring(true)} className="px-4 py-2 rounded-xl text-sm font-bold text-white" style={{ background: 'linear-gradient(135deg, #10B981, #6366F1)' }}>
+                                <span className="text-[10px]">⚙️</span> Configurar Horas
+                              </button>
+                              <button onClick={() => generateWeeklyPlan(cycle.id, {})} className="px-4 py-2 rounded-xl text-sm font-bold text-white shrink-0" style={{ background: 'linear-gradient(135deg, #10B981, #6366F1)' }}>
+                                Gerar Plano Semanal Rápido
+                            </button>
                           </div>
                         )}
                   </BentoCard>
