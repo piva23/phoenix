@@ -143,8 +143,13 @@ function ProvaTile({ prova, days }) {
         </span>
       </div>
       <span className="text-[9px] md:text-[10px] font-bold truncate" style={{ color }}>
-        {prova.nome}
+        {prova.nome || prova.concursoName}
       </span>
+      {prova.concursoName && prova.nome && prova.nome !== prova.concursoName && (
+        <span className="text-[8px] md:text-[9px] truncate" style={{ color: 'var(--text-dim)' }}>
+          {prova.concursoName}
+        </span>
+      )}
     </div>
   );
 }
@@ -408,7 +413,7 @@ export default function StudyTodayPage() {
   const revisions = useRevisionStore(s => s.revisions);
   const completeRevision = useRevisionStore(s => s.completeRevision);
   const cycles = useCycleStore(s => s.cycles);
-  const activeCycleId = useCycleStore(s => s.activeCycleId);
+  const activeCycleIds = useCycleStore(s => s.activeCycleIds);
   const concursos = useConcursoStore(s => s.concursos);
   const openModal = useSessionModalStore(s => s.openModal);
 
@@ -434,30 +439,44 @@ export default function StudyTodayPage() {
     return store.getStreak ? store.getStreak() : 0;
   }, [sessions]);
 
-  // Next prova
+  // Next prova — busca em provas[] E em dataProva do concurso
   const nextProva = useMemo(() => {
-    const todayDate = new Date();
     let closest = null;
     let closestDays = Infinity;
     for (const c of concursos) {
+      // 1) Provas vinculadas ao concurso
       for (const p of c.provas || []) {
         if (p.dataProva) {
           const d = daysUntil(p.dataProva);
           if (d > 0 && d < closestDays) {
             closestDays = d;
-            closest = { ...p, concursoName: c.name };
+            closest = { ...p, concursoName: c.nome || c.name, _rawDate: p.dataProva };
           }
+        }
+      }
+      // 2) Data da prova direto no concurso (criada pelo wizard)
+      if (c.dataProva) {
+        const d = daysUntil(c.dataProva);
+        if (d > 0 && d < closestDays) {
+          closestDays = d;
+          closest = {
+            nome: c.nome || c.name,
+            concursoName: c.nome || c.name,
+            dataProva: c.dataProva,
+            _rawDate: c.dataProva,
+          };
         }
       }
     }
     return closest;
   }, [concursos]);
 
-  // Active cycle
-  const activeCycle = useMemo(
-    () => cycles.find(c => c.id === activeCycleId) || null,
-    [cycles, activeCycleId]
+  // Active cycles (pode ter mais de um)
+  const activeCycles = useMemo(
+    () => cycles.filter(c => activeCycleIds.includes(c.id)),
+    [cycles, activeCycleIds]
   );
+  const activeCycle = activeCycles[0] || null;
 
   // Revisions — all uncompleted (not just <= today, so "Próximas" filter works)
   const pendingRevisions = useMemo(() => {
@@ -514,16 +533,19 @@ export default function StudyTodayPage() {
         </div>
 
         {/* Ciclo inline badge */}
-        {activeCycle && (
-          <div className="flex items-center gap-2 text-xs">
-            <span className="font-bold" style={{ color: 'var(--text-dim)' }}>Ciclo:</span>
-            <a
-              href="/study?tab=cycle"
-              className="font-bold px-2 py-0.5 rounded-lg transition-all hover:bg-white/[0.06]"
-              style={{ color: 'var(--accent)', background: 'rgba(168,85,247,0.1)' }}
-            >
-              {activeCycle.name || 'Ciclo Atual'}
-            </a>
+        {activeCycles.length > 0 && (
+          <div className="flex items-center gap-2 text-xs flex-wrap">
+            <span className="font-bold" style={{ color: 'var(--text-dim)' }}>Ciclos:</span>
+            {activeCycles.map(c => (
+              <a
+                key={c.id}
+                href="/study?tab=cycle"
+                className="font-bold px-2 py-0.5 rounded-lg transition-all hover:bg-white/[0.06]"
+                style={{ color: 'var(--accent)', background: 'rgba(168,85,247,0.1)' }}
+              >
+                {c.name || 'Ciclo Atual'}
+              </a>
+            ))}
           </div>
         )}
 

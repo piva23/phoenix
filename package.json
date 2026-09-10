@@ -1,6 +1,6 @@
 {
   "name": "phoenix-os",
-  "version": "5.0.0-alpha",
+  "version": "5.1.0",
   "private": true,
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

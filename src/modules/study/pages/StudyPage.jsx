@@ -12,6 +12,7 @@ import {
   FileText,
   BarChart3,
   PenTool,
+  Clock,
 } from 'lucide-react';
 
 import StudyTodayPage from './StudyTodayPage';
@@ -28,16 +29,16 @@ import StudyRedacaoPage from './StudyRedacaoPage';
 import StudySessionPage from './StudySessionPage';
 
 const TABS = [
-  { id: 'today',      label: 'Hoje',      icon: Zap,        color: '#F59E0B' },
-  { id: 'subjects',   label: 'Matérias',   icon: BookOpen,   color: '#3B82F6' },
-  { id: 'concursos',  label: 'Concursos',  icon: Landmark,   color: '#8B5CF6' },
-  { id: 'cycle',      label: 'Ciclos',     icon: RotateCcw,  color: '#06B6D4' },
-  { id: 'questoes',   label: 'Questões',   icon: HelpCircle, color: '#A855F7' },
-  { id: 'revisions',  label: 'Revisões',   icon: Repeat,     color: '#10B981' },
-  { id: 'simulados',  label: 'Simulados',  icon: FileText,   color: '#EC4899' },
-  { id: 'analytics',  label: 'Analytics',  icon: BarChart3,  color: '#3B82F6' },
-  { id: 'redacao',    label: 'Redação',    icon: PenTool,    color: '#F97316' },
-  { id: 'session',    label: 'Sessões',    icon: null,       hidden: true },
+  { id: 'today',      label: 'Hoje',       icon: Zap,        color: '#F59E0B' },
+  { id: 'concursos',  label: 'Concursos',   icon: Landmark,   color: '#8B5CF6' },
+  { id: 'cycle',      label: 'Ciclos',      icon: RotateCcw,  color: '#06B6D4' },
+  { id: 'subjects',   label: 'Matérias',    icon: BookOpen,   color: '#3B82F6' },
+  { id: 'questoes',   label: 'Questões',    icon: HelpCircle, color: '#A855F7' },
+  { id: 'revisions',  label: 'Revisões',    icon: Repeat,     color: '#10B981' },
+  { id: 'simulados',  label: 'Simulados',   icon: FileText,   color: '#EC4899' },
+  { id: 'redacao',    label: 'Redação',     icon: PenTool,    color: '#F97316' },
+  { id: 'session',    label: 'Sessões',     icon: Clock,      color: '#14B8A6' },
+  { id: 'analytics',  label: 'Analytics',   icon: BarChart3,  color: '#3B82F6' },
 ];
 
 const VALID_TABS = TABS.map(t => t.id);

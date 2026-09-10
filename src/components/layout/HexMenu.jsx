@@ -80,9 +80,15 @@ function HexFAB({ isOpen, setIsOpen }) {
     ...EXTRA_ITEMS.map(i => ({ ...i, name: i.label, action: () => { navigate(i.path); setIsOpen(false); } })),
   ];
 
+  const mobileMenuItems = [
+    ...MAIN_ITEMS.map(i => ({ ...i, action: () => { navigate(i.path); setIsOpen(false); } })),
+    { name: 'Sessão de Estudo', icon: BookOpen, color: 'text-emerald-400 hover:bg-emerald-500/10 border-emerald-500/20', action: () => { if(openSessionModal) openSessionModal(); setIsOpen(false); } },
+    ...EXTRA_ITEMS.map(i => ({ ...i, name: i.label, action: () => { navigate(i.path); setIsOpen(false); } })),
+  ];
+
   return (
     <>
-      {/* Backdrop — click outside to close (rendered outside the FAB's stacking context) */}
+      {/* Backdrop — click outside to close */}
       <AnimatePresence>
         {!isSessionActive && isOpen && (
           <motion.div
@@ -90,15 +96,15 @@ function HexFAB({ isOpen, setIsOpen }) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setIsOpen(false)}
-            className="fixed inset-0 z-[93] bg-black/20 backdrop-blur-sm cursor-pointer"
+            className="fixed inset-0 z-[97] bg-black/30 backdrop-blur-sm cursor-pointer pointer-events-auto"
           />
         )}
       </AnimatePresence>
 
-    <div className="flex fixed bottom-24 right-4 lg:bottom-6 lg:right-6 z-[94] lg:z-[999] flex-col items-center select-none group">
-      {/* Session Tooltip — desktop only */}
+    <div className="flex fixed bottom-4 right-4 z-[98] flex-col items-center select-none group">
+      {/* Session Tooltip - visible on desktop, hidden on very small mobile */}
       {isSessionActive && (
-        <div className="hidden lg:block absolute bottom-20 bg-background/90 backdrop-blur-xl border border-white/10 px-4 py-2 rounded-full shadow-2xl flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none transform translate-y-2 group-hover:translate-y-0 z-[1000] whitespace-nowrap">
+        <div className="absolute bottom-12 bg-background/90 backdrop-blur-xl border border-white/10 px-4 py-2 rounded-full shadow-2xl flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none transform translate-y-2 group-hover:translate-y-0 z-[100] whitespace-nowrap max-w-xs">
           <span className="relative flex h-2.5 w-2.5">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
             <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500"></span>
@@ -110,7 +116,7 @@ function HexFAB({ isOpen, setIsOpen }) {
         </div>
       )}
 
-      {/* Radial Menu Items */}
+      {/* Radial Menu Items - shows on mobile AND desktop */}
       <AnimatePresence>
         {!isSessionActive && isOpen && (
           <motion.div
@@ -118,35 +124,60 @@ function HexFAB({ isOpen, setIsOpen }) {
             initial="hidden"
             animate="visible"
             exit="hidden"
-            className="flex flex-col items-center gap-2 lg:gap-3 mb-3 lg:mb-4"
+            className="flex flex-col items-center gap-2 md:gap-3 mb-3 md:mb-4 max-w-full"
           >
-            {desktopMenuItems.map((item) => {
-              const IconComponent = item.icon;
-              return (
-                <motion.div key={item.label || item.name} variants={itemVariants} className="relative group/item flex items-center justify-center">
-                  <div className="hidden lg:block absolute right-14 bg-background/95 backdrop-blur-md border border-white/10 text-text-main text-[10px] font-black uppercase tracking-wider py-1.5 px-3 rounded-lg shadow-xl opacity-0 group-hover/item:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap">
-                    {item.label || item.name}
-                  </div>
-                  <button
-                    onClick={item.action}
-                    style={hexClipStyle}
-                    className={`w-10 h-10 lg:w-11 lg:h-11 flex items-center justify-center card-surface shadow-lg transition-all duration-300 relative group-hover/item:scale-105 cursor-pointer ${item.color}`}
-                  >
-                    <IconComponent size={16} className="lg:hidden" />
-                    <IconComponent size={18} className="hidden lg:block" />
-                    <div className="absolute inset-0 bg-white/[0.02] group-hover/item:bg-transparent transition-colors" />
-                  </button>
-                </motion.div>
-              );
-            })}
+            {isOpen && (typeof window !== 'undefined' ? window.innerWidth >= 768 : false) ? (
+              <div className="flex flex-col items-center gap-2 lg:gap-3 mb-3 lg:mb-4">
+                {desktopMenuItems.map((item) => {
+                  const IconComponent = item.icon;
+                  return (
+                    <motion.div key={item.label || item.name} variants={itemVariants} className="relative group/item">
+                      <div className="hidden lg:block absolute right-14 bg-background/95 backdrop-blur-md border border-white/10 text-text-main text-[10px] font-black uppercase tracking-wider py-1.5 px-3 rounded-lg shadow-xl opacity-0 group-hover/item:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap">
+                        {item.label || item.name}
+                      </div>
+                      <button
+                        onClick={item.action}
+                        style={hexClipStyle}
+                        className={`w-10 h-10 lg:w-11 lg:h-11 flex items-center justify-center card-surface shadow-lg transition-all duration-300 relative group-hover/item:scale-105 cursor-pointer ${item.color}`}
+                      >
+                        <IconComponent size={16} className="lg:hidden" />
+                        <IconComponent size={18} className="hidden lg:block" />
+                        <div className="absolute inset-0 bg-white/[0.02] group-hover/item:bg-transparent transition-colors" />
+                      </button>
+                    </motion.div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center gap-2">
+                {mobileMenuItems.map((item) => {
+                  const IconComponent = item.icon;
+                  return (
+                    <motion.div key={item.label || item.name} variants={itemVariants} className="relative group/item flex items-center justify-center">
+                      <button
+                        onClick={item.action}
+                        style={hexClipStyle}
+                        className={`w-12 h-12 flex items-center justify-center card-surface shadow-lg transition-all duration-300 relative group-hover/item:scale-105 cursor-pointer ${item.color}`}
+                      >
+                        <IconComponent size={20} />
+                        <div className="absolute inset-0 bg-white/[0.02] group-hover/item:bg-transparent transition-colors" />
+                      </button>
+                      <div className="absolute right-14 bg-background/95 backdrop-blur-md border border-white/10 text-text-main text-[10px] font-black uppercase tracking-wider py-1.5 px-3 rounded-lg shadow-xl opacity-0 group-hover/item:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap">
+                        {item.label || item.name}
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </div>
+            )}
           </motion.div>
         )}
       </AnimatePresence>
 
       {/* Master Toggle */}
-      <div className="relative w-12 h-12 lg:w-16 lg:h-16 flex items-center justify-center">
+      <div className="relative w-12 h-12 flex items-center justify-center">
         {isSessionActive && (
-          <svg className="absolute w-[48px] h-[48px] lg:w-[62px] lg:h-[62px] -rotate-90 pointer-events-none z-20" viewBox="0 0 64 64">
+          <svg className="absolute w-[40px] h-[40px] -rotate-90 pointer-events-none z-20" viewBox="0 0 64 64">
             <circle cx="32" cy="32" r="29" fill="none" stroke="rgba(255,255,255,0.03)" strokeWidth="2.5" />
             <circle
               cx="32" cy="32" r="29" fill="none" stroke="#60A5FA" strokeWidth="2.5" strokeLinecap="round"
@@ -159,7 +190,7 @@ function HexFAB({ isOpen, setIsOpen }) {
         <motion.button
           onClick={handleToggle}
           style={hexClipStyle}
-          className={`w-11 h-11 lg:w-14 lg:h-14 flex items-center justify-center text-white cursor-pointer relative z-10 transition-all duration-300 ${
+          className={`w-11 h-11 flex items-center justify-center text-white cursor-pointer relative z-10 transition-all duration-300 ${
             isSessionActive
               ? 'bg-blue-600 shadow-lg shadow-blue-500/40 hover:scale-105'
               : 'bg-gradient-to-br from-primary to-secondary shadow-xl hover:shadow-2xl hover:shadow-primary/20'
@@ -168,12 +199,12 @@ function HexFAB({ isOpen, setIsOpen }) {
           whileTap={{ scale: 0.95 }}
         >
           {isSessionActive ? (
-            <div className="flex items-center justify-center animate-pulse"><Activity size={20} className="lg:hidden" strokeWidth={2.5} /><Activity size={24} className="hidden lg:block" strokeWidth={2.5} /></div>
+            <div className="flex items-center justify-center animate-pulse"><Activity size={20} strokeWidth={2.5} /><Activity size={24} strokeWidth={2.5} /></div>
           ) : (
             <motion.div
               animate={{ rotate: isOpen ? 180 : 0 }}
               transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-              className="flex items-center justify-center text-xl lg:text-2xl font-bold"
+              className="flex items-center justify-center text-xl font-bold"
               style={{ fontFamily: 'serif' }}
             >
               🜁
@@ -194,7 +225,7 @@ function HexFAB({ isOpen, setIsOpen }) {
 export default function HexMenu() {
   const [hexOpen, setHexOpen] = useState(false);
   return (
-    <div className="hidden lg:flex">
+    <div className="flex fixed bottom-4 right-4 z-[99] items-center">
       <HexFAB isOpen={hexOpen} setIsOpen={setHexOpen} />
     </div>
   );

@@ -15,7 +15,7 @@ export const useCycleStore = create(
   persist(
     (set, get) => ({
       cycles: [],
-      activeCycleId: null,
+      activeCycleIds: [],
 
       // ─── CRUD DE CICLOS ───────────────────────────────────────────────────
 
@@ -38,7 +38,7 @@ export const useCycleStore = create(
           };
           return {
             cycles: [...state.cycles, newCycle],
-            activeCycleId: newCycle.id,
+            activeCycleIds: [...state.activeCycleIds, newCycle.id],
           };
         }),
 
@@ -50,11 +50,16 @@ export const useCycleStore = create(
       deleteCycle: id =>
         set(state => ({
           cycles: state.cycles.filter(c => c.id !== id),
-          activeCycleId:
-            state.activeCycleId === id ? null : state.activeCycleId,
+          activeCycleIds: state.activeCycleIds.filter(cid => cid !== id),
         })),
 
-      setActiveCycle: id => set({ activeCycleId: id }),
+      // Toggle: se já está ativo, remove. Se não está, adiciona.
+      setActiveCycle: id =>
+        set(state => ({
+          activeCycleIds: state.activeCycleIds.includes(id)
+            ? state.activeCycleIds.filter(cid => cid !== id)
+            : [...state.activeCycleIds, id],
+        })),
 
       // ─── EDIÇÃO DE ITENS SEM RECRIAR O CICLO ─────────────────────────────
 
@@ -195,8 +200,13 @@ export const useCycleStore = create(
       // ─── SELETORES ────────────────────────────────────────────────────────
 
       getActiveCycle: () => {
-        const { cycles, activeCycleId } = get();
-        return cycles.find(c => c.id === activeCycleId) || null;
+        const { cycles, activeCycleIds } = get();
+        return activeCycleIds.length > 0 ? cycles.find(c => c.id === activeCycleIds[0]) || null : null;
+      },
+
+      getActiveCycles: () => {
+        const { cycles, activeCycleIds } = get();
+        return cycles.filter(c => activeCycleIds.includes(c.id));
       },
 
       // ─── PLANNER SEMANAL ─────────────────────────────────────────────────

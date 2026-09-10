@@ -210,7 +210,7 @@ function ActiveCycleHero({ cycle, onOpen, onAdvance, onExportToConcurso }) {
   );
 }
 
-function CycleListRow({ cycle, onActivate, onClick }) {
+function CycleListRow({ cycle, isActive, onActivate, onClick }) {
   const subjects = useStudyStore(s => s.subjects);
   const sessions = useSessionStore(s => s.sessions);
   const roundStart = cycle.rodadaStartDate || '2000-01-01';
@@ -235,10 +235,10 @@ function CycleListRow({ cycle, onActivate, onClick }) {
       </div>
       <button
         onClick={e => { e.stopPropagation(); onActivate(); }}
-        className="min-h-[44px] px-4 py-2 rounded-lg text-[10px] font-bold border border-white/10 shrink-0 hover:bg-white/5"
-        style={{ color: 'var(--text-muted)' }}
+        className="min-h-[44px] px-4 py-2 rounded-lg text-[10px] font-bold border shrink-0 hover:bg-white/5"
+        style={{ borderColor: isActive ? '#10B981' : 'rgba(255,255,255,0.1)', color: isActive ? '#10B981' : 'var(--text-muted)' }}
       >
-        Ativar
+        {isActive ? '⚡ Ativo' : 'Ativar'}
       </button>
     </BentoCard>
   );
@@ -299,7 +299,7 @@ function RoundsHistoryChart({ cycle }) {
 }
 
 export default function StudyCyclePage() {
-  const { cycles, activeCycleId, addCycle, updateCycle, deleteCycle, setActiveCycle, advanceRound, generateWeeklyPlan } = useCycleStore();
+  const { cycles, activeCycleIds, addCycle, updateCycle, deleteCycle, setActiveCycle, advanceRound, generateWeeklyPlan } = useCycleStore();
   const allSessions = useSessionStore(s => s.sessions);
   const concursos = useConcursoStore(s => s.concursos);
   const updateConcurso = useConcursoStore(s => s.updateConcurso);
@@ -308,7 +308,8 @@ export default function StudyCyclePage() {
   const [detailId, setDetailId] = useState(null);
   const [editCycleData, setEditCycleData] = useState(null);
 
-  const activeCycle = cycles.find(c => c.id === activeCycleId);
+  const activeCycles = cycles.filter(c => activeCycleIds.includes(c.id));
+  const activeCycle = activeCycles[0] || null;
   const detailCycle = cycles.find(c => c.id === detailId);
 
   const aggregateStats = useMemo(() => {
@@ -336,7 +337,6 @@ export default function StudyCyclePage() {
       const createdId = useCycleStore.getState().cycles.at(-1)?.id;
       if (createdId) {
         setDetailId(createdId);
-        if (cycles.length === 0) setActiveCycle(createdId);
       }
       toast.success('Ciclo criado!');
       setEditCycleData(null);
@@ -441,30 +441,30 @@ export default function StudyCyclePage() {
                 </button>
               </motion.div>
 
-              {activeCycle && (
-                <motion.div {...fadeUp}>
-                  <SectionHeader title="Ciclo ativo" icon="⚡" />
+              {activeCycles.length > 0 && activeCycles.map(cycle => (
+                <motion.div key={cycle.id} {...fadeUp}>
+                  <SectionHeader title={`Ciclo ativo — ${cycle.name || 'Sem nome'}`} icon="⚡" />
                   <ActiveCycleHero
-                    cycle={activeCycle}
-                    onOpen={() => { setDetailId(activeCycle.id); setView('detail'); }}
-                    onAdvance={() => { advanceRound(activeCycle.id); toast.success(`Rodada ${activeCycle.rodadaAtual + 1} iniciada!`); }}
+                    cycle={cycle}
+                    onOpen={() => { setDetailId(cycle.id); setView('detail'); }}
+                    onAdvance={() => { advanceRound(cycle.id); toast.success(`Rodada ${cycle.rodadaAtual + 1} iniciada!`); }}
                     onExportToConcurso={handleExportToConcurso}
                   />
                 </motion.div>
-              )}
+              ))}
 
-              {activeCycle && activeCycle.items?.length > 0 && (
-                <motion.div {...fadeUp}>
+              {activeCycles.length > 0 && activeCycles.map(cycle => cycle.items?.length > 0 && (
+                <motion.div key={`plan-${cycle.id}`} {...fadeUp}>
                   <BentoCard span="full">
-                    {!activeCycle.weeklyPlan || Object.keys(activeCycle.weeklyPlan).length === 0 ? (
+                    {!cycle.weeklyPlan || Object.keys(cycle.weeklyPlan).length === 0 ? (
                       <div className="flex flex-col items-center gap-3 py-6">
                         <span className="text-3xl">📅</span>
                         <div className="text-center">
-                          <div className="text-sm font-bold" style={{ color: 'var(--text-main)' }}>Plano semanal não gerado</div>
+                          <div className="text-sm font-bold" style={{ color: 'var(--text-main)' }}>{cycle.name || 'Ciclo'} — Plano semanal não gerado</div>
                           <div className="text-[11px] mt-1" style={{ color: 'var(--text-dim)' }}>Distribua automaticamente os blocos de estudo nos dias da semana</div>
                         </div>
                         <button
-                          onClick={() => { generateWeeklyPlan(activeCycle.id); toast.success('Plano semanal gerado!'); }}
+                          onClick={() => { generateWeeklyPlan(cycle.id); toast.success('Plano semanal gerado!'); }}
                           className="px-4 py-2 rounded-xl text-sm font-bold text-white"
                           style={{ background: 'linear-gradient(135deg, #10B981, #6366F1)' }}
                         >
@@ -472,24 +472,25 @@ export default function StudyCyclePage() {
                         </button>
                       </div>
                     ) : (
-                      <WeeklyPlanner cycle={activeCycle} />
+                      <WeeklyPlanner cycle={cycle} />
                     )}
                   </BentoCard>
                 </motion.div>
-              )}
+              ))}
 
-              {activeCycle && (activeCycle.roundsHistory || []).length > 0 && (
-                <motion.div {...fadeUp}><RoundsHistoryChart cycle={activeCycle} /></motion.div>
-              )}
+              {activeCycles.filter(c => (c.roundsHistory || []).length > 0).map(cycle => (
+                <motion.div key={`hist-${cycle.id}`} {...fadeUp}><RoundsHistoryChart cycle={cycle} /></motion.div>
+              ))}
 
-              {cycles.filter(c => c.id !== activeCycleId).length > 0 && (
+              {cycles.filter(c => !activeCycleIds.includes(c.id)).length > 0 && (
                 <motion.div {...fadeUp}>
-                  <SectionHeader title="Outros ciclos" icon="📋" count={cycles.filter(c => c.id !== activeCycleId).length} />
+                  <SectionHeader title="Outros ciclos" icon="📋" count={cycles.filter(c => !activeCycleIds.includes(c.id)).length} />
                   <div className="space-y-2">
-                    {cycles.filter(c => c.id !== activeCycleId).map(cycle => (
+                    {cycles.filter(c => !activeCycleIds.includes(c.id)).map(cycle => (
                       <CycleListRow
                         key={cycle.id}
                         cycle={cycle}
+                        isActive={false}
                         onActivate={() => { setActiveCycle(cycle.id); toast.success(`"${cycle.nome}" ativado!`); }}
                         onClick={() => { setDetailId(cycle.id); setView('detail'); }}
                       />

@@ -330,6 +330,36 @@ export const useStudyStore = create(
           };
         }),
 
+      // Update subject-level stats directly (for questions without topic/subtopic hierarchy)
+      updateSubjectStats: (subjectId, { qC, qA, mins = 0 }) =>
+        set(state => {
+          const subject = state.subjects.find(s => s.id === subjectId);
+          if (!subject) return {};
+
+          const stats = subject.stats || {
+            totalMinutes: 0,
+            questionsAnswered: 0,
+            questionsCorrect: 0,
+            lastStudied: null,
+          };
+
+          const d = new Date();
+          const todayStr = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().split('T')[0];
+
+          const newStats = {
+            totalMinutes: stats.totalMinutes + mins,
+            questionsAnswered: stats.questionsAnswered + qA,
+            questionsCorrect: stats.questionsCorrect + qC,
+            lastStudied: todayStr,
+          };
+
+          return {
+            subjects: state.subjects.map(s =>
+              s.id !== subjectId ? s : { ...s, stats: newStats }
+            ),
+          };
+        }),
+
       backupSubjects: () => {
         const snapshot = JSON.parse(JSON.stringify(get().subjects));
         localStorage.setItem('phoenix-study-backup', JSON.stringify({ subjects: snapshot, date: Date.now() }));

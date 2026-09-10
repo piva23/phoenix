@@ -141,7 +141,7 @@ export default function StudySubjectDetailPage() {
   const sessions = useSessionStore(s => s.sessions);
   const getPendingToday = useRevisionStore(s => s.getPendingToday);
   const cycles = useCycleStore(s => s.cycles);
-  const activeCycleId = useCycleStore(s => s.activeCycleId);
+  const activeCycleIds = useCycleStore(s => s.activeCycleIds);
   const revisions = useRevisionStore(s => s.revisions);
   const editRevisionDate = useRevisionStore(s => s.editRevisionDate);
   const editRevision = useRevisionStore(s => s.editRevision);
@@ -160,15 +160,24 @@ export default function StudySubjectDetailPage() {
   const subject = subjects.find(s => s.id === subjectId);
 
   const cycleProgress = useMemo(() => {
-    const cycle = cycles.find(c => c.id === activeCycleId);
-    if (!cycle) return null;
-    const item = cycle.items?.find(i => i.subjectId === subjectId);
-    if (!item) return null;
-    const metaMin = (item.horasPorRodada || 1) * 60;
-    const roundStart = cycle.rodadaStartDate || '2000-01-01';
-    const realMin = sessions.filter(s => s.date >= roundStart && s.subjectId === subjectId).reduce((a, s) => a + (s.totalMinutes || 0), 0);
-    return { pct: metaMin > 0 ? Math.min(100, Math.round((realMin / metaMin) * 100)) : 0, realMin, metaMin, rodada: cycle.rodadaAtual };
-  }, [cycles, activeCycleId, subjectId, sessions]);
+    // Busca em TODOS os ciclos ativos que tenham esta matéria
+    const activeCycles = cycles.filter(c => activeCycleIds.includes(c.id));
+    let totalPct = 0, totalRealMin = 0, totalMetaMin = 0, rodadas = [];
+    for (const cycle of activeCycles) {
+      const item = cycle.items?.find(i => i.subjectId === subjectId);
+      if (!item) continue;
+      const metaMin = (item.horasPorRodada || 1) * 60;
+      const roundStart = cycle.rodadaStartDate || '2000-01-01';
+      const realMin = sessions.filter(s => s.date >= roundStart && s.subjectId === subjectId).reduce((a, s) => a + (s.totalMinutes || 0), 0);
+      const pct = metaMin > 0 ? Math.min(100, Math.round((realMin / metaMin) * 100)) : 0;
+      totalPct = Math.min(100, totalPct + pct);
+      totalRealMin += realMin;
+      totalMetaMin += metaMin;
+      rodadas.push(cycle.rodadaAtual);
+    }
+    if (totalMetaMin === 0) return null;
+    return { pct: totalPct, realMin: totalRealMin, metaMin: totalMetaMin, rodada: rodadas.join('+') };
+  }, [cycles, activeCycleIds, subjectId, sessions]);
 
   const statsMap = useMemo(() => {
     const map = { totalMins: 0, totalQ: 0, totalC: 0, totalFlashcards: 0, subtopics: {}, topics: {} };

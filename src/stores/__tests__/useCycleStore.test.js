@@ -4,7 +4,7 @@ import { useCycleStore } from '../useCycleStore';
 beforeEach(() => {
   useCycleStore.setState({
     cycles: [],
-    activeCycleId: null,
+    activeCycleIds: [],
   });
 });
 
@@ -21,9 +21,9 @@ describe('addCycle', () => {
       ],
     });
 
-    const { cycles, activeCycleId } = useCycleStore.getState();
+    const { cycles, activeCycleIds } = useCycleStore.getState();
     expect(cycles).toHaveLength(1);
-    expect(activeCycleId).toBe(cycles[0].id);
+    expect(activeCycleIds).toContain(cycles[0].id);
     expect(cycles[0].name).toBe('Ciclo TRT');
     expect(cycles[0].rodadaAtual).toBe(1);
     expect(cycles[0].status).toBe('ativo');

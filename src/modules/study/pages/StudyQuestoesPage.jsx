@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useRef } from 'react';
+import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useQuestionsStore } from '../../../stores/useQuestionsStore';
@@ -7,55 +7,128 @@ import { useGameStore, XP_RULES } from '../../../stores/useGameStore';
 import { DIFICULDADE_COLORS, DIFICULDADE_LABELS } from '../../../shared/constants/dificuldade';
 import toast from 'react-hot-toast';
 import { StudyLayout } from '../components/StudyLayout';
-import { BentoCard, SectionHeader, Badge } from '../components/BentoCard';
+import { BentoCard, Badge } from '../components/BentoCard';
 
-const today = () => new Date().toISOString().slice(0, 10);
-const fmtTimer = sec => `${String(Math.floor(sec / 60)).padStart(2, '0')}:${String(sec % 60).padStart(2, '0')}`;
-const STATUS_OPTS = [{ key: 'all', label: 'Todas' }, { key: 'unresolved', label: 'Não Resolvidas' }, { key: 'correct', label: 'Acertei' }, { key: 'wrong', label: 'Errei' }];
 const COLORS = ['#8B5CF6', '#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#06B6D4', '#EC4899', '#F97316', '#14B8A6', '#A855F7'];
-const inp = { background: 'rgba(255,255,255,0.04)', borderColor: 'rgba(255,255,255,0.08)', color: 'var(--text-main)' };
-const chipS = (active, c) => ({ borderColor: active ? (c || 'var(--primary)') : 'rgba(255,255,255,0.08)', background: active ? `${c || 'var(--primary)'}18` : 'transparent', color: active ? (c || 'var(--primary)') : 'var(--text-dim)' });
+const STATUS_OPTS = [
+  { key: 'all', label: 'Todas', icon: '📋' },
+  { key: 'unresolved', label: 'Não Resolvidas', icon: '⏳' },
+  { key: 'correct', label: 'Acertei', icon: '✅' },
+  { key: 'wrong', label: 'Errei', icon: '❌' },
+];
 
-// ── MultiSelect ─────────────────────────────────────────────────────────
+const fmtTimer = sec => `${String(Math.floor(sec / 60)).padStart(2, '0')}:${String(sec % 60).padStart(2, '0')}`;
 
-function MultiSelect({ label, options, selected, onChange, icon }) {
+// ══════════════════════════════════════════════════════════════════════════
+// ── FILTER CHIP ─────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════════
+
+function FilterChip({ label, count, active, onClick, onRemove, color }) {
+  const bg = active ? `${color || 'var(--primary)'}18` : 'rgba(255,255,255,0.04)';
+  const border = active ? `${color || 'var(--primary)'}40` : 'rgba(255,255,255,0.08)';
+  const txt = active ? (color || 'var(--primary)') : 'var(--text-dim)';
+  return (
+    <button
+      onClick={onClick}
+      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold transition-all shrink-0"
+      style={{ background: bg, border: `1px solid ${border}`, color: txt }}
+    >
+      {label}
+      {count > 0 && (
+        <span className="ml-0.5 px-1.5 py-0.5 rounded-full text-[9px] text-white font-black"
+          style={{ background: color || 'var(--primary)' }}>
+          {count}
+        </span>
+      )}
+      {active && onRemove && (
+        <span onClick={e => { e.stopPropagation(); onRemove(); }} className="ml-0.5 hover:opacity-70">×</span>
+      )}
+    </button>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// ── FILTER GROUP (inside drawer) ────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════════
+
+function FilterGroup({ label, icon, options, selected, onChange }) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
-  const ref = useRef(null);
-  useEffect(() => { if (!open) return; const h = e => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); }; document.addEventListener('mousedown', h); return () => document.removeEventListener('mousedown', h); }, [open]);
   const safe = a => Array.isArray(a) ? a : [];
   const filtered = safe(options).filter(o => o.name.toLowerCase().includes(search.toLowerCase()));
   const count = safe(selected).length;
+
   return (
-    <div ref={ref} className="relative">
-      <button onClick={() => setOpen(!open)} className="flex items-center gap-2 px-3 py-2 rounded-xl text-[11px] font-bold border backdrop-blur-sm transition-all"
-        style={{ ...inp, borderColor: count > 0 ? 'var(--primary)' : 'rgba(255,255,255,0.08)', color: count > 0 ? 'var(--primary)' : 'var(--text-dim)' }}>
-        {icon && <span className="text-xs">{icon}</span>}<span>{label}</span>
-        {count > 0 && <span className="px-1.5 py-0.5 rounded-full text-[9px] text-white font-black" style={{ background: 'var(--primary)' }}>{count}</span>}
+    <div className="space-y-2">
+      <button
+        onClick={() => setOpen(!open)}
+        className="w-full flex items-center justify-between px-4 py-3 rounded-xl border transition-all"
+        style={{
+          background: count > 0 ? 'rgba(139,92,246,0.06)' : 'rgba(255,255,255,0.03)',
+          borderColor: count > 0 ? 'rgba(139,92,246,0.2)' : 'rgba(255,255,255,0.06)',
+        }}
+      >
+        <div className="flex items-center gap-2">
+          <span className="text-sm">{icon}</span>
+          <span className="text-xs font-bold" style={{ color: 'var(--text-main)' }}>{label}</span>
+          {count > 0 && (
+            <span className="px-1.5 py-0.5 rounded-full text-[9px] font-bold text-white"
+              style={{ background: 'var(--primary)' }}>
+              {count}
+            </span>
+          )}
+        </div>
+        <span className="text-[10px] transition-transform" style={{
+          color: 'var(--text-dim)',
+          transform: open ? 'rotate(180deg)' : 'rotate(0deg)',
+        }}>▼</span>
       </button>
+
       <AnimatePresence>
         {open && (
-          <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} className="absolute z-50 mt-1 w-full max-w-64 rounded-2xl border overflow-hidden backdrop-blur-2xl"
-            style={{ background: 'rgba(15,15,20,0.95)', borderColor: 'rgba(255,255,255,0.1)', boxShadow: '0 20px 60px rgba(0,0,0,0.5)' }}>
-            <div className="p-2 border-b" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
-              <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar..." className="w-full px-2 py-1.5 rounded-lg text-xs border outline-none" style={inp} autoFocus />
-            </div>
-            <div className="max-h-48 overflow-y-auto custom-scrollbar">
-              {filtered.length === 0 && <p className="text-xs text-center py-3" style={{ color: 'var(--text-dim)' }}>Nenhum resultado</p>}
-              {filtered.map(o => {
-                const sel = safe(selected).includes(o.name);
-                return (
-                  <button key={o.name} onClick={() => onChange(sel ? safe(selected).filter(s => s !== o.name) : [...safe(selected), o.name])}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-xs hover:bg-white/5 transition-colors text-left" style={{ color: 'var(--text-main)' }}>
-                    <span className="w-4 h-4 rounded-md border flex items-center justify-center shrink-0"
-                      style={{ borderColor: sel ? 'var(--primary)' : 'rgba(255,255,255,0.12)', background: sel ? 'var(--primary)' : 'transparent' }}>
-                      {sel && <span className="text-white text-[9px] font-bold">✓</span>}
-                    </span>
-                    <span className="flex-1 truncate">{o.name}</span>
-                    <span className="text-[9px] font-bold" style={{ color: 'var(--text-dim)' }}>{o.count}</span>
-                  </button>
-                );
-              })}
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="overflow-hidden"
+          >
+            <div className="px-2 pb-2 space-y-1">
+              <input
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                placeholder={`Buscar ${label.toLowerCase()}...`}
+                className="w-full px-3 py-2 rounded-lg text-xs border outline-none"
+                style={{ background: 'rgba(255,255,255,0.04)', borderColor: 'rgba(255,255,255,0.08)', color: 'var(--text-main)' }}
+              />
+              <div className="max-h-40 overflow-y-auto space-y-0.5 custom-scrollbar">
+                {filtered.length === 0 && (
+                  <p className="text-[11px] text-center py-3" style={{ color: 'var(--text-dim)' }}>Nenhum resultado</p>
+                )}
+                {filtered.map(o => {
+                  const sel = safe(selected).includes(o.name);
+                  return (
+                    <button
+                      key={o.name}
+                      onClick={() => onChange(sel ? safe(selected).filter(s => s !== o.name) : [...safe(selected), o.name])}
+                      className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs transition-colors text-left"
+                      style={{
+                        background: sel ? 'rgba(139,92,246,0.1)' : 'transparent',
+                        color: sel ? 'var(--primary)' : 'var(--text-main)',
+                      }}
+                    >
+                      <span className="w-4 h-4 rounded-md border flex items-center justify-center shrink-0"
+                        style={{
+                          borderColor: sel ? 'var(--primary)' : 'rgba(255,255,255,0.12)',
+                          background: sel ? 'var(--primary)' : 'transparent',
+                        }}>
+                        {sel && <span className="text-white text-[9px] font-bold">✓</span>}
+                      </span>
+                      <span className="flex-1 truncate">{o.name}</span>
+                      <span className="text-[10px] font-bold" style={{ color: 'var(--text-dim)' }}>{o.count}</span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </motion.div>
         )}
@@ -64,11 +137,127 @@ function MultiSelect({ label, options, selected, onChange, icon }) {
   );
 }
 
-// ── PracticeMode ────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════════
+// ── FILTER DRAWER ───────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════════
+
+function FilterDrawer({ filters, filterValues, onChange, onClose }) {
+  const [local, setLocal] = useState({ ...filters });
+  const set = (k, v) => setLocal(prev => ({ ...prev, [k]: v }));
+
+  const activeCount = useMemo(() => {
+    let c = 0;
+    ['materias', 'assuntos', 'bancas', 'anos', 'dificuldades', 'orgaos', 'cargos'].forEach(k => {
+      c += (local[k] || []).length;
+    });
+    if (local.status !== 'all') c++;
+    if (local.keyword) c++;
+    return c;
+  }, [local]);
+
+  return (
+    <div className="fixed inset-0 z-[100] flex justify-end" style={{ background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)' }}>
+      <motion.div
+        initial={{ x: '100%' }}
+        animate={{ x: 0 }}
+        exit={{ x: '100%' }}
+        transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+        className="w-full max-w-sm h-full flex flex-col border-l"
+        style={{ background: 'rgba(15,15,20,0.98)', borderColor: 'rgba(255,255,255,0.06)' }}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
+          <div>
+            <h3 className="text-sm font-bold" style={{ color: 'var(--text-main)' }}>Filtros</h3>
+            {activeCount > 0 && <p className="text-[10px] mt-0.5" style={{ color: 'var(--text-dim)' }}>{activeCount} ativos</p>}
+          </div>
+          <button onClick={onClose} className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-white/5 transition-colors"
+            style={{ color: 'var(--text-dim)' }}>✕</button>
+        </div>
+
+        {/* Body */}
+        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4 custom-scrollbar">
+          {/* Search */}
+          <div>
+            <label className="text-[10px] font-bold uppercase tracking-wider mb-2 block" style={{ color: 'var(--text-dim)' }}>Palavra-chave</label>
+            <input
+              defaultValue={filters.keyword}
+              onChange={e => set('keyword', e.target.value)}
+              placeholder="Buscar no enunciado..."
+              className="w-full px-3 py-2.5 rounded-xl text-xs border outline-none"
+              style={{ background: 'rgba(255,255,255,0.04)', borderColor: 'rgba(255,255,255,0.08)', color: 'var(--text-main)' }}
+            />
+          </div>
+
+          {/* Status */}
+          <div>
+            <label className="text-[10px] font-bold uppercase tracking-wider mb-2 block" style={{ color: 'var(--text-dim)' }}>Status</label>
+            <div className="flex flex-wrap gap-2">
+              {STATUS_OPTS.map(o => (
+                <button
+                  key={o.key}
+                  onClick={() => set('status', o.key)}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-[11px] font-bold border transition-all"
+                  style={{
+                    background: local.status === o.key ? 'rgba(139,92,246,0.12)' : 'rgba(255,255,255,0.03)',
+                    borderColor: local.status === o.key ? 'rgba(139,92,246,0.3)' : 'rgba(255,255,255,0.06)',
+                    color: local.status === o.key ? 'var(--primary)' : 'var(--text-dim)',
+                  }}
+                >
+                  <span>{o.icon}</span>
+                  <span>{o.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Multi-select groups */}
+          <FilterGroup label="Disciplina" icon="📖" options={filterValues.materias} selected={filters.materias} onChange={v => set('materias', v)} />
+          <FilterGroup label="Assunto" icon="📝" options={filterValues.assuntos} selected={filters.assuntos} onChange={v => set('assuntos', v)} />
+          <FilterGroup label="Banca" icon="🏛️" options={filterValues.bancas} selected={filters.bancas} onChange={v => set('bancas', v)} />
+          <FilterGroup label="Ano" icon="📅" options={filterValues.anos} selected={filters.anos} onChange={v => set('anos', v)} />
+          <FilterGroup label="Dificuldade" icon="📊" options={filterValues.dificuldades} selected={filters.dificuldades} onChange={v => set('dificuldades', v)} />
+          <FilterGroup label="Órgão" icon="🏢" options={filterValues.orgaos} selected={filters.orgaos} onChange={v => set('orgaos', v)} />
+          <FilterGroup label="Cargo" icon="👤" options={filterValues.cargos} selected={filters.cargos} onChange={v => set('cargos', v)} />
+        </div>
+
+        {/* Footer */}
+        <div className="flex gap-3 px-5 py-4 border-t" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
+          <button
+            onClick={() => {
+              onChange({
+                materias: [], assuntos: [], bancas: [], anos: [],
+                dificuldades: [], orgaos: [], cargos: [],
+                status: 'all', keyword: '',
+              });
+              onClose();
+            }}
+            className="flex-1 py-2.5 rounded-xl text-xs font-bold border transition-colors hover:bg-white/5"
+            style={{ borderColor: 'rgba(255,255,255,0.08)', color: 'var(--text-dim)' }}
+          >
+            Limpar tudo
+          </button>
+          <button
+            onClick={() => { onChange({ ...local }); onClose(); }}
+            className="flex-1 py-2.5 rounded-xl text-xs font-bold text-white transition-all"
+            style={{ background: 'var(--primary)' }}
+          >
+            Aplicar {activeCount > 0 && `(${activeCount})`}
+          </button>
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// ── PRACTICE MODE ───────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════════
 
 function PracticeMode({ questions, onExit }) {
   const answerQuestion = useQuestionsStore(s => s.answerQuestion);
   const updateSubtopicStats = useStudyStore(s => s.updateSubtopicStats);
+  const updateSubjectStats = useStudyStore(s => s.updateSubjectStats);
   const subjects = useStudyStore(s => s.subjects);
   const { dispatchXP } = useGameStore();
 
@@ -120,43 +309,85 @@ function PracticeMode({ questions, onExit }) {
   function confirm() {
     if (!selected) return; const { correct } = answerQuestion(q.id, selected) || {};
     setResults(r => [...r, { questionId: q.id, correct, question: q }]); setRevealed(true);
-    // Gaps/insecurities tracking removed
   }
 
   function next() {
-    if (idx < questions.length - 1) { setIdx(i => i + 1); setSelected(null); setRevealed(false); setDiscarded(new Set()); setHighlights([]); setShowToolbar(false); }
-    else { const totalCorrect = results.filter(r => r.correct).length; const xp = totalCorrect * (XP_RULES.QUESTION_CORRECT?.xp || 2);
-      if (xp > 0) { dispatchXP('study', xp, 'sabedoria', false, 'conhecimento'); }
-      const g = {}; results.forEach(r => { if (r.question?.subjectId && r.question?.topicId && r.question?.subtopicId) {
-        const k = `${r.question.subjectId}|${r.question.topicId}|${r.question.subtopicId}`;
-        if (!g[k]) g[k] = { qA: 0, qC: 0 }; g[k].qA++; if (r.correct) g[k].qC++; } });
-      Object.entries(g).forEach(([k, s]) => { const [sid, tid, stid] = k.split('|'); updateSubtopicStats(sid, tid, stid, { qC: s.qC, qA: s.qA }); });
+    if (idx < questions.length - 1) {
+      setIdx(i => i + 1); setSelected(null); setRevealed(false); setDiscarded(new Set()); setHighlights([]); setShowToolbar(false);
+    } else {
+      const totalCorrect = results.filter(r => r.correct).length;
+      const xp = totalCorrect * (XP_RULES.QUESTION_CORRECT?.xp || 2);
+      if (xp > 0) dispatchXP('study', xp, 'sabedoria', false, 'conhecimento');
+
+      // Group results by subject for stats update
+      const bySubject = {};
+      results.forEach(r => {
+        const sid = r.question?.subjectId;
+        if (!sid) return;
+        if (!bySubject[sid]) bySubject[sid] = { qA: 0, qC: 0, byTopic: {} };
+        bySubject[sid].qA++;
+        if (r.correct) bySubject[sid].qC++;
+
+        // Also track by topic/subtopic if available
+        const tid = r.question?.topicId;
+        const stid = r.question?.subtopicId;
+        if (tid && stid) {
+          const tk = `${tid}|${stid}`;
+          if (!bySubject[sid].byTopic[tk]) bySubject[sid].byTopic[tk] = { qA: 0, qC: 0 };
+          bySubject[sid].byTopic[tk].qA++;
+          if (r.correct) bySubject[sid].byTopic[tk].qC++;
+        }
+      });
+
+      // Update stats
+      Object.entries(bySubject).forEach(([sid, data]) => {
+        // Update subtopic stats if available
+        Object.entries(data.byTopic).forEach(([tk, s]) => {
+          const [tid, stid] = tk.split('|');
+          updateSubtopicStats(sid, tid, stid, { qC: s.qC, qA: s.qA });
+        });
+        // Always update subject-level stats
+        updateSubjectStats(sid, { qC: data.qC, qA: data.qA });
+      });
+
       onExit({ total: results.length, correct: totalCorrect, xpEarned: xp });
     }
   }
 
   if (!q) return null;
-  const accent = subject?.color || 'var(--primary)'; const pct = Math.round((idx / questions.length) * 100);
+  const accent = subject?.color || 'var(--primary)';
+  const pct = Math.round((idx / questions.length) * 100);
 
   return (
     <div className="space-y-4 max-w-2xl mx-auto">
+      {/* Header */}
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="rounded-2xl border backdrop-blur-xl overflow-hidden" style={{ background: 'rgba(255,255,255,0.04)', borderColor: 'rgba(255,255,255,0.08)' }}>
         <div className="flex items-center justify-between px-5 pt-4 pb-3">
           <button onClick={() => onExit(null)} className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg hover:bg-red-500/10 transition-colors" style={{ color: 'var(--text-dim)' }}>← Sair</button>
           <div className="flex items-center gap-4">
-            <div className="flex items-baseline gap-1"><span className="text-2xl font-black" style={{ color: accent }}>{idx + 1}</span><span className="text-sm font-bold" style={{ color: 'var(--text-dim)' }}>/ {questions.length}</span></div>
+            <div className="flex items-baseline gap-1">
+              <span className="text-2xl font-black" style={{ color: accent }}>{idx + 1}</span>
+              <span className="text-sm font-bold" style={{ color: 'var(--text-dim)' }}>/ {questions.length}</span>
+            </div>
             <div className="w-px h-6" style={{ background: 'rgba(255,255,255,0.08)' }} />
-            <button onClick={() => setTimerOn(t => !t)} className="flex items-center gap-1.5 text-xs font-bold px-2.5 py-1.5 rounded-lg transition-all" style={{ color: timerOn ? accent : 'var(--text-dim)', background: timerOn ? `${accent}15` : 'transparent' }}>
+            <button onClick={() => setTimerOn(t => !t)} className="flex items-center gap-1.5 text-xs font-bold px-2.5 py-1.5 rounded-lg transition-all"
+              style={{ color: timerOn ? accent : 'var(--text-dim)', background: timerOn ? `${accent}15` : 'transparent' }}>
               {timerOn ? '⏸' : '⏱'} {timerOn && <span className="font-mono">{fmtTimer(elapsed)}</span>}
             </button>
             {subject && <Badge color={accent} variant="solid">{subject.name}</Badge>}
           </div>
         </div>
-        <div className="px-5 pb-4"><div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.06)' }}>
-          <motion.div className="h-full rounded-full" initial={{ width: 0 }} animate={{ width: `${pct}%` }} style={{ background: `linear-gradient(90deg, ${accent}, var(--primary))` }} /></div></div>
+        <div className="px-5 pb-4">
+          <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.06)' }}>
+            <motion.div className="h-full rounded-full" initial={{ width: 0 }} animate={{ width: `${pct}%` }}
+              style={{ background: `linear-gradient(90deg, ${accent}, var(--primary))` }} />
+          </div>
+        </div>
       </motion.div>
 
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="rounded-2xl border backdrop-blur-xl overflow-hidden" style={{ background: 'rgba(255,255,255,0.04)', borderColor: 'rgba(255,255,255,0.08)' }}>
+      {/* Question card */}
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
+        className="rounded-2xl border backdrop-blur-xl overflow-hidden" style={{ background: 'rgba(255,255,255,0.04)', borderColor: 'rgba(255,255,255,0.08)' }}>
         <div className="p-5 pb-3">
           <div className="flex items-center gap-2 flex-wrap mb-3">
             <Badge color={accent} variant="solid">{q.materia}</Badge>
@@ -168,7 +399,10 @@ function PracticeMode({ questions, onExit }) {
               </Badge>
             )}
           </div>
-          <div ref={enunciadoRef} onMouseUp={handleMouseUp} className="text-sm" style={{ color: 'var(--text-main)', lineHeight: 1.8, userSelect: 'text', cursor: 'text' }}>{renderHL(q.enunciado, highlights)}</div>
+          <div ref={enunciadoRef} onMouseUp={handleMouseUp} className="text-sm"
+            style={{ color: 'var(--text-main)', lineHeight: 1.8, userSelect: 'text', cursor: 'text' }}>
+            {renderHL(q.enunciado, highlights)}
+          </div>
         </div>
         <div className="px-5 pb-5 space-y-2">
           {q.alternativas.map((alt, i) => {
@@ -180,58 +414,87 @@ function PracticeMode({ questions, onExit }) {
             else if (isSel) s = { borderColor: accent, background: `${accent}15`, color: accent };
             return (
               <div key={i} className="relative group">
-                <button onClick={() => isDisc ? toggleDiscard(letter) : pick(letter)} disabled={revealed} className="w-full text-left px-4 py-3.5 rounded-xl border text-sm transition-all duration-200 disabled:cursor-default backdrop-blur-sm" style={s}>
+                <button onClick={() => isDisc ? toggleDiscard(letter) : pick(letter)} disabled={revealed}
+                  className="w-full text-left px-4 py-3.5 rounded-xl border text-sm transition-all duration-200 disabled:cursor-default backdrop-blur-sm" style={s}>
                   <div className="flex items-start gap-3">
                     <span className="shrink-0 w-8 h-8 lg:w-6 lg:h-6 rounded-lg flex items-center justify-center text-[10px] font-black mt-0.5"
-                      style={{ background: isDisc && !revealed ? 'transparent' : isSel ? `${accent}30` : 'rgba(255,255,255,0.04)', color: isDisc && !revealed ? 'var(--text-dim)' : isSel ? accent : 'var(--text-dim)', border: isDisc && !revealed ? '1.5px dashed #EF4444' : '1px solid rgba(255,255,255,0.06)' }}>
+                      style={{
+                        background: isDisc && !revealed ? 'transparent' : isSel ? `${accent}30` : 'rgba(255,255,255,0.04)',
+                        color: isDisc && !revealed ? 'var(--text-dim)' : isSel ? accent : 'var(--text-dim)',
+                        border: isDisc && !revealed ? '1.5px dashed #EF4444' : '1px solid rgba(255,255,255,0.06)',
+                      }}>
                       {isDisc && !revealed ? '✕' : letter}
                     </span>
-                    <span className="flex-1" style={{ textDecoration: isDisc && !revealed ? 'line-through' : 'none', fontWeight: isSel && !revealed ? 600 : 400 }}>{alt}</span>
+                    <span className="flex-1" style={{ textDecoration: isDisc && !revealed ? 'line-through' : 'none', fontWeight: isSel && !revealed ? 600 : 400 }}>
+                      {alt}
+                    </span>
                     {revealed && isCorr && <span className="text-sm font-bold">✓</span>}
                   </div>
                 </button>
-                {!revealed && <button onClick={e => { e.stopPropagation(); toggleDiscard(letter); }} className="absolute top-2 right-2 w-9 h-9 lg:w-6 lg:h-6 rounded-lg flex items-center justify-center text-[10px] font-bold transition-all md:opacity-0 md:group-hover:opacity-100" style={{ color: isDisc ? '#EF4444' : 'var(--text-dim)', background: isDisc ? 'rgba(239,68,68,0.15)' : 'rgba(255,255,255,0.04)' }}>{isDisc ? '↩' : '✕'}</button>}
+                {!revealed && (
+                  <button onClick={e => { e.stopPropagation(); toggleDiscard(letter); }}
+                    className="absolute top-2 right-2 w-9 h-9 lg:w-6 lg:h-6 rounded-lg flex items-center justify-center text-[10px] font-bold transition-all md:opacity-0 md:group-hover:opacity-100"
+                    style={{ color: isDisc ? '#EF4444' : 'var(--text-dim)', background: isDisc ? 'rgba(239,68,68,0.15)' : 'rgba(255,255,255,0.04)' }}>
+                    {isDisc ? '↩' : '✕'}
+                  </button>
+                )}
               </div>
             );
           })}
         </div>
         <AnimatePresence>{revealed && q.explicacao && (
           <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
-            className="mx-5 mb-5 p-4 rounded-xl text-xs backdrop-blur-sm" style={{ background: 'rgba(139,92,246,0.08)', borderLeft: '3px solid #8B5CF6', color: 'var(--text-muted)', lineHeight: 1.7 }}>
+            className="mx-5 mb-5 p-4 rounded-xl text-xs backdrop-blur-sm"
+            style={{ background: 'rgba(139,92,246,0.08)', borderLeft: '3px solid #8B5CF6', color: 'var(--text-muted)', lineHeight: 1.7 }}>
             <span className="font-bold" style={{ color: '#8B5CF6' }}>💡 Explicação:</span> {q.explicacao}
           </motion.div>
         )}</AnimatePresence>
       </motion.div>
 
+      {/* Action buttons */}
       <div className="flex gap-3">
         {!revealed ? (
-          <button onClick={confirm} disabled={!selected} className="w-full py-3.5 rounded-xl font-bold text-sm text-white disabled:opacity-30 transition-all"
-            style={{ background: selected ? `linear-gradient(135deg, ${accent}, var(--primary))` : 'rgba(255,255,255,0.04)', boxShadow: selected ? `0 4px 20px ${accent}30` : 'none' }}>Confirmar</button>
+          <button onClick={confirm} disabled={!selected}
+            className="w-full py-3.5 rounded-xl font-bold text-sm text-white disabled:opacity-30 transition-all"
+            style={{
+              background: selected ? `linear-gradient(135deg, ${accent}, var(--primary))` : 'rgba(255,255,255,0.04)',
+              boxShadow: selected ? `0 4px 20px ${accent}30` : 'none',
+            }}>
+            Confirmar
+          </button>
         ) : (
-          <button onClick={next} className="w-full py-3.5 rounded-xl font-bold text-sm text-white"
+          <button onClick={next}
+            className="w-full py-3.5 rounded-xl font-bold text-sm text-white"
             style={{ background: 'linear-gradient(135deg, #10B981, #059669)', boxShadow: '0 4px 20px rgba(16,185,129,0.3)' }}>
             {idx < questions.length - 1 ? 'Próxima →' : 'Finalizar →'}
           </button>
         )}
       </div>
 
+      {/* Highlight toolbar */}
       {showToolbar && (
         <div data-hl className="fixed z-[200] flex items-center gap-1 px-2 py-1.5 rounded-xl border shadow-lg backdrop-blur-xl"
           style={{ left: toolbarPos.x, top: toolbarPos.y, transform: 'translate(-50%, -100%)', background: 'rgba(15,15,20,0.9)', borderColor: 'rgba(255,255,255,0.1)' }}>
-          <button onClick={addHL} className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-bold hover:bg-yellow-500/20 transition-colors" style={{ color: 'var(--text-main)' }}>🖊 Marcar</button>
-          <button onClick={() => { setShowToolbar(false); pendingSel.current = null; window.getSelection()?.removeAllRanges(); }} className="px-1.5 py-1.5 rounded-lg text-[11px] font-bold hover:text-red-400 transition-colors" style={{ color: 'var(--text-dim)' }}>✕</button>
+          <button onClick={addHL} className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[11px] font-bold hover:bg-yellow-500/20 transition-colors"
+            style={{ color: 'var(--text-main)' }}>🖊 Marcar</button>
+          <button onClick={() => { setShowToolbar(false); pendingSel.current = null; window.getSelection()?.removeAllRanges(); }}
+            className="px-1.5 py-1.5 rounded-lg text-[11px] font-bold hover:text-red-400 transition-colors"
+            style={{ color: 'var(--text-dim)' }}>✕</button>
         </div>
       )}
     </div>
   );
 }
 
-// ── ResultScreen ────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════════
+// ── RESULT SCREEN ───────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════════
 
 function ResultScreen({ result, onClose }) {
   const acc = result.total > 0 ? Math.round((result.correct / result.total) * 100) : 0;
   return (
-    <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="flex flex-col items-center justify-center py-12 gap-5 max-w-md mx-auto text-center">
+    <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
+      className="flex flex-col items-center justify-center py-12 gap-5 max-w-md mx-auto text-center">
       <div className="text-6xl">{acc >= 70 ? '🏆' : '📚'}</div>
       <div className="text-2xl font-black" style={{ color: 'var(--text-main)' }}>{result.correct}/{result.total} acertos</div>
       <div className="text-4xl font-black" style={{ color: acc >= 70 ? '#10B981' : 'var(--primary)' }}>{acc}%</div>
@@ -241,13 +504,16 @@ function ResultScreen({ result, onClose }) {
   );
 }
 
-// ── Modals ──────────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════════
+// ── MODALS ──────────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════════
 
 function Modal({ children, onClose }) {
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)' }}>
       <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
-        className="w-full max-w-sm rounded-2xl border backdrop-blur-xl overflow-hidden max-h-[80vh] flex flex-col" style={{ background: 'rgba(15,15,20,0.95)', borderColor: 'rgba(255,255,255,0.08)' }}>
+        className="w-full max-w-sm rounded-2xl border backdrop-blur-xl overflow-hidden max-h-[80vh] flex flex-col"
+        style={{ background: 'rgba(15,15,20,0.95)', borderColor: 'rgba(255,255,255,0.08)' }}>
         {children}
       </motion.div>
     </div>
@@ -255,22 +521,33 @@ function Modal({ children, onClose }) {
 }
 
 function SaveCadernoModal({ filters, folders, onSave, onClose }) {
-  const [name, setName] = useState(''); const [folderId, setFolderId] = useState(null);
+  const [name, setName] = useState('');
+  const [folderId, setFolderId] = useState(null);
+  const inp = { background: 'rgba(255,255,255,0.04)', borderColor: 'rgba(255,255,255,0.08)', color: 'var(--text-main)' };
   return (
     <Modal onClose={onClose}>
-      <div className="p-5 border-b" style={{ borderColor: 'rgba(255,255,255,0.06)' }}><h3 className="text-sm font-bold" style={{ color: 'var(--text-main)' }}>Salvar Caderno</h3></div>
+      <div className="p-5 border-b" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
+        <h3 className="text-sm font-bold" style={{ color: 'var(--text-main)' }}>Salvar Caderno</h3>
+      </div>
       <div className="p-5 space-y-4">
-        <input value={name} onChange={e => setName(e.target.value)} placeholder="Nome do caderno" className="w-full px-3 py-2.5 rounded-xl text-sm border outline-none" style={inp} autoFocus />
-        <select value={folderId || ''} onChange={e => setFolderId(e.target.value || null)} className="w-full px-3 py-2.5 rounded-xl text-sm border outline-none" style={inp}>
-          <option value="">Sem pasta</option>{folders.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
+        <input value={name} onChange={e => setName(e.target.value)} placeholder="Nome do caderno"
+          className="w-full px-3 py-2.5 rounded-xl text-sm border outline-none" style={inp} autoFocus />
+        <select value={folderId || ''} onChange={e => setFolderId(e.target.value || null)}
+          className="w-full px-3 py-2.5 rounded-xl text-sm border outline-none" style={inp}>
+          <option value="">Sem pasta</option>
+          {folders.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
         </select>
         <div className="text-[10px] px-3 py-2 rounded-lg" style={{ background: 'rgba(255,255,255,0.03)', color: 'var(--text-dim)' }}>
-          {Object.entries(filters).filter(([, v]) => Array.isArray(v) ? v.length > 0 : !!v).map(([k, v]) => <span key={k} className="inline-block mr-2 mb-1">{k}: {Array.isArray(v) ? v.join(', ') : v}</span>)}
+          {Object.entries(filters).filter(([, v]) => Array.isArray(v) ? v.length > 0 : !!v).map(([k, v]) => (
+            <span key={k} className="inline-block mr-2 mb-1">{k}: {Array.isArray(v) ? v.join(', ') : v}</span>
+          ))}
         </div>
       </div>
       <div className="flex gap-3 p-5 border-t" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
-        <button onClick={onClose} className="flex-1 py-2.5 rounded-xl text-xs font-bold border" style={{ borderColor: 'rgba(255,255,255,0.08)', color: 'var(--text-dim)' }}>Cancelar</button>
-        <button onClick={() => { if (!name.trim()) { toast.error('Digite um nome'); return; } onSave(name.trim(), filters, folderId); onClose(); }} className="flex-1 py-2.5 rounded-xl text-xs font-bold text-white" style={{ background: 'var(--primary)' }}>Salvar</button>
+        <button onClick={onClose} className="flex-1 py-2.5 rounded-xl text-xs font-bold border"
+          style={{ borderColor: 'rgba(255,255,255,0.08)', color: 'var(--text-dim)' }}>Cancelar</button>
+        <button onClick={() => { if (!name.trim()) { toast.error('Digite um nome'); return; } onSave(name.trim(), filters, folderId); onClose(); }}
+          className="flex-1 py-2.5 rounded-xl text-xs font-bold text-white" style={{ background: 'var(--primary)' }}>Salvar</button>
       </div>
     </Modal>
   );
@@ -278,6 +555,7 @@ function SaveCadernoModal({ filters, folders, onSave, onClose }) {
 
 function CadernoManagerModal({ cadernos, folders, onLoad, onDelete, onCreateFolder, onDeleteFolder, onClose }) {
   const [newFolderName, setNewFolderName] = useState('');
+  const inp = { background: 'rgba(255,255,255,0.04)', borderColor: 'rgba(255,255,255,0.08)', color: 'var(--text-main)' };
   const create = () => { if (!newFolderName.trim()) return; onCreateFolder(newFolderName.trim()); setNewFolderName(''); };
   return (
     <Modal onClose={onClose}>
@@ -287,98 +565,192 @@ function CadernoManagerModal({ cadernos, folders, onLoad, onDelete, onCreateFold
       </div>
       <div className="flex-1 overflow-y-auto p-5 space-y-5">
         <div className="flex gap-2">
-          <input value={newFolderName} onChange={e => setNewFolderName(e.target.value)} placeholder="Nova pasta..." className="flex-1 px-3 py-2 rounded-xl text-xs border outline-none" style={inp} onKeyDown={e => e.key === 'Enter' && create()} />
+          <input value={newFolderName} onChange={e => setNewFolderName(e.target.value)} placeholder="Nova pasta..."
+            className="flex-1 px-3 py-2 rounded-xl text-xs border outline-none" style={inp} onKeyDown={e => e.key === 'Enter' && create()} />
           <button onClick={create} className="px-3 py-2 rounded-xl text-xs font-bold text-white" style={{ background: 'var(--primary)' }}>+ Pasta</button>
         </div>
         {folders.map(f => (
           <div key={f.id}>
             <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-md" style={{ background: f.color }} /><span className="text-xs font-bold" style={{ color: 'var(--text-main)' }}>{f.name}</span></div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-md" style={{ background: f.color }} />
+                <span className="text-xs font-bold" style={{ color: 'var(--text-main)' }}>{f.name}</span>
+              </div>
               <button onClick={() => onDeleteFolder(f.id)} className="text-[10px] hover:text-red-400 transition-colors" style={{ color: 'var(--text-dim)' }}>×</button>
             </div>
             {cadernos.filter(c => c.folderId === f.id).map(c => (
-              <div key={c.id} className="flex items-center gap-2 ml-5 mb-1 p-2 rounded-lg hover:bg-white/5 cursor-pointer" onClick={() => { onLoad(c.filters); onClose(); }}>
+              <div key={c.id} className="flex items-center gap-2 ml-5 mb-1 p-2 rounded-lg hover:bg-white/5 cursor-pointer"
+                onClick={() => { onLoad(c.filters); onClose(); }}>
                 <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{c.name}</span>
-                <button onClick={e => { e.stopPropagation(); onDelete(c.id); }} className="text-[10px] ml-auto hover:text-red-400 transition-colors" style={{ color: 'var(--text-dim)' }}>×</button>
+                <button onClick={e => { e.stopPropagation(); onDelete(c.id); }} className="text-[10px] ml-auto hover:text-red-400 transition-colors"
+                  style={{ color: 'var(--text-dim)' }}>×</button>
               </div>
             ))}
           </div>
         ))}
-        {cadernos.filter(c => !c.folderId).length > 0 && <div><span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-dim)' }}>Sem pasta</span>{cadernos.filter(c => !c.folderId).map(c => <div key={c.id} className="flex items-center gap-2 mt-2 p-2 rounded-lg hover:bg-white/5 cursor-pointer" onClick={() => { onLoad(c.filters); onClose(); }}><span className="text-xs" style={{ color: 'var(--text-muted)' }}>{c.name}</span><button onClick={e => { e.stopPropagation(); onDelete(c.id); }} className="text-[10px] ml-auto hover:text-red-400 transition-colors" style={{ color: 'var(--text-dim)' }}>×</button></div>)}</div>}
+        {cadernos.filter(c => !c.folderId).length > 0 && (
+          <div>
+            <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-dim)' }}>Sem pasta</span>
+            {cadernos.filter(c => !c.folderId).map(c => (
+              <div key={c.id} className="flex items-center gap-2 mt-2 p-2 rounded-lg hover:bg-white/5 cursor-pointer"
+                onClick={() => { onLoad(c.filters); onClose(); }}>
+                <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{c.name}</span>
+                <button onClick={e => { e.stopPropagation(); onDelete(c.id); }} className="text-[10px] ml-auto hover:text-red-400 transition-colors"
+                  style={{ color: 'var(--text-dim)' }}>×</button>
+              </div>
+            ))}
+          </div>
+        )}
         {cadernos.length === 0 && <p className="text-xs text-center py-4" style={{ color: 'var(--text-dim)' }}>Nenhum caderno salvo</p>}
       </div>
     </Modal>
   );
 }
 
-// ── PendingQuestionsTab ────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════════
+// ── PENDING QUESTIONS TAB ───────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════════
 
-function PendingTab({ questions, subjects, addSubject, linkQuestionsToSubjects, applySubjectLinks }) {
+function PendingTab({ questions, subjects, addSubject, linkQuestionsToSubjects }) {
   const [selIds, setSelIds] = useState(new Set());
   const [linkTarget, setLinkTarget] = useState('');
   const [showNew, setShowNew] = useState(false);
   const [newName, setNewName] = useState('');
   const pending = useMemo(() => questions.filter(q => !q.subjectId), [questions]);
-  const grouped = useMemo(() => { const m = {}; pending.forEach(q => { const k = q.materia || 'Sem matéria'; if (!m[k]) m[k] = []; m[k].push(q); }); return Object.entries(m).sort((a, b) => b[1].length - a[1].length); }, [pending]);
+  const grouped = useMemo(() => {
+    const m = {};
+    pending.forEach(q => { const k = q.materia || 'Sem matéria'; if (!m[k]) m[k] = []; m[k].push(q); });
+    return Object.entries(m).sort((a, b) => b[1].length - a[1].length);
+  }, [pending]);
 
   const toggle = id => setSelIds(p => { const n = new Set(p); n.has(id) ? n.delete(id) : n.add(id); return n; });
-  const selectAll = mat => { const ids = pending.filter(q => (q.materia || 'Sem matéria') === mat).map(q => q.id); setSelIds(p => { const n = new Set(p); const all = ids.every(id => n.has(id)); ids.forEach(id => all ? n.delete(id) : n.add(id)); return n; }); };
+  const selectAll = mat => {
+    const ids = pending.filter(q => (q.materia || 'Sem matéria') === mat).map(q => q.id);
+    setSelIds(p => { const n = new Set(p); const all = ids.every(id => n.has(id)); ids.forEach(id => all ? n.delete(id) : n.add(id)); return n; });
+  };
 
-  const handleLink = () => { if (!linkTarget || !selIds.size) return; const u = {}; selIds.forEach(id => { u[id] = linkTarget; }); useQuestionsStore.setState(s => ({ questions: s.questions.map(q => u[q.id] ? { ...q, subjectId: u[q.id] } : q) })); setSelIds(new Set()); toast.success(`${selIds.size} vinculadas`); };
-  const handleCreateLink = () => { if (!newName.trim()) return; const nid = addSubject({ name: newName.trim(), color: COLORS[subjects.length % COLORS.length] }); if (nid && selIds.size) { const u = {}; selIds.forEach(id => { u[id] = nid; }); useQuestionsStore.setState(s => ({ questions: s.questions.map(q => u[q.id] ? { ...q, subjectId: u[q.id] } : q) })); toast.success(`${selIds.size} vinculadas a "${newName.trim()}"`); setSelIds(new Set()); setNewName(''); setShowNew(false); } };
+  const handleLink = () => {
+    if (!linkTarget || !selIds.size) return;
+    const u = {};
+    selIds.forEach(id => { u[id] = linkTarget; });
+    useQuestionsStore.setState(s => ({ questions: s.questions.map(q => u[q.id] ? { ...q, subjectId: u[q.id] } : q) }));
+    setSelIds(new Set());
+    toast.success(`${selIds.size} vinculadas`);
+  };
+
+  const handleCreateLink = () => {
+    if (!newName.trim()) return;
+    const nid = addSubject({ name: newName.trim(), color: COLORS[subjects.length % COLORS.length] });
+    if (nid && selIds.size) {
+      const u = {};
+      selIds.forEach(id => { u[id] = nid; });
+      useQuestionsStore.setState(s => ({ questions: s.questions.map(q => u[q.id] ? { ...q, subjectId: u[q.id] } : q) }));
+      toast.success(`${selIds.size} vinculadas a "${newName.trim()}"`);
+      setSelIds(new Set());
+      setNewName('');
+      setShowNew(false);
+    }
+  };
+
+  const inp = { background: 'rgba(255,255,255,0.04)', borderColor: 'rgba(255,255,255,0.08)', color: 'var(--text-main)' };
 
   return (
     <div className="space-y-4">
       <BentoCard className="border-red-500/20">
         <div className="flex items-center justify-between">
-          <div><h3 className="text-sm font-bold" style={{ color: 'var(--text-main)' }}>⚠️ Questões sem vínculo</h3><p className="text-[11px] mt-1" style={{ color: 'var(--text-dim)' }}>{pending.length} pendentes</p></div>
+          <div>
+            <h3 className="text-sm font-bold" style={{ color: 'var(--text-main)' }}>⚠️ Questões sem vínculo</h3>
+            <p className="text-[11px] mt-1" style={{ color: 'var(--text-dim)' }}>{pending.length} pendentes</p>
+          </div>
           {selIds.size > 0 && <Badge color="var(--primary)" variant="solid">{selIds.size} selecionadas</Badge>}
         </div>
       </BentoCard>
+
       {grouped.length === 0 ? (
-        <div className="text-center py-10"><div className="text-4xl mb-3">✅</div><p className="text-sm font-bold" style={{ color: 'var(--text-main)' }}>Tudo vinculado!</p></div>
-      ) : (<>
-        {selIds.size > 0 && (
-          <div className="p-3 rounded-xl border flex flex-wrap items-center gap-2 backdrop-blur-sm" style={{ background: 'rgba(255,255,255,0.03)', borderColor: 'rgba(139,92,246,0.2)' }}>
-            <span className="text-[10px] font-bold" style={{ color: 'var(--text-dim)' }}>Vincular a:</span>
-            <select value={linkTarget} onChange={e => setLinkTarget(e.target.value)} className="px-2 py-1.5 rounded-lg text-[10px] border outline-none" style={{ ...inp, background: 'rgba(255,255,255,0.04)' }}>
-              <option value="">Selecione...</option>{subjects.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-            </select>
-            <button onClick={handleLink} disabled={!linkTarget} className="px-3 py-1.5 rounded-lg text-[10px] font-bold text-white disabled:opacity-30" style={{ background: 'var(--primary)' }}>Vincular</button>
-            <button onClick={() => setShowNew(!showNew)} className="px-3 py-1.5 rounded-lg text-[10px] font-bold" style={{ background: 'rgba(16,185,129,0.1)', color: '#10B981' }}>+ Nova</button>
-          </div>
-        )}
-        {showNew && selIds.size > 0 && (
-          <div className="p-3 rounded-xl border flex items-center gap-2" style={{ background: 'rgba(255,255,255,0.03)', borderColor: 'rgba(16,185,129,0.2)' }}>
-            <input value={newName} onChange={e => setNewName(e.target.value)} placeholder="Nome da matéria..." className="flex-1 px-2 py-1.5 rounded-lg text-[10px] border outline-none" style={inp} autoFocus onKeyDown={e => e.key === 'Enter' && handleCreateLink()} />
-            <button onClick={handleCreateLink} disabled={!newName.trim()} className="px-3 py-1.5 rounded-lg text-[10px] font-bold text-white disabled:opacity-30" style={{ background: '#10B981' }}>Criar e vincular</button>
-          </div>
-        )}
-        {grouped.map(([mat, qs]) => (
-          <BentoCard key={mat} padding={false}>
-            <button onClick={() => selectAll(mat)} className="w-full flex items-center justify-between px-4 py-3 hover:bg-white/[0.02] transition-all">
-              <div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full" style={{ background: '#EF4444' }} /><span className="text-xs font-bold" style={{ color: 'var(--text-main)' }}>{mat}</span><Badge color="#EF4444" variant="solid">{qs.length}</Badge></div>
-              <span className="text-[10px]" style={{ color: 'var(--text-dim)' }}>{qs.every(q => selIds.has(q.id)) ? '☑' : '☐'} todas</span>
-            </button>
-            <div className="border-t divide-y" style={{ borderColor: 'rgba(255,255,255,0.04)' }}>
-              {qs.slice(0, 10).map(q => (
-                <button key={q.id} onClick={() => toggle(q.id)} className="w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-white/[0.02] transition-all">
-                  <span className="w-4 h-4 rounded-md border flex items-center justify-center shrink-0 text-[10px]" style={{ borderColor: selIds.has(q.id) ? 'var(--primary)' : 'rgba(255,255,255,0.08)', background: selIds.has(q.id) ? 'var(--primary)' : 'transparent', color: selIds.has(q.id) ? '#fff' : 'transparent' }}>{selIds.has(q.id) && '✓'}</span>
-                  <p className="text-[11px] flex-1 truncate" style={{ color: 'var(--text-main)' }}>{q.enunciado.slice(0, 120)}{q.enunciado.length > 120 ? '...' : ''}</p>
-                  {q.banca && <Badge>{q.banca}</Badge>}{q.ano && <Badge>{q.ano}</Badge>}
-                </button>
-              ))}
-              {qs.length > 10 && <div className="px-4 py-2 text-center"><span className="text-[10px]" style={{ color: 'var(--text-dim)' }}>+{qs.length - 10} mais</span></div>}
+        <div className="text-center py-10">
+          <div className="text-4xl mb-3">✅</div>
+          <p className="text-sm font-bold" style={{ color: 'var(--text-main)' }}>Tudo vinculado!</p>
+        </div>
+      ) : (
+        <>
+          {selIds.size > 0 && (
+            <div className="p-3 rounded-xl border flex flex-wrap items-center gap-2 backdrop-blur-sm"
+              style={{ background: 'rgba(255,255,255,0.03)', borderColor: 'rgba(139,92,246,0.2)' }}>
+              <span className="text-[10px] font-bold" style={{ color: 'var(--text-dim)' }}>Vincular a:</span>
+              <select value={linkTarget} onChange={e => setLinkTarget(e.target.value)}
+                className="px-2 py-1.5 rounded-lg text-[10px] border outline-none" style={{ ...inp, background: 'rgba(255,255,255,0.04)' }}>
+                <option value="">Selecione...</option>
+                {subjects.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+              </select>
+              <button onClick={handleLink} disabled={!linkTarget}
+                className="px-3 py-1.5 rounded-lg text-[10px] font-bold text-white disabled:opacity-30" style={{ background: 'var(--primary)' }}>
+                Vincular
+              </button>
+              <button onClick={() => setShowNew(!showNew)}
+                className="px-3 py-1.5 rounded-lg text-[10px] font-bold" style={{ background: 'rgba(16,185,129,0.1)', color: '#10B981' }}>
+                + Nova
+              </button>
             </div>
-          </BentoCard>
-        ))}
-      </>)}
+          )}
+
+          {showNew && selIds.size > 0 && (
+            <div className="p-3 rounded-xl border flex items-center gap-2"
+              style={{ background: 'rgba(255,255,255,0.03)', borderColor: 'rgba(16,185,129,0.2)' }}>
+              <input value={newName} onChange={e => setNewName(e.target.value)} placeholder="Nome da matéria..."
+                className="flex-1 px-2 py-1.5 rounded-lg text-[10px] border outline-none" style={inp} autoFocus
+                onKeyDown={e => e.key === 'Enter' && handleCreateLink()} />
+              <button onClick={handleCreateLink} disabled={!newName.trim()}
+                className="px-3 py-1.5 rounded-lg text-[10px] font-bold text-white disabled:opacity-30" style={{ background: '#10B981' }}>
+                Criar e vincular
+              </button>
+            </div>
+          )}
+
+          {grouped.map(([mat, qs]) => (
+            <BentoCard key={mat} padding={false}>
+              <button onClick={() => selectAll(mat)} className="w-full flex items-center justify-between px-4 py-3 hover:bg-white/[0.02] transition-all">
+                <div className="flex items-center gap-2">
+                  <div className="w-2.5 h-2.5 rounded-full" style={{ background: '#EF4444' }} />
+                  <span className="text-xs font-bold" style={{ color: 'var(--text-main)' }}>{mat}</span>
+                  <Badge color="#EF4444" variant="solid">{qs.length}</Badge>
+                </div>
+                <span className="text-[10px]" style={{ color: 'var(--text-dim)' }}>{qs.every(q => selIds.has(q.id)) ? '☑' : '☐'} todas</span>
+              </button>
+              <div className="border-t divide-y" style={{ borderColor: 'rgba(255,255,255,0.04)' }}>
+                {qs.slice(0, 10).map(q => (
+                  <button key={q.id} onClick={() => toggle(q.id)}
+                    className="w-full flex items-center gap-3 px-4 py-2.5 text-left hover:bg-white/[0.02] transition-all">
+                    <span className="w-4 h-4 rounded-md border flex items-center justify-center shrink-0 text-[10px]"
+                      style={{
+                        borderColor: selIds.has(q.id) ? 'var(--primary)' : 'rgba(255,255,255,0.08)',
+                        background: selIds.has(q.id) ? 'var(--primary)' : 'transparent',
+                        color: selIds.has(q.id) ? '#fff' : 'transparent',
+                      }}>
+                      {selIds.has(q.id) && '✓'}
+                    </span>
+                    <p className="text-[11px] flex-1 truncate" style={{ color: 'var(--text-main)' }}>
+                      {q.enunciado.slice(0, 120)}{q.enunciado.length > 120 ? '...' : ''}
+                    </p>
+                    {q.banca && <Badge>{q.banca}</Badge>}
+                    {q.ano && <Badge>{q.ano}</Badge>}
+                  </button>
+                ))}
+                {qs.length > 10 && (
+                  <div className="px-4 py-2 text-center">
+                    <span className="text-[10px]" style={{ color: 'var(--text-dim)' }}>+{qs.length - 10} mais</span>
+                  </div>
+                )}
+              </div>
+            </BentoCard>
+          ))}
+        </>
+      )}
     </div>
   );
 }
 
 // ══════════════════════════════════════════════════════════════════════════
-// ── MAIN ───────────────────────────────────────────────────────────────
+// ── MAIN ────────────────────────────────────────────────────────────────
 // ══════════════════════════════════════════════════════════════════════════
 
 export default function StudyQuestoesPage() {
@@ -389,7 +761,6 @@ export default function StudyQuestoesPage() {
   const folders = useQuestionsStore(s => s.folders);
   const syncFromMago = useQuestionsStore(s => s.syncFromMago);
   const linkQuestionsToSubjects = useQuestionsStore(s => s.linkQuestionsToSubjects);
-  const applySubjectLinks = useQuestionsStore(s => s.applySubjectLinks);
   const getFilteredQuestions = useQuestionsStore(s => s.getFilteredQuestions);
   const getAnswerStatus = useQuestionsStore(s => s.getAnswerStatus);
   const getFilterValues = useQuestionsStore(s => s.getFilterValues);
@@ -399,11 +770,14 @@ export default function StudyQuestoesPage() {
   const deleteFolder = useQuestionsStore(s => s.deleteFolder);
   const subjects = useStudyStore(s => s.subjects);
   const addSubject = useStudyStore(s => s.addSubject);
-  const findSubjectByName = useStudyStore(s => s.findSubjectByName);
   const backupSubjects = useStudyStore(s => s.backupSubjects);
 
-  const [filters, setFilters] = useState({ materias: [], assuntos: [], bancas: [], anos: [], dificuldades: [], orgaos: [], cargos: [], status: 'all', keyword: '' });
-  const [showFilters, setShowFilters] = useState(true);
+  const [filters, setFilters] = useState({
+    materias: [], assuntos: [], bancas: [], anos: [],
+    dificuldades: [], orgaos: [], cargos: [],
+    status: 'all', keyword: '',
+  });
+  const [showFilterDrawer, setShowFilterDrawer] = useState(false);
   const [tab, setTab] = useState('questoes');
   const [syncing, setSyncing] = useState(false);
   const [syncError, setSyncError] = useState('');
@@ -427,7 +801,6 @@ export default function StudyQuestoesPage() {
     if (newM.length) setUnmatchedMaterias(newM);
   }, [questions.length, subjects.length]);
 
-  // Close merge dropdown on outside click
   useEffect(() => {
     if (!showMergeDropdown) return;
     const h = e => { if (mergeRef.current && !mergeRef.current.contains(e.target)) setShowMergeDropdown(false); };
@@ -435,28 +808,47 @@ export default function StudyQuestoesPage() {
     return () => document.removeEventListener('mousedown', h);
   }, [showMergeDropdown]);
 
-  async function doSync() { if (syncing) return; setSyncing(true); setSyncError(''); try { backupSubjects(); const r = await syncFromMago(); if (r.success) toast.success(r.newCount > 0 ? `${r.count} (${r.newCount} novas)` : `${r.count} no banco`); else setSyncError(r.errors?.[0] || 'Erro'); } catch (e) { setSyncError(e.message); } finally { setSyncing(false); } }
+  async function doSync() {
+    if (syncing) return;
+    setSyncing(true); setSyncError('');
+    try {
+      backupSubjects();
+      const r = await syncFromMago();
+      if (r.success) toast.success(r.newCount > 0 ? `${r.count} (${r.newCount} novas)` : `${r.count} no banco`);
+      else setSyncError(r.errors?.[0] || 'Erro');
+    } catch (e) { setSyncError(e.message); } finally { setSyncing(false); }
+  }
 
   const filterValues = useMemo(() => getFilterValues(), [questions, getFilterValues]);
-  const answerStatus = useMemo(() => getAnswerStatus(), [questions, answers, getAnswerStatus]);
   const filtered = useMemo(() => getFilteredQuestions(filters), [questions, answers, filters, getFilteredQuestions]);
   const materiaStats = useMemo(() => useQuestionsStore.getState().getMateriaStats(), [questions, answers]);
-  const activeCount = useMemo(() => { let c = 0; ['materias', 'assuntos', 'bancas', 'anos', 'dificuldades', 'orgaos', 'cargos'].forEach(k => { c += filters[k].length; }); if (filters.status !== 'all') c++; if (filters.keyword) c++; return c; }, [filters]);
-  const updFilter = (k, v) => setFilters(p => ({ ...p, [k]: v }));
-  const clearFilters = () => setFilters({ materias: [], assuntos: [], bancas: [], anos: [], dificuldades: [], orgaos: [], cargos: [], status: 'all', keyword: '' });
   const pendingCount = questions.filter(q => !q.subjectId).length;
 
-  // Subject counts for the "Questões" tab overview
-  const subjectCounts = useMemo(() => {
-    const map = {};
-    filtered.forEach(q => {
-      const m = q.materia || 'Sem matéria';
-      map[m] = (map[m] || 0) + 1;
-    });
-    return Object.entries(map).sort((a, b) => b[1] - a[1]);
-  }, [filtered]);
+  const activeFilters = useMemo(() => {
+    const tags = [];
+    filters.materias.forEach(m => tags.push({ key: `m-${m}`, label: m, color: '#8B5CF6', type: 'materias', value: m }));
+    filters.bancas.forEach(b => tags.push({ key: `b-${b}`, label: b, color: '#06B6D4', type: 'bancas', value: b }));
+    filters.anos.forEach(a => tags.push({ key: `a-${a}`, label: a, color: '#F59E0B', type: 'anos', value: a }));
+    filters.dificuldades.forEach(d => tags.push({ key: `d-${d}`, label: d, color: '#EF4444', type: 'dificuldades', value: d }));
+    filters.orgaos.forEach(o => tags.push({ key: `o-${o}`, label: o, color: '#10B981', type: 'orgaos', value: o }));
+    filters.cargos.forEach(c => tags.push({ key: `c-${c}`, label: c, color: '#EC4899', type: 'cargos', value: c }));
+    filters.assuntos.forEach(a => tags.push({ key: `a-${a}`, label: a, color: '#F97316', type: 'assuntos', value: a }));
+    if (filters.status !== 'all') {
+      const opt = STATUS_OPTS.find(o => o.key === filters.status);
+      tags.push({ key: 'status', label: opt?.label || filters.status, color: '#EF4444', type: 'status', value: 'all' });
+    }
+    if (filters.keyword) tags.push({ key: 'kw', label: `"${filters.keyword}"`, color: '#8B5CF6', type: 'keyword', value: '' });
+    return tags;
+  }, [filters]);
 
-  // Handle "Praticar" click for a specific materia (or all if null)
+  const removeFilter = useCallback((type, value) => {
+    setFilters(prev => {
+      if (type === 'status') return { ...prev, status: 'all' };
+      if (type === 'keyword') return { ...prev, keyword: '' };
+      return { ...prev, [type]: prev[type].filter(v => v !== value) };
+    });
+  }, []);
+
   const handlePractice = (materia) => {
     const qs = materia
       ? getFilteredQuestions({ ...filters, materias: [materia] }).slice(0, 20)
@@ -467,17 +859,19 @@ export default function StudyQuestoesPage() {
     setPracticeResult(null);
   };
 
-  // Handle caderno load: practice all filtered questions
   const handleCadernoPractice = (cadernoFilters) => {
     setFilters(cadernoFilters);
     setTab('questoes');
   };
 
+  // ── Practice Mode ──
   if (practiceSubject) return (
     <StudyLayout>
       <div className="flex flex-col max-h-[calc(100vh-80px)] overflow-y-auto custom-scrollbar pr-1 pb-10">
         <div className="mb-4">
-          <button onClick={() => { setPracticeSubject(null); setPracticeQuestions([]); }} className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg hover:bg-white/5 transition-colors" style={{ color: 'var(--text-dim)' }}>← Voltar para visão geral</button>
+          <button onClick={() => { setPracticeSubject(null); setPracticeQuestions([]); }}
+            className="flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg hover:bg-white/5 transition-colors"
+            style={{ color: 'var(--text-dim)' }}>← Voltar para visão geral</button>
         </div>
         <PracticeMode questions={practiceQuestions} onExit={r => { setPracticeSubject(null); setPracticeQuestions([]); if (r) setPracticeResult(r); }} />
       </div>
@@ -485,38 +879,52 @@ export default function StudyQuestoesPage() {
   );
   if (practiceResult) return <StudyLayout><ResultScreen result={practiceResult} onClose={() => setPracticeResult(null)} /></StudyLayout>;
 
+  // ── Empty State ──
   if (questions.length === 0 && !syncing) return (
     <StudyLayout>
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="flex items-center justify-center min-h-[60vh]">
         <BentoCard className="text-center max-w-md mx-auto">
-          <div className="w-20 h-20 rounded-2xl flex items-center justify-center text-4xl mx-auto mb-5" style={{ background: 'rgba(139,92,246,0.12)', border: '1px solid rgba(139,92,246,0.2)' }}>📚</div>
+          <div className="w-20 h-20 rounded-2xl flex items-center justify-center text-4xl mx-auto mb-5"
+            style={{ background: 'rgba(139,92,246,0.12)', border: '1px solid rgba(139,92,246,0.2)' }}>📚</div>
           <h2 className="text-xl font-bold mb-2" style={{ color: 'var(--text-main)' }}>Banco de Questões</h2>
           <p className="text-sm mb-6" style={{ color: 'var(--text-muted)', lineHeight: 1.7 }}>Conecte-se ao banco MAGO para carregar questões.</p>
-          <button onClick={doSync} className="px-6 py-3 rounded-xl font-bold text-sm text-white hover:scale-105 transition-transform" style={{ background: 'linear-gradient(135deg, #8B5CF6, var(--primary))', boxShadow: '0 4px 20px rgba(139,92,246,0.3)' }}>🔄 Sincronizar com MAGO</button>
+          <button onClick={doSync} className="px-6 py-3 rounded-xl font-bold text-sm text-white hover:scale-105 transition-transform"
+            style={{ background: 'linear-gradient(135deg, #8B5CF6, var(--primary))', boxShadow: '0 4px 20px rgba(139,92,246,0.3)' }}>
+            🔄 Sincronizar com MAGO
+          </button>
           {syncError && <p className="mt-3 text-sm" style={{ color: '#EF4444' }}>{syncError}</p>}
         </BentoCard>
       </motion.div>
     </StudyLayout>
   );
 
-  const filterTags = [];
-  filters.materias.forEach(m => filterTags.push(<span key={`m-${m}`} className="px-2 py-0.5 rounded-full text-[10px] font-bold" style={{ background: 'rgba(139,92,246,0.12)', color: '#8B5CF6' }}>{m} ×</span>));
-  filters.bancas.forEach(b => filterTags.push(<span key={`b-${b}`} className="px-2 py-0.5 rounded-full text-[10px] font-bold" style={{ background: 'rgba(6,182,212,0.12)', color: '#06B6D4' }}>{b} ×</span>));
-  filters.anos.forEach(a => filterTags.push(<span key={`a-${a}`} className="px-2 py-0.5 rounded-full text-[10px] font-bold" style={{ background: 'rgba(245,158,11,0.12)', color: '#F59E0B' }}>{a} ×</span>));
-  if (filters.status !== 'all') filterTags.push(<span key="s" className="px-2 py-0.5 rounded-full text-[10px] font-bold" style={{ background: 'rgba(239,68,68,0.12)', color: '#EF4444' }}>{STATUS_OPTS.find(o => o.key === filters.status)?.label} ×</span>);
+  const subjectCounts = useMemo(() => {
+    const map = {};
+    filtered.forEach(q => {
+      const m = q.materia || 'Sem matéria';
+      map[m] = (map[m] || 0) + 1;
+    });
+    return Object.entries(map).sort((a, b) => b[1] - a[1]);
+  }, [filtered]);
 
   return (
     <StudyLayout>
       <div className="flex flex-col max-h-[calc(100vh-80px)] overflow-y-auto custom-scrollbar pr-1 pb-10">
-        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="flex items-start justify-between gap-4 flex-wrap mb-4">
-          <p className="text-sm" style={{ color: 'var(--text-dim)' }}>{filtered.length} questões {activeCount > 0 ? '(filtrado)' : ''} · {materiaStats.length} disciplinas</p>
+        {/* ── Top bar ── */}
+        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
+          className="flex items-center justify-between gap-3 flex-wrap mb-4">
+          <p className="text-sm" style={{ color: 'var(--text-dim)' }}>
+            {filtered.length} questões {activeFilters.length > 0 ? '(filtrado)' : ''} · {materiaStats.length} disciplinas
+          </p>
           <div className="flex gap-2 items-center">
-            {/* Merge conflict bell icon */}
             {unmatchedMaterias.length > 0 && (
               <div ref={mergeRef} className="relative">
-                <button onClick={() => setShowMergeDropdown(v => !v)} className="relative w-9 h-9 rounded-xl flex items-center justify-center text-lg hover:bg-white/5 transition-all" title="Disciplinas não vinculadas">
+                <button onClick={() => setShowMergeDropdown(v => !v)}
+                  className="relative w-9 h-9 rounded-xl flex items-center justify-center text-lg hover:bg-white/5 transition-all"
+                  title="Disciplinas não vinculadas">
                   🔔
-                  <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full text-[10px] lg:text-[8px] font-bold flex items-center justify-center text-white" style={{ background: '#F59E0B' }}>{unmatchedMaterias.length}</span>
+                  <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full text-[10px] lg:text-[8px] font-bold flex items-center justify-center text-white"
+                    style={{ background: '#F59E0B' }}>{unmatchedMaterias.length}</span>
                 </button>
                 <AnimatePresence>
                   {showMergeDropdown && (
@@ -529,128 +937,214 @@ export default function StudyQuestoesPage() {
                       </div>
                       <div className="max-h-48 overflow-y-auto custom-scrollbar">
                         {unmatchedMaterias.map((m, i) => (
-                          <div key={i} className="px-3 py-2 text-xs border-b last:border-b-0" style={{ borderColor: 'rgba(255,255,255,0.04)', color: 'var(--text-main)' }}>
-                            {m}
-                          </div>
+                          <div key={i} className="px-3 py-2 text-xs border-b last:border-b-0"
+                            style={{ borderColor: 'rgba(255,255,255,0.04)', color: 'var(--text-main)' }}>{m}</div>
                         ))}
                       </div>
                       <div className="p-2 border-t" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
-                        <button onClick={() => { setShowMergeDropdown(false); setTab('pendentes'); }} className="w-full py-2 rounded-lg text-[11px] font-bold hover:bg-white/5 transition-colors" style={{ color: 'var(--primary)' }}>
-                          Ir para Pendentes →
-                        </button>
+                        <button onClick={() => { setShowMergeDropdown(false); setTab('pendentes'); }}
+                          className="w-full py-2 rounded-lg text-[11px] font-bold hover:bg-white/5 transition-colors"
+                          style={{ color: 'var(--primary)' }}>Ir para Pendentes →</button>
                       </div>
                     </motion.div>
                   )}
                 </AnimatePresence>
               </div>
             )}
-            <button onClick={() => setShowCadernoMgr(true)} className="px-3 py-2 rounded-xl text-xs font-bold border backdrop-blur-sm hover:border-purple-500/40 hover:text-purple-400 transition-all" style={{ borderColor: 'rgba(255,255,255,0.08)', color: 'var(--text-dim)' }}>📁 Cadernos {cadernos.length > 0 && <span className="ml-1">({cadernos.length})</span>}</button>
-            <button onClick={doSync} disabled={syncing} className="px-4 py-2 rounded-xl text-xs font-bold border backdrop-blur-sm" style={{ borderColor: syncing ? 'var(--primary)' : 'rgba(255,255,255,0.08)', color: syncing ? 'var(--primary)' : 'var(--text-dim)' }}>{syncing ? '⏳' : '🔄'}</button>
+            <button onClick={() => setShowCadernoMgr(true)}
+              className="px-3 py-2 rounded-xl text-xs font-bold border backdrop-blur-sm hover:border-purple-500/40 hover:text-purple-400 transition-all"
+              style={{ borderColor: 'rgba(255,255,255,0.08)', color: 'var(--text-dim)' }}>
+              📁 Cadernos {cadernos.length > 0 && <span className="ml-1">({cadernos.length})</span>}
+            </button>
+            <button onClick={doSync} disabled={syncing}
+              className="px-4 py-2 rounded-xl text-xs font-bold border backdrop-blur-sm"
+              style={{ borderColor: syncing ? 'var(--primary)' : 'rgba(255,255,255,0.08)', color: syncing ? 'var(--primary)' : 'var(--text-dim)' }}>
+              {syncing ? '⏳' : '🔄'}
+            </button>
           </div>
         </motion.div>
 
-        {syncError && <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mb-4 px-4 py-2 rounded-xl text-sm" style={{ background: 'rgba(239,68,68,0.08)', color: '#EF4444' }}>{syncError}</motion.div>}
+        {syncError && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+            className="mb-4 px-4 py-2 rounded-xl text-sm" style={{ background: 'rgba(239,68,68,0.08)', color: '#EF4444' }}>
+            {syncError}
+          </motion.div>
+        )}
 
+        {/* ── Tabs ── */}
         <div className="flex gap-1 p-1 rounded-xl mb-4 backdrop-blur-sm" style={{ background: 'rgba(255,255,255,0.03)' }}>
           {[{ k: 'questoes', l: '📋 Questões' }, { k: 'pendentes', l: '⚠️ Pendentes' }].map(t => (
-            <button key={t.k} onClick={() => setTab(t.k)} className="flex-1 py-2 px-4 rounded-lg text-xs font-bold transition-all relative" style={{ background: tab === t.k ? 'var(--primary)' : 'transparent', color: tab === t.k ? '#fff' : 'var(--text-dim)' }}>
-              {t.l}{t.k === 'pendentes' && pendingCount > 0 && <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full text-[10px] lg:text-[8px] font-bold flex items-center justify-center text-white" style={{ background: '#EF4444' }}>{pendingCount}</span>}
+            <button key={t.k} onClick={() => setTab(t.k)}
+              className="flex-1 py-2 px-4 rounded-lg text-xs font-bold transition-all relative"
+              style={{ background: tab === t.k ? 'var(--primary)' : 'transparent', color: tab === t.k ? '#fff' : 'var(--text-dim)' }}>
+              {t.l}
+              {t.k === 'pendentes' && pendingCount > 0 && (
+                <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full text-[10px] lg:text-[8px] font-bold flex items-center justify-center text-white"
+                  style={{ background: '#EF4444' }}>{pendingCount}</span>
+              )}
             </button>
           ))}
         </div>
 
-        <div className="mb-4">
-          <button onClick={() => setShowFilters(!showFilters)} className="flex items-center gap-2 text-xs font-bold mb-2 hover:text-white transition-colors" style={{ color: 'var(--text-dim)' }}>
-            <span className="transition-transform" style={{ transform: showFilters ? 'rotate(0)' : 'rotate(-90deg)' }}>▼</span>Filtros{activeCount > 0 && <Badge color="var(--primary)" variant="solid">{activeCount}</Badge>}
-          </button>
-          <AnimatePresence>{showFilters && (
-            <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.2 }} className="relative z-50">
-              <div className="p-4 rounded-2xl border backdrop-blur-xl space-y-3" style={{ background: 'rgba(255,255,255,0.03)', borderColor: 'rgba(255,255,255,0.06)' }}>
-                <input value={filters.keyword} onChange={e => updFilter('keyword', e.target.value)} placeholder="🔍 Palavra-chave..." className="w-full px-3 py-2.5 rounded-xl text-sm border outline-none backdrop-blur-sm" style={inp} />
-                {/* MultiSelect buttons — horizontal scroll on mobile */}
-                <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1 -mx-1 px-1">
-                  <MultiSelect label="Disciplina" icon="📖" options={filterValues.materias} selected={filters.materias} onChange={v => updFilter('materias', v)} />
-                  <MultiSelect label="Assunto" icon="📝" options={filterValues.assuntos} selected={filters.assuntos} onChange={v => updFilter('assuntos', v)} />
-                  <MultiSelect label="Banca" icon="🏛️" options={filterValues.bancas} selected={filters.bancas} onChange={v => updFilter('bancas', v)} />
-                  <MultiSelect label="Ano" icon="📅" options={filterValues.anos} selected={filters.anos} onChange={v => updFilter('anos', v)} />
-                  <MultiSelect label="Dificuldade" icon="📊" options={filterValues.dificuldades} selected={filters.dificuldades} onChange={v => updFilter('dificuldades', v)} />
-                  <MultiSelect label="Órgão" icon="🏢" options={filterValues.orgaos} selected={filters.orgaos} onChange={v => updFilter('orgaos', v)} />
-                  <MultiSelect label="Cargo" icon="👤" options={filterValues.cargos} selected={filters.cargos} onChange={v => updFilter('cargos', v)} />
-                </div>
-                <div className="flex flex-wrap gap-2">{STATUS_OPTS.map(o => <button key={o.key} onClick={() => updFilter('status', o.key)} className="px-3 py-2 lg:py-1.5 rounded-lg text-[10px] font-bold border backdrop-blur-sm transition-all" style={chipS(filters.status === o.key)}>{o.label}</button>)}</div>
-                {activeCount > 0 && <div className="flex items-center gap-2 flex-wrap">{filterTags}<button onClick={clearFilters} className="text-[10px] font-bold underline hover:text-white transition-colors" style={{ color: 'var(--text-dim)' }}>Limpar tudo</button></div>}
+        {/* ── Filter Bar (inline) ── */}
+        {tab === 'questoes' && (
+          <div className="mb-4 space-y-3">
+            {/* Search + filter button */}
+            <div className="flex gap-2">
+              <div className="flex-1 relative">
+                <input value={filters.keyword} onChange={e => setFilters(p => ({ ...p, keyword: e.target.value }))}
+                  placeholder="🔍 Buscar no enunciado..."
+                  className="w-full pl-3 pr-8 py-2.5 rounded-xl text-xs border outline-none backdrop-blur-sm"
+                  style={{ background: 'rgba(255,255,255,0.04)', borderColor: 'rgba(255,255,255,0.08)', color: 'var(--text-main)' }} />
+                {filters.keyword && (
+                  <button onClick={() => setFilters(p => ({ ...p, keyword: '' }))}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full flex items-center justify-center text-[10px] hover:bg-white/10 transition-colors"
+                    style={{ color: 'var(--text-dim)' }}>✕</button>
+                )}
               </div>
-            </motion.div>
-          )}</AnimatePresence>
-        </div>
+              <button onClick={() => setShowFilterDrawer(true)}
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold border backdrop-blur-sm transition-all"
+                style={{
+                  background: activeFilters.length > 0 ? 'rgba(139,92,246,0.1)' : 'rgba(255,255,255,0.04)',
+                  borderColor: activeFilters.length > 0 ? 'rgba(139,92,246,0.3)' : 'rgba(255,255,255,0.08)',
+                  color: activeFilters.length > 0 ? 'var(--primary)' : 'var(--text-dim)',
+                }}>
+                ⚙️ Filtros
+                {activeFilters.length > 0 && (
+                  <span className="px-1.5 py-0.5 rounded-full text-[9px] text-white font-black" style={{ background: 'var(--primary)' }}>
+                    {activeFilters.length}
+                  </span>
+                )}
+              </button>
+            </div>
 
-        <AnimatePresence mode="wait">{tab === 'pendentes' && (
-          <motion.div key="pend" initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 10 }}>
-            <PendingTab questions={questions} subjects={subjects} addSubject={addSubject} linkQuestionsToSubjects={linkQuestionsToSubjects} applySubjectLinks={applySubjectLinks} />
-          </motion.div>
-        )}</AnimatePresence>
+            {/* Status chips (always visible) */}
+            <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
+              {STATUS_OPTS.map(o => (
+                <FilterChip
+                  key={o.key}
+                  label={`${o.icon} ${o.label}`}
+                  active={filters.status === o.key}
+                  onClick={() => setFilters(p => ({ ...p, status: o.key }))}
+                  color={o.key === 'correct' ? '#10B981' : o.key === 'wrong' ? '#EF4444' : o.key === 'unresolved' ? '#F59E0B' : undefined}
+                />
+              ))}
+            </div>
 
-        {/* Save caderno button — visible on questoes and materias tabs when filters are active */}
-        {tab !== 'pendentes' && activeCount > 0 && (
-          <div className="mb-4">
-            <button onClick={() => setShowSaveModal(true)} className="px-4 py-2 rounded-xl text-xs font-bold border backdrop-blur-sm hover:border-green-500/40 hover:text-green-400 transition-all" style={{ borderColor: 'rgba(16,185,129,0.3)', color: '#10B981' }}>💾 Salvar como Caderno</button>
+            {/* Active filter tags */}
+            {activeFilters.length > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                {activeFilters.map(f => (
+                  <span key={f.key}
+                    className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-bold"
+                    style={{ background: `${f.color}18`, color: f.color, border: `1px solid ${f.color}30` }}>
+                    {f.label}
+                    <button onClick={() => removeFilter(f.type, f.value)} className="hover:opacity-70 ml-0.5">×</button>
+                  </span>
+                ))}
+                <button onClick={() => setFilters({ materias: [], assuntos: [], bancas: [], anos: [], dificuldades: [], orgaos: [], cargos: [], status: 'all', keyword: '' })}
+                  className="text-[10px] font-bold underline hover:text-white transition-colors px-1"
+                  style={{ color: 'var(--text-dim)' }}>
+                  Limpar tudo
+                </button>
+              </div>
+            )}
           </div>
         )}
 
-        {/* ═══ QUESTÕES TAB — Summary + Iniciar ═══ */}
-        <AnimatePresence mode="wait">{tab === 'questoes' && (
-          <motion.div key="q" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-            {filtered.length === 0 ? (
-              <div className="text-center py-12">
-                <div className="text-4xl mb-3">🔍</div>
-                <p className="text-sm font-bold" style={{ color: 'var(--text-main)' }}>Nenhuma questão encontrada</p>
-                <p className="text-xs mt-1" style={{ color: 'var(--text-dim)' }}>Ajuste os filtros ou sincronize</p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {/* Summary cards */}
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="p-4 rounded-2xl border backdrop-blur-xl text-center" style={{ background: 'rgba(139,92,246,0.08)', borderColor: 'rgba(139,92,246,0.15)' }}>
-                    <div className="text-2xl font-black" style={{ color: '#8B5CF6' }}>{questions.length}</div>
-                    <div className="text-[10px] font-bold uppercase tracking-wider mt-1" style={{ color: 'var(--text-dim)' }}>Total no banco</div>
-                  </div>
-                  <div className="p-4 rounded-2xl border backdrop-blur-xl text-center" style={{ background: 'rgba(16,185,129,0.08)', borderColor: 'rgba(16,185,129,0.15)' }}>
-                    <div className="text-2xl font-black" style={{ color: '#10B981' }}>{filtered.length}</div>
-                    <div className="text-[10px] font-bold uppercase tracking-wider mt-1" style={{ color: 'var(--text-dim)' }}>{activeCount > 0 ? 'Filtradas' : 'Disponíveis'}</div>
-                  </div>
+        {/* ── Pending Tab ── */}
+        <AnimatePresence mode="wait">
+          {tab === 'pendentes' && (
+            <motion.div key="pend" initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 10 }}>
+              <PendingTab questions={questions} subjects={subjects} addSubject={addSubject} linkQuestionsToSubjects={linkQuestionsToSubjects} />
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* ── Save caderno button ── */}
+        {tab === 'questoes' && activeFilters.length > 0 && (
+          <div className="mb-4">
+            <button onClick={() => setShowSaveModal(true)}
+              className="px-4 py-2 rounded-xl text-xs font-bold border backdrop-blur-sm hover:border-green-500/40 hover:text-green-400 transition-all"
+              style={{ borderColor: 'rgba(16,185,129,0.3)', color: '#10B981' }}>
+              💾 Salvar como Caderno
+            </button>
+          </div>
+        )}
+
+        {/* ── Questões Tab ── */}
+        <AnimatePresence mode="wait">
+          {tab === 'questoes' && (
+            <motion.div key="q" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+              {filtered.length === 0 ? (
+                <div className="text-center py-12">
+                  <div className="text-4xl mb-3">🔍</div>
+                  <p className="text-sm font-bold" style={{ color: 'var(--text-main)' }}>Nenhuma questão encontrada</p>
+                  <p className="text-xs mt-1" style={{ color: 'var(--text-dim)' }}>Ajuste os filtros ou sincronize</p>
                 </div>
-
-                {/* Iniciar button */}
-                <button
-                  onClick={() => handlePractice(filters.materias[0] || null)}
-                  className="w-full py-3.5 rounded-2xl font-bold text-sm text-white hover:scale-[1.02] active:scale-[0.98] transition-transform flex items-center justify-center gap-2"
-                  style={{ background: 'linear-gradient(135deg, #8B5CF6, var(--primary))', boxShadow: '0 4px 20px rgba(139,92,246,0.3)' }}
-                >
-                  🚀 Iniciar Prática ({filtered.length} questões)
-                </button>
-
-                {/* Quick subject pills */}
-                {subjectCounts.length > 1 && (
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    {subjectCounts.slice(0, 6).map(([materia, count]) => (
-                      <button key={materia} onClick={() => handlePractice(materia)}
-                        className="px-3 py-1.5 rounded-xl text-[10px] font-bold border backdrop-blur-sm hover:border-white/[0.15] transition-all"
-                        style={{ background: 'rgba(255,255,255,0.03)', borderColor: 'rgba(255,255,255,0.06)', color: 'var(--text-main)' }}>
-                        {materia} ({count})
-                      </button>
-                    ))}
+              ) : (
+                <div className="space-y-3">
+                  {/* Summary cards */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="p-4 rounded-2xl border backdrop-blur-xl text-center"
+                      style={{ background: 'rgba(139,92,246,0.08)', borderColor: 'rgba(139,92,246,0.15)' }}>
+                      <div className="text-2xl font-black" style={{ color: '#8B5CF6' }}>{questions.length}</div>
+                      <div className="text-[10px] font-bold uppercase tracking-wider mt-1" style={{ color: 'var(--text-dim)' }}>Total no banco</div>
+                    </div>
+                    <div className="p-4 rounded-2xl border backdrop-blur-xl text-center"
+                      style={{ background: 'rgba(16,185,129,0.08)', borderColor: 'rgba(16,185,129,0.15)' }}>
+                      <div className="text-2xl font-black" style={{ color: '#10B981' }}>{filtered.length}</div>
+                      <div className="text-[10px] font-bold uppercase tracking-wider mt-1" style={{ color: 'var(--text-dim)' }}>
+                        {activeFilters.length > 0 ? 'Filtradas' : 'Disponíveis'}
+                      </div>
+                    </div>
                   </div>
-                )}
-              </div>
-            )}
-          </motion.div>
-        )}</AnimatePresence>
 
+                  {/* Iniciar button */}
+                  <button onClick={() => handlePractice(filters.materias[0] || null)}
+                    className="w-full py-3.5 rounded-2xl font-bold text-sm text-white hover:scale-[1.02] active:scale-[0.98] transition-transform flex items-center justify-center gap-2"
+                    style={{ background: 'linear-gradient(135deg, #8B5CF6, var(--primary))', boxShadow: '0 4px 20px rgba(139,92,246,0.3)' }}>
+                    🚀 Iniciar Prática ({filtered.length} questões)
+                  </button>
+
+                  {/* Quick subject pills */}
+                  {subjectCounts.length > 1 && (
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {subjectCounts.slice(0, 6).map(([materia, count]) => (
+                        <button key={materia} onClick={() => handlePractice(materia)}
+                          className="px-3 py-1.5 rounded-xl text-[10px] font-bold border backdrop-blur-sm hover:border-white/[0.15] transition-all"
+                          style={{ background: 'rgba(255,255,255,0.03)', borderColor: 'rgba(255,255,255,0.06)', color: 'var(--text-main)' }}>
+                          {materia} ({count})
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
+      {/* ── Modals ── */}
       <AnimatePresence>
+        {showFilterDrawer && (
+          <FilterDrawer
+            filters={filters}
+            filterValues={filterValues}
+            onChange={setFilters}
+            onClose={() => setShowFilterDrawer(false)}
+          />
+        )}
         {showSaveModal && <SaveCadernoModal filters={filters} folders={folders} onSave={createCaderno} onClose={() => setShowSaveModal(false)} />}
-        {showCadernoMgr && <CadernoManagerModal cadernos={cadernos} folders={folders} onLoad={handleCadernoPractice} onDelete={deleteCaderno} onCreateFolder={n => createFolder(n, COLORS[folders.length % COLORS.length])} onDeleteFolder={deleteFolder} onClose={() => setShowCadernoMgr(false)} />}
+        {showCadernoMgr && (
+          <CadernoManagerModal
+            cadernos={cadernos} folders={folders}
+            onLoad={handleCadernoPractice} onDelete={deleteCaderno}
+            onCreateFolder={n => createFolder(n, COLORS[folders.length % COLORS.length])}
+            onDeleteFolder={deleteFolder} onClose={() => setShowCadernoMgr(false)}
+          />
+        )}
       </AnimatePresence>
     </StudyLayout>
   );

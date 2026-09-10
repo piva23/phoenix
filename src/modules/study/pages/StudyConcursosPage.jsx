@@ -10,7 +10,9 @@ import { useStudyStore } from '../../../stores/useStudyStore';
 import { useSimuladoStore } from '../../../stores/useSimuladoStore';
 import { formatDateBR, daysUntil } from '../../../shared/utils/time';
 import { StudyLayout } from '../components/StudyLayout';
-import { BentoCard, SectionHeader, Badge } from '../components/BentoCard';
+import { BentoCard, SectionHeader, Badge, ProgressRing } from '../components/BentoCard';
+import { CycleBuilder } from '../components/CycleBuilder';
+import { ConcursoOnboardingWizard } from '../components/ConcursoOnboardingWizard';
 
 const STATUS_CFG = {
   estudando: { label: 'Estudando', color: '#3B82F6', bg: 'rgba(59,130,246,0.12)' },
@@ -73,51 +75,6 @@ function Field({ label, children }) {
   return <div><label className="text-xs font-bold text-text-muted uppercase tracking-wider block mb-1.5">{label}</label>{children}</div>;
 }
 
-function ConcursoForm({ onClose, editData = null }) {
-  const { addConcurso, updateConcurso } = useConcursoStore();
-  const [f, setF] = useState({
-    nome: editData?.nome || '', cargo: editData?.cargo || '', orgao: editData?.orgao || '', banca: editData?.banca || '',
-    edital_url: editData?.edital_url || '', vagas: editData?.vagas || '', salario: editData?.salario || '',
-    dataInscricaoFim: editData?.dataInscricaoFim || '', dataProva: editData?.dataProva || '',
-    status: editData?.status || 'estudando', observacoes: editData?.observacoes || '', metaCiclos: editData?.metaCiclos || 24,
-  });
-  const s = (k, v) => setF(p => ({ ...p, [k]: v }));
-  const save = () => { if (!f.nome.trim()) return toast.error('O nome do concurso é obrigatório!'); editData ? updateConcurso(editData.id, f) : addConcurso({ ...f, disciplinas: [] }); onClose(); };
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={GLASS_BG} onClick={onClose}>
-      <motion.div className="w-full max-w-lg rounded-2xl overflow-hidden flex flex-col backdrop-blur-xl" style={GLASS_PANEL}
-        initial={{ opacity: 0, scale: 0.95, y: 12 }} animate={{ opacity: 1, scale: 1, y: 0 }} transition={{ duration: 0.25 }} onClick={e => e.stopPropagation()}>
-        <div className="flex items-center justify-between p-5 border-b flex-shrink-0" style={BD}>
-          <h2 className="font-bold text-text-main text-lg">{editData ? 'Editar Concurso' : 'Novo Concurso'}</h2>
-          <button onClick={onClose} className="text-text-dim hover:text-text-main w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/5">✕</button>
-        </div>
-        <div className="flex-1 overflow-y-auto p-5 space-y-4">
-          <Field label="Nome do Concurso *"><input className={INP} style={INP_S} placeholder="Ex: TJRS — Analista Judiciário" value={f.nome} onChange={e => s('nome', e.target.value)} autoFocus /></Field>
-          <div className="grid grid-cols-2 gap-3">
-            <Field label="Cargo"><input className={INP} style={INP_S} value={f.cargo} onChange={e => s('cargo', e.target.value)} /></Field>
-            <Field label="Órgão"><input className={INP} style={INP_S} value={f.orgao} onChange={e => s('orgao', e.target.value)} /></Field>
-            <Field label="Banca"><input className={INP} style={INP_S} value={f.banca} onChange={e => s('banca', e.target.value)} /></Field>
-            <Field label="Status"><select className={INP} style={INP_S} value={f.status} onChange={e => s('status', e.target.value)}>
-              {Object.entries(STATUS_CFG).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
-            </select></Field>
-            <Field label="Vagas"><input type="number" className={INP} style={INP_S} value={f.vagas} onChange={e => s('vagas', e.target.value)} /></Field>
-            <Field label="Salário (R$)"><input type="number" className={INP} style={INP_S} value={f.salario} onChange={e => s('salario', e.target.value)} /></Field>
-            <Field label="Inscrições até"><input type="date" className={INP} style={INP_S} value={f.dataInscricaoFim} onChange={e => s('dataInscricaoFim', e.target.value)} /></Field>
-            <Field label="Data da Prova"><input type="date" className={INP} style={INP_S} value={f.dataProva} onChange={e => s('dataProva', e.target.value)} /></Field>
-            <div className="col-span-2"><Field label="Meta de Blocos no Ciclo"><input type="number" className={INP} style={INP_S} value={f.metaCiclos} onChange={e => s('metaCiclos', Number(e.target.value))} /></Field></div>
-          </div>
-          <Field label="Link do Edital"><input className={INP} style={INP_S} placeholder="https://..." value={f.edital_url} onChange={e => s('edital_url', e.target.value)} /></Field>
-          <Field label="Observações"><textarea rows={3} className={`${INP} resize-none`} style={INP_S} value={f.observacoes} onChange={e => s('observacoes', e.target.value)} /></Field>
-        </div>
-        <div className="flex gap-3 p-5 border-t flex-shrink-0" style={BD}>
-          <button onClick={onClose} className="flex-1 py-2.5 rounded-xl text-sm font-bold text-text-muted border hover:bg-white/5" style={BD}>Cancelar</button>
-          <button onClick={save} className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white hover:opacity-90" style={{ background: 'var(--primary)' }}>{editData ? 'Salvar' : 'Cadastrar'}</button>
-        </div>
-      </motion.div>
-    </div>
-  );
-}
 
 function ProvaForm({ concursoId, onClose, editProva = null }) {
   const { addProva, updateProva } = useConcursoStore();
@@ -172,11 +129,14 @@ function ConcursoDetailView({ concurso, onBack, onAprovado, onChangeStatus }) {
   const [activeTab, setActiveTab] = useState('edital');
   const [provaModal, setProvaModal] = useState(null);
   const [statusPickerOpen, setStatusPickerOpen] = useState(false);
+  const [cycleBuilderOpen, setCycleBuilderOpen] = useState(false);
+  const [editingCycle, setEditingCycle] = useState(null);
   const statusCfg = STATUS_CFG[concurso.status] || STATUS_CFG.estudando;
   const disciplinas = concurso.disciplinas || [];
   const metaCiclos = concurso.metaCiclos || 24;
   const realSimulados = useMemo(() => getByConcurso(concurso.id), [getByConcurso, concurso.id]);
   const evolution = useMemo(() => getEvolutionTimeline(concurso.id), [getEvolutionTimeline, concurso.id]);
+  const existingCycle = useMemo(() => cycles.find(c => c.concursoId === concurso.id), [cycles, concurso.id]);
 
   const updateSubject = (id, field, value) => updateConcurso(concurso.id, { disciplinas: disciplinas.map(d => d.id === id ? { ...d, [field]: Number(value) || value } : d) });
   const addSubject = () => updateConcurso(concurso.id, { disciplinas: [...disciplinas, { id: Date.now().toString(), name: 'Nova Disciplina', questions: 10, min: 5, weight: 1, difficulty: 'Médio', correct: 0, wrong: 0 }] });
@@ -185,14 +145,31 @@ function ConcursoDetailView({ concurso, onBack, onAprovado, onChangeStatus }) {
   const stats = useMemo(() => {
     let tq = 0, tp = 0, tc = 0, ta = 0;
     const proc = disciplinas.map(sub => {
-      const points = sub.questions * sub.weight; tq += sub.questions; tp += points;
+      const points = Math.round(sub.questions * sub.weight); tq += sub.questions; tp += points;
       const answered = (sub.correct || 0) + (sub.wrong || 0); tc += sub.correct || 0; ta += answered;
       return { ...sub, points, answered, accuracy: answered > 0 ? (((sub.correct || 0) / answered) * 100).toFixed(1) : 0 };
     });
-    const enriched = proc.map(sub => {
-      const pct = tp > 0 ? (sub.points / tp) * 100 : 0;
-      return { ...sub, percent: pct.toFixed(1), cycleBlocks: (tp > 0 ? (pct / 100) * metaCiclos : 0).toFixed(1) };
-    });
+    // Largest remainder — garante soma exata de 100%
+    let enriched;
+    if (tp === 0) {
+      enriched = proc.map(s => ({ ...s, percent: '0.0', cycleBlocks: '0.0' }));
+    } else {
+      const raw = proc.map(sub => ({ ...sub, rawPct: (sub.points / tp) * 100 }));
+      const floored = raw.map(s => ({ ...s, pctFloor: Math.floor(s.rawPct * 10) / 10 }));
+      const sumFloored = floored.reduce((a, s) => a + s.pctFloor, 0);
+      let remainder = Math.round((100 - sumFloored) * 10);
+      const sorted = [...floored].map((s, i) => ({ ...s, idx: i })).sort((a, b) => (b.rawPct * 10 % 1) - (a.rawPct * 10 % 1));
+      while (remainder > 0 && sorted.length > 0) {
+        const top = sorted.shift();
+        floored[top.idx].pctFloor = Math.round((floored[top.idx].pctFloor + 0.1) * 10) / 10;
+        remainder--;
+      }
+      enriched = floored.map(sub => ({
+        ...sub,
+        percent: sub.pctFloor.toFixed(1),
+        cycleBlocks: (tp > 0 ? (sub.pctFloor / 100) * metaCiclos : 0).toFixed(1),
+      }));
+    }
     return { subjects: enriched, totalQuestions: tq, totalPoints: tp, totalCorrect: tc, totalAnswered: ta, globalAccuracy: ta > 0 ? ((tc / ta) * 100).toFixed(1) : 0 };
   }, [disciplinas, metaCiclos]);
 
@@ -240,9 +217,10 @@ function ConcursoDetailView({ concurso, onBack, onAprovado, onChangeStatus }) {
   // ── GERAR CICLO: cria ciclo com horas distribuídas pelos pesos ──────────
   function handleImportToCycle() {
     if (!stats.subjects.length) return toast.error('Adicione disciplinas ao edital antes de gerar o ciclo.');
-    const totalPercent = stats.subjects.reduce((a, s) => a + Number(s.percent), 0) || 100;
     const totalHours = metaCiclos;
     const colors = ['#8B5CF6', '#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#06B6D4', '#EC4899', '#F97316', '#14B8A6', '#A855F7'];
+    const hasRedacao = (concurso.redacaoWeight || 0) > 0;
+    const effectiveTotal = hasRedacao ? (100 - concurso.redacaoWeight) : 100;
 
     const items = stats.subjects.map((sub, idx) => {
       let m = sub.subjectId ? subjects.find(s => s.id === sub.subjectId) : null;
@@ -254,9 +232,15 @@ function ConcursoDetailView({ concurso, onBack, onAprovado, onChangeStatus }) {
       }
       if (m) useStudyStore.getState().updateSubject(m.id, { editalWeight: Math.round(Number(sub.percent)) });
       const wp = Number(sub.percent);
-      const horas = Math.max(0.5, Math.round((wp / totalPercent) * totalHours * 10) / 10);
+      const horas = Math.max(0.5, Math.round((wp / effectiveTotal) * totalHours * 10) / 10);
       return { id: `ci_${Date.now()}_${idx}`, subjectId: m?.id || null, subjectName: sub.name, subjectColor: m?.color || colors[idx % colors.length], weightPct: Math.round(wp), horasPorRodada: horas, minutosFeitos: 0, completedThisRound: false, ordem: idx };
     });
+
+    // Adiciona redação no ciclo se tiver peso
+    if (hasRedacao) {
+      const redHoras = Math.max(1, Math.round((concurso.redacaoWeight / 100) * totalHours * 10) / 10);
+      items.push({ id: `ci_redacao_${Date.now()}`, subjectId: null, subjectName: 'Redação', subjectColor: '#EC4899', weightPct: concurso.redacaoWeight, horasPorRodada: redHoras, minutosFeitos: 0, completedThisRound: false, ordem: items.length, isRedacao: true });
+    }
 
     const existingCycle = cycles.find(c => c.concursoId === concurso.id);
     if (existingCycle) {
@@ -269,17 +253,7 @@ function ConcursoDetailView({ concurso, onBack, onAprovado, onChangeStatus }) {
     toast.success(`Ciclo criado com ${items.length} disciplinas e ativado!`);
   }
 
-  function handleImportFromCycle() {
-    const cycle = cycles.find(c => c.concursoId === concurso.id) || cycles.find(c => c.id === useCycleStore.getState().activeCycleId);
-    if (!cycle) return toast.error('Nenhum ciclo encontrado pra importar.');
-    const existing = new Set(disciplinas.map(d => d.subjectId).filter(Boolean));
-    const newRows = cycle.items.filter(i => i.subjectId && !existing.has(i.subjectId)).map((i, idx) => ({ id: `${Date.now()}_${idx}`, name: i.subjectName || subjects.find(s => s.id === i.subjectId)?.name || 'Matéria', subjectId: i.subjectId, questions: 10, min: 5, weight: 1, difficulty: 'Médio', correct: 0, wrong: 0 }));
-    if (!newRows.length) return toast.error('Todas as matérias do ciclo já estão no edital.');
-    updateConcurso(concurso.id, { disciplinas: [...disciplinas, ...newRows] });
-    toast.success(`${newRows.length} matéria(s) importada(s) do ciclo!`);
-  }
-
-  const tabs = [{ key: 'edital', label: '📊 Edital Estratégico' }, { key: 'simulados', label: '🎯 Simulados & Metas' }, { key: 'fases', label: '📝 Fases & Provas' }];
+  const tabs = [{ key: 'edital', label: '📊 Edital Estratégico' }, { key: 'ciclo', label: '🔄 Ciclo' }, { key: 'simulados', label: '🎯 Simulados & Metas' }, { key: 'fases', label: '📝 Fases & Provas' }];
   const th = 'p-4 border-b font-bold text-xs uppercase tracking-wider';
   const td = 'p-3 text-center';
 
@@ -307,16 +281,16 @@ function ConcursoDetailView({ concurso, onBack, onAprovado, onChangeStatus }) {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {[{ l: 'Questões Edital', v: stats.totalQuestions, i: '📝' }, { l: 'Pontos (NxP)', v: stats.totalPoints, i: '🎯' },
           { l: 'Acerto Global', v: `${stats.globalAccuracy}%`, i: '📈', c: stats.globalAccuracy >= 70 ? '#10B981' : stats.globalAccuracy >= 50 ? '#F59E0B' : '#EF4444' }
         ].map((k, i) => (
-          <BentoCard key={i} span="3/12" className="flex flex-col gap-1">
+          <BentoCard key={i} className="flex flex-col gap-1">
             <div className="flex items-center justify-between"><span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--text-dim)' }}>{k.l}</span><span className="text-sm">{k.i}</span></div>
             <div className="text-2xl font-black tracking-tight" style={{ color: k.c || 'var(--text-main)' }}>{k.v}</div>
           </BentoCard>
         ))}
-        <BentoCard span="3/12" className="flex items-center justify-center">
+        <BentoCard className="flex items-center justify-center">
           {concurso.status === 'aprovado'
             ? <div className="flex items-center gap-2"><span className="text-2xl">✅</span><span className="font-bold" style={{ color: '#10B981' }}>Aprovado</span></div>
             : <button onClick={() => onAprovado(concurso)} className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold text-white hover:opacity-90" style={{ background: 'var(--primary)' }}>🏆 Fui Aprovado!</button>}
@@ -335,9 +309,6 @@ function ConcursoDetailView({ concurso, onBack, onAprovado, onChangeStatus }) {
               <span className="font-bold text-sm text-text-main">Mapeamento e Pesos</span>
               <div className="flex gap-2 flex-wrap">
                 <button onClick={handleAutoLink} className="text-xs px-3 py-1.5 rounded-lg font-bold border hover:bg-white/5" style={{ borderColor: 'rgba(255,255,255,0.1)', color: '#10B981' }}>🔗 Vincular</button>
-                <button onClick={handleCreateSubjects} className="text-xs px-3 py-1.5 rounded-lg font-bold border hover:bg-white/5" style={{ borderColor: 'rgba(255,255,255,0.1)', color: '#F59E0B' }}>📥 Criar Matérias</button>
-                <button onClick={handleImportFromCycle} className="text-xs px-3 py-1.5 rounded-lg font-bold border hover:bg-white/5" style={{ borderColor: 'rgba(255,255,255,0.1)', color: 'var(--text-main)' }}>⬇️ Do Ciclo</button>
-                <button onClick={handleImportToCycle} className="text-xs px-3 py-1.5 rounded-lg font-bold border hover:bg-white/5" style={{ borderColor: 'rgba(255,255,255,0.1)', color: 'var(--text-main)' }}>🔄 Gerar Ciclo</button>
                 <button onClick={addSubject} className="text-xs px-3 py-1.5 rounded-lg font-bold text-white hover:opacity-90" style={{ background: 'var(--primary)' }}>+ Disciplina</button>
               </div>
             </div>
@@ -374,6 +345,70 @@ function ConcursoDetailView({ concurso, onBack, onAprovado, onChangeStatus }) {
                 })}
               </tbody>
             </table>
+          </div>
+        )}
+
+        {activeTab === 'ciclo' && (
+          <div className="p-4 space-y-4">
+            {existingCycle ? (
+              <div className="space-y-4">
+                <BentoCard className="flex items-center gap-4">
+                  <div className="relative shrink-0">
+                    <ProgressRing
+                      value={existingCycle.items?.reduce((acc, item) => {
+                        const meta = (item.horasPorRodada || 1) * 60;
+                        const real = item.minutosFeitos || 0;
+                        return acc + (meta > 0 ? Math.min(100, Math.round((real / meta) * 100)) : 0);
+                      }, 0) / (existingCycle.items?.length || 1)}
+                      size={56} stroke={5} color="#8B5CF6"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <div className="text-sm font-bold" style={{ color: 'var(--text-main)' }}>{existingCycle.nome}</div>
+                    <div className="text-[11px] mt-1" style={{ color: 'var(--text-dim)' }}>
+                      {existingCycle.items?.length || 0} disciplinas · {existingCycle.totalHoras || 0}h totais · Rodada {existingCycle.rodadaAtual}
+                    </div>
+                    <div className="flex gap-2 mt-2">
+                      <button onClick={() => navigate('/study?tab=cycle')}
+                        className="text-[10px] px-2.5 py-1 rounded-lg font-bold hover:bg-white/5"
+                        style={{ color: 'var(--accent)' }}>
+                        Abrir na página de Ciclos →
+                      </button>
+                    </div>
+                  </div>
+                </BentoCard>
+
+                <div className="flex gap-2 flex-wrap">
+                  <button onClick={() => { useCycleStore.getState().setActiveCycle(existingCycle.id); toast.success(existingCycle.active ? 'Ciclo desativado!' : 'Ciclo ativado!'); }}
+                    className="text-xs px-3 py-1.5 rounded-lg font-bold text-white hover:opacity-90"
+                    style={{ background: 'var(--primary)' }}>
+                    {useCycleStore.getState().activeCycleIds.includes(existingCycle.id) ? '⚡ Desativar' : '▶ Ativar'}
+                  </button>
+                  <button onClick={handleImportToCycle} className="text-xs px-3 py-1.5 rounded-lg font-bold border hover:bg-white/5"
+                    style={{ borderColor: 'rgba(255,255,255,0.1)', color: 'var(--text-main)' }}>
+                    🔄 Gerar do Edital
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <div className="text-4xl mb-3">🔄</div>
+                <p className="text-sm font-bold text-text-main mb-1">Nenhum ciclo vinculado</p>
+                <p className="text-xs text-text-dim mb-4">Crie um ciclo de estudos baseado na estratégia deste edital.</p>
+                <div className="flex gap-2 justify-center flex-wrap">
+                  <button onClick={() => { setEditingCycle(null); setCycleBuilderOpen(true); }}
+                    className="px-5 py-2.5 rounded-xl text-sm font-bold text-white hover:opacity-90"
+                    style={{ background: 'var(--primary)' }}>
+                    + Criar Ciclo
+                  </button>
+                  <button onClick={handleImportToCycle}
+                    className="px-5 py-2.5 rounded-xl text-sm font-bold border hover:bg-white/5"
+                    style={{ borderColor: 'rgba(255,255,255,0.1)', color: 'var(--text-main)' }}>
+                    🔄 Gerar do Edital
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -450,6 +485,22 @@ function ConcursoDetailView({ concurso, onBack, onAprovado, onChangeStatus }) {
         )}
       </BentoCard>
       {provaModal && <ProvaForm concursoId={provaModal.concursoId} onClose={() => setProvaModal(null)} />}
+      {cycleBuilderOpen && (
+        <CycleBuilder
+          editCycle={editingCycle}
+          onSave={(cycle) => {
+            // If editing, the CycleBuilder already handles update via store
+            // If creating, link to this concurso
+            if (!editingCycle && cycle) {
+              useCycleStore.getState().updateCycle(cycle.id, { concursoId: concurso.id });
+            }
+            setCycleBuilderOpen(false);
+            setEditingCycle(null);
+            toast.success(editingCycle ? 'Ciclo atualizado!' : 'Ciclo criado e vinculado!');
+          }}
+          onClose={() => { setCycleBuilderOpen(false); setEditingCycle(null); }}
+        />
+      )}
     </motion.div>
   );
 }
@@ -457,8 +508,8 @@ function ConcursoDetailView({ concurso, onBack, onAprovado, onChangeStatus }) {
 export default function StudyConcursosPage() {
   const { concursos, deleteConcurso, updateConcurso } = useConcursoStore();
   const { dispatchXP } = useGameStore();
-  const [formOpen, setFormOpen] = useState(false);
-  const [editTarget, setEditTarget] = useState(null);
+  const [wizardOpen, setWizardOpen] = useState(false);
+  const [editingConcurso, setEditingConcurso] = useState(null);
   const [selectedConcursoId, setSelectedConcursoId] = useState(null);
 
   const handleAprovado = c => {
@@ -477,14 +528,14 @@ export default function StudyConcursosPage() {
           <motion.div key="list" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-6">
             <div className="flex items-center justify-between">
               <div><h2 className="font-bold text-text-main text-xl">Gestão de Concursos</h2><p className="text-xs text-text-dim mt-1">Acompanhe editais, provas e seu desempenho estratégico.</p></div>
-              <button onClick={() => { setEditTarget(null); setFormOpen(true); }} className="px-5 py-2.5 rounded-xl text-sm font-bold text-white hover:opacity-90 shadow-lg" style={{ background: 'var(--primary)' }}>+ Novo Concurso</button>
+              <button onClick={() => { setEditingConcurso(null); setWizardOpen(true); }} className="px-5 py-2.5 rounded-xl text-sm font-bold text-white hover:opacity-90 shadow-lg" style={{ background: 'var(--primary)' }}>+ Novo Concurso</button>
             </div>
             {!concursos.length ? (
               <BentoCard span="full" className="text-center py-12">
                 <div className="text-5xl mb-4 opacity-40">🏛️</div>
                 <p className="font-bold text-text-main mb-2">Nenhum concurso no radar</p>
                 <p className="text-sm text-text-dim mb-6">Mapeie editais abertos para organizar sua estratégia.</p>
-                <button onClick={() => setFormOpen(true)} className="px-6 py-3 rounded-xl text-sm font-bold text-white" style={{ background: 'var(--primary)' }}>Cadastrar Primeiro Concurso</button>
+                <button onClick={() => { setEditingConcurso(null); setWizardOpen(true); }} className="px-6 py-3 rounded-xl text-sm font-bold text-white" style={{ background: 'var(--primary)' }}>Cadastrar Primeiro Concurso</button>
               </BentoCard>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">{concursos.map(c => {
@@ -498,7 +549,7 @@ export default function StudyConcursosPage() {
                         <Badge color={st.color} variant="solid">{st.label}</Badge>
                         <div className="flex gap-1">
                           {c.edital_url && <a href={c.edital_url} target="_blank" rel="noreferrer" className="w-7 h-7 flex items-center justify-center rounded-lg text-text-dim hover:text-text-main" style={{ background: 'rgba(255,255,255,0.05)' }} title="Ver edital">📎</a>}
-                          <button onClick={() => { setEditTarget(c); setFormOpen(true); }} className="w-7 h-7 flex items-center justify-center rounded-lg text-text-dim hover:text-text-main text-xs" style={{ background: 'rgba(255,255,255,0.05)' }}>✎</button>
+                          <button onClick={() => { setEditingConcurso(c); setWizardOpen(true); }} className="w-7 h-7 flex items-center justify-center rounded-lg text-text-dim hover:text-text-main text-xs" style={{ background: 'rgba(255,255,255,0.05)' }}>✎</button>
                           <button onClick={() => { if (window.confirm(`Excluir ${c.nome}?`)) deleteConcurso(c.id); }} className="w-7 h-7 flex items-center justify-center rounded-lg text-red-400 hover:bg-red-500/20 text-xs" style={{ background: 'rgba(255,255,255,0.05)' }}>✕</button>
                         </div>
                       </div>
@@ -522,7 +573,7 @@ export default function StudyConcursosPage() {
           </motion.div>
         )}
       </AnimatePresence>
-      {formOpen && <ConcursoForm editData={editTarget} onClose={() => { setFormOpen(false); setEditTarget(null); }} />}
+      {wizardOpen && <ConcursoOnboardingWizard editData={editingConcurso} onClose={() => { setWizardOpen(false); setEditingConcurso(null); }} />}
     </StudyLayout>
   );
 }
