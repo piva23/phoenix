@@ -13,6 +13,7 @@ import { create } from 'zustand';
 
 const EMPTY = {
   open: false,
+  openCount: 0,
   preSubjectId: null,
   preTopicId: null,
   preSubtopicId: null,
@@ -24,14 +25,15 @@ export const useSessionModalStore = create(set => ({
   ...EMPTY,
 
   openModal: (payload = {}) =>
-    set({
+    set(state => ({
       open: true,
+      openCount: state.openCount + 1,
       preSubjectId: payload.preSubjectId ?? payload.subjectId ?? null,
       preTopicId: payload.preTopicId ?? payload.topicId ?? null,
       preSubtopicId: payload.preSubtopicId ?? payload.subtopicId ?? null,
       preMode: payload.preMode ?? null,
       revisionId: payload.revisionId ?? null,
-    }),
+    })),
 
   closeModal: () => set({ ...EMPTY }),
 }));

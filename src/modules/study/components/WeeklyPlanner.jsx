@@ -42,24 +42,6 @@ function BlockCard({ block, onDragStart }) {
     }
   }
 
-  // Horas disponíveis para seleção rápida
-  const hourOptions = [0.5, 1, 1.5, 2, 3, 4, 5].map(h => ({
-    value: h,
-    label: `${h}h${h % 1 === 0 ? '' : `${(h % 1) * 60}min`}`
-  }));
-
-  // Seletor de horas visível apenas em desktop (sm: block, lg: hidden)
-  const [editingHours, setEditingHours] = useState(null);
-
-  function handleClick(e) {
-    e.stopPropagation();
-    if (openSessionModal) {
-      openSessionModal({ subjectId: block.subjectId });
-    } else {
-      navigate('/study?tab=today');
-    }
-  }
-
   return (
     <div
       draggable
@@ -93,49 +75,6 @@ function BlockCard({ block, onDragStart }) {
         <span className="text-[8px] opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: 'var(--text-dim)' }}>
           ↕
         </span>
-        {/* Seletor de horas em desktop */}
-        {editingHours === null && window.innerWidth >= 768 ? (
-          <div className="flex items-center gap-1">
-            <button
-              onClick={() => setEditingHours(block.hours)}
-              className="px-1.5 py-0.5 rounded text-[8px] font-bold text-white hover:bg-primary/20 transition-colors"
-              style={{ background: block.color, color: 'white' }}
-              title="Definir horas">
-                ✎
-            </button>
-            <select
-              onChange={(e) => {
-                const hours = parseFloat(e.target.value);
-                // Atualiza o bloco no estado local
-                setEditingHours(null);
-                // Note: Para salvar, seria necessário chamar a função moveBlock/atualizar ciclo
-                // Por enquanto, apenas atualiza o estado de edição
-                console.log('Horas selecionadas:', hours);
-              }}
-              className="px-2 py-0.5 rounded text-[8px] outline-none bg-white/[0.03] text-sm"
-              style={{ minWidth: 50 }}
-            >
-              {hourOptions.map(opt => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
-          </div>
-        ) : editingHours !== null && (
-          <div className="flex items-center gap-1">
-            <span className="text-[9px] font-mono" style={{ color: 'var(--text-dim)' }}>
-              {minutesToHuman(block.hours * 60)}
-            </span>
-            <button
-              onClick={() => setEditingHours(null)}
-              className="px-1.5 py-0.5 rounded text-[8px] font-bold text-white hover:bg-primary/20 transition-colors"
-              style={{ background: block.color, color: 'white' }}
-              title="Cancelar">
-                ✕
-            </button>
-          </div>
-        )}
       </div>
     </div>
   );
@@ -251,6 +190,7 @@ export function WeeklyPlanner({ cycle }) {
     generateWeeklyPlan,
     moveBlock,
     setAvailableDays,
+    clearWeeklyPlan,
   } = useCycleStore();
 
   const today = new Date();
@@ -290,7 +230,7 @@ export function WeeklyPlanner({ cycle }) {
       if (blocks.some(b => b.subjectId === subjectId || b.subjectName === subjectId)) fromDay = Number(day);
     });
     if (fromDay === toDay || fromDay === null) return;
-    moveBlock(cycle.id, fromDay, toDay, subjectId, subjectId ? undefined : weeklyPlan[Object.keys(weeklyPlan).find(k => weeklyPlan[k].some(b => b.subjectName === subjectId))]?.[0]?.subjectName || '');
+    moveBlock(cycle.id, fromDay, toDay, subjectId, subjectId);
   }
 
   // Sincronizar com calendário — gera eventos para os próximos N dias
@@ -385,6 +325,14 @@ export function WeeklyPlanner({ cycle }) {
           >
             🔄 Gerar
           </button>
+          {cycle?.weeklyPlan && Object.keys(cycle.weeklyPlan).length > 0 && (
+            <button
+              onClick={() => { clearWeeklyPlan(cycle.id); toast.success('Plano semanal zerado!'); }}
+              className="px-3 py-1.5 rounded-lg text-[10px] font-bold border border-red-500/20 bg-red-500/5 text-red-400 hover:bg-red-500/10 transition-all cursor-pointer"
+            >
+              🗑️ Zerar
+            </button>
+          )}
         </div>
       </div>
 

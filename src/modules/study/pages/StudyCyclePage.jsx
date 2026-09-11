@@ -307,8 +307,7 @@ export default function StudyCyclePage() {
   const [view, setView] = useState('list');
   const [detailId, setDetailId] = useState(null);
   const [editCycleData, setEditCycleData] = useState(null);
-  const [configuredHours, setConfiguredHours] = useState({});
-  const [isConfiguring, setIsConfiguring] = useState(false);
+  const [blockSize, setBlockSize] = useState(1);
 
   const activeCycles = cycles.filter(c => activeCycleIds.includes(c.id));
   const activeCycle = activeCycles[0] || null;
@@ -444,109 +443,51 @@ export default function StudyCyclePage() {
               </motion.div>
 
               {activeCycles.length > 0 && activeCycles.map(cycle => (
-                <motion.div key={cycle.id} {...fadeUp}>
-                  <SectionHeader title={`Ciclo ativo — ${cycle.name || 'Sem nome'}`} icon="⚡" />
+                <motion.div key={cycle.id} {...fadeUp} className="space-y-3">
+                  <SectionHeader title={`Ciclo ativo — ${cycle.nome || 'Sem nome'}`} icon="⚡" />
                   <ActiveCycleHero
                     cycle={cycle}
                     onOpen={() => { setDetailId(cycle.id); setView('detail'); }}
                     onAdvance={() => { advanceRound(cycle.id); toast.success(`Rodada ${cycle.rodadaAtual + 1} iniciada!`); }}
                     onExportToConcurso={handleExportToConcurso}
                   />
-                </motion.div>
-              ))}
-
-              {activeCycles.length > 0 && activeCycles.map(cycle => cycle.items?.length > 0 && (
-                <motion.div key={`plan-${cycle.id}`} {...fadeUp}>
-                  <BentoCard span="full">
-                    {!cycle.weeklyPlan || Object.keys(cycle.weeklyPlan).length === 0 ? (
-                      <div className="flex flex-col items-center gap-3 py-6">
-                        <span className="text-3xl">📅</span>
-                        <div className="text-center">
-                          <div className="text-sm font-bold" style={{ color: 'var(--text-main)' }}>{cycle.name || 'Ciclo'} — Plano semanal não gerado</div>
-                          <div className="text-[11px] mt-1" style={{ color: 'var(--text-dim)' }}>Distribua automaticamente os blocos de estudo nos dias da semana</div>
-                        </div>
-                        <button
-                          onClick={() => setIsConfiguring(true)}
-                          className="px-4 py-2 rounded-xl text-sm font-bold text-white"
-                          style={{ background: 'linear-gradient(135deg, #10B981, #6366F1)' }}
-                        >
-                          <span className="text-[10px]">⚙️</span>
-                          Configurar Horas
-                        </button>
-                        <button
-                          onClick={() => generateWeeklyPlan(cycle.id, {})}
-                          className="px-4 py-2 rounded-xl text-sm font-bold text-white shrink-0"
-                          style={{ background: 'linear-gradient(135deg, #10B981, #6366F1)' }}
-                        >
-                          Gerar Plano Semanal Rápido
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-2">
-                        {isConfiguring ? (
-                          <div className="fixed inset-0 z-[999] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
-                            <div className="bg-white rounded-xl p-6 shadow-2xl max-w-md w-full">
-                              <h3 className="text-xl font-bold text-text-main mb-4">Horas por Matéria</h3>
-                              <p className="text-sm text-text-dim mb-4">Defina quantas horas por semana cada matéria terá no planner:</p>
-                              <div className="space-y-3" ref={ref => { if (ref) ref.scrollIntoView(); }}>
-                                {subjects.map(subject => {
-                                  const currentHours = configuredHours[subject.id] || (subject.horasPorRodada || 1);
-                                  return (
-                                    <div key={subject.id} className="flex items-center gap-3">
-                                      <span className="text-[10px] font-medium" style={{ color: 'var(--text-main)' }}>{subject.name}</span>
-                                      <select
-                                        value={configuredHours[subject.id] || subject.horasPorRodada || 1}
-                                        onChange={(e) => {
-                                          const hours = parseFloat(e.target.value);
-                                          const newConfig = { ...configuredHours };
-                                          newConfig[subject.id] = hours;
-                                          setConfiguredHours(newConfig);
-                                        }}
-                                        className="px-2 py-1 rounded text-[10px] outline-none bg-white/[0.03] text-sm w-20"
-                                      >
-                                        <option value={0.5}>0.5h</option>
-                                        <option value={1}>1h</option>
-                                        <option value={1.5}>1.5h</option>
-                                        <option value={2}>2h</option>
-                                        <option value={3}>3h</option>
-                                        <option value={4}>4h</option>
-                                        <option value={5}>5h</option>
-                                      </select>
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                              <div className="mt-6 flex gap-3">
-                                <button
-                                  onClick={() => setIsConfiguring(false)}
-                                  className="px-4 py-2 rounded-lg text-sm font-bold text-gray-600 hover:bg-gray-100 transition-colors"
-                                >
-                                  Cancelar
-                                </button>
-                                <button
-                                  onClick={() => {
-                                    setIsConfiguring(false);
-                                    generateWeeklyPlan(cycle.id, configuredHours);
-                                    toast.success('Plano semanal gerado!');
-                                  }}
-                                  className="px-4 py-2 rounded-xl text-sm font-bold text-white"
-                                  style={{ background: 'linear-gradient(135deg, #10B981, #6366F1)' }}
-                                >
-                                  Gerar Plano Semanal
-                                </button>
-                              </div>
-                            </div>
-                          ) : (
-                            <div className="flex items-center gap-2">
-                              <button onClick={() => setIsConfiguring(true)} className="px-4 py-2 rounded-xl text-sm font-bold text-white" style={{ background: 'linear-gradient(135deg, #10B981, #6366F1)' }}>
-                                <span className="text-[10px]">⚙️</span> Configurar Horas
-                              </button>
-                              <button onClick={() => generateWeeklyPlan(cycle.id, {})} className="px-4 py-2 rounded-xl text-sm font-bold text-white shrink-0" style={{ background: 'linear-gradient(135deg, #10B981, #6366F1)' }}>
-                                Gerar Plano Semanal Rápido
+                  {cycle.items?.length > 0 && (
+                    <BentoCard span="full">
+                      {!cycle.weeklyPlan || Object.keys(cycle.weeklyPlan).length === 0 ? (
+                        <div className="flex flex-col items-center gap-3 py-6">
+                          <span className="text-3xl">📅</span>
+                          <div className="text-center">
+                            <div className="text-sm font-bold" style={{ color: 'var(--text-main)' }}>{cycle.nome || 'Ciclo'} — Plano semanal não gerado</div>
+                            <div className="text-[11px] mt-1" style={{ color: 'var(--text-dim)' }}>Distribua automaticamente os blocos de estudo nos dias da semana</div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-[11px]" style={{ color: 'var(--text-dim)' }}>Bloco:</span>
+                            <select
+                              value={blockSize}
+                              onChange={(e) => setBlockSize(parseFloat(e.target.value))}
+                              className="px-2 py-1 rounded text-[11px] outline-none bg-white/[0.03] border border-white/10"
+                              style={{ color: 'var(--text-main)' }}
+                            >
+                              <option value={0.5}>30 min</option>
+                              <option value={1}>1h</option>
+                              <option value={1.5}>1h30</option>
+                              <option value={2}>2h</option>
+                              <option value={3}>3h</option>
+                            </select>
+                            <button
+                              onClick={() => { generateWeeklyPlan(cycle.id, blockSize); toast.success('Plano semanal gerado!'); }}
+                              className="px-4 py-2 rounded-xl text-sm font-bold text-white"
+                              style={{ background: 'linear-gradient(135deg, #10B981, #6366F1)' }}
+                            >
+                              Gerar Plano Semanal
                             </button>
                           </div>
-                        )}
-                  </BentoCard>
+                        </div>
+                      ) : (
+                        <WeeklyPlanner cycle={cycle} />
+                      )}
+                    </BentoCard>
+                  )}
                 </motion.div>
               ))}
 

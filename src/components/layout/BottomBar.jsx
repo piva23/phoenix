@@ -82,11 +82,7 @@ export default function BottomBar() {
   }, [location.pathname]);
 
   const handleHexTap = () => {
-    if (isSessionActive && openSessionModal) {
-      openSessionModal();
-    } else {
-      setHexOpen(!hexOpen);
-    }
+    setHexOpen(!hexOpen);
   };
 
   const handleNav = (path) => {
@@ -101,47 +97,6 @@ export default function BottomBar() {
 
   return (
     <div ref={menuRef}>
-      {/* Radial menu — floats above bottom bar, no backdrop */}
-      <AnimatePresence>
-        {hexOpen && (
-          <motion.div
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-            exit="hidden"
-            className="fixed bottom-[76px] left-0 right-0 z-[91] flex flex-col items-center gap-2.5 px-4 pb-2 lg:hidden"
-          >
-            {/* Session button */}
-            <motion.div variants={itemVariants} className="flex items-center justify-center">
-              <button
-                onClick={() => { if(openSessionModal) openSessionModal(); setHexOpen(false); }}
-                style={hexClipStyle}
-                className="flex items-center gap-2 px-4 py-2.5 bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-xs font-bold shadow-lg"
-              >
-                <BookOpen size={14} />
-                Sessão
-              </button>
-            </motion.div>
-            {/* Extra items in a row */}
-            <motion.div variants={itemVariants} className="flex items-center gap-2">
-              {EXTRA_ITEMS.map((item) => {
-                const Icon = item.icon;
-                return (
-                  <button
-                    key={item.path}
-                    onClick={() => handleExtra(item.path)}
-                    style={hexClipStyle}
-                    className={`w-11 h-12 flex items-center justify-center card-surface shadow-lg ${item.color}`}
-                  >
-                    <Icon size={16} />
-                  </button>
-                );
-              })}
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
       {/* Bottom Bar */}
       <div
         className="fixed bottom-0 left-0 right-0 z-[89] lg:hidden border-t backdrop-blur-xl"
@@ -178,9 +133,48 @@ export default function BottomBar() {
           })}
 
           {/* HEX BUTTON — integrated into bottom bar */}
-          <div className="relative w-14 h-14 flex items-center justify-center">
+          <div className="relative">
+            {/* Radial menu — opens upward from hex, horizontal row */}
+            <AnimatePresence>
+              {hexOpen && (
+                <motion.div
+                  variants={containerVariants}
+                  initial="hidden"
+                  animate="visible"
+                  exit="hidden"
+                  className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-[91] flex flex-col items-center gap-2"
+                >
+                  {/* Extra items in a row */}
+                  {EXTRA_ITEMS.map((item) => {
+                    const Icon = item.icon;
+                    return (
+                      <motion.div key={item.path} variants={itemVariants}>
+                        <button
+                          onClick={() => handleExtra(item.path)}
+                          style={hexClipStyle}
+                          className={`w-11 h-12 flex items-center justify-center card-surface shadow-lg ${item.color}`}
+                        >
+                          <Icon size={16} />
+                        </button>
+                      </motion.div>
+                    );
+                  })}
+                  {/* Session button — hex like desktop */}
+                  <motion.div variants={itemVariants}>
+                    <button
+                      onClick={() => { if(openSessionModal) openSessionModal(); setHexOpen(false); }}
+                      style={hexClipStyle}
+                      className="w-11 h-12 flex items-center justify-center card-surface shadow-lg text-emerald-400"
+                    >
+                      <BookOpen size={16} />
+                    </button>
+                  </motion.div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
             {isSessionActive && (
-              <svg className="absolute w-[52px] h-[52px] -rotate-90 pointer-events-none z-20" viewBox="0 0 52 52">
+              <svg className="absolute inset-0 w-full h-full -rotate-90 pointer-events-none z-20" viewBox="0 0 52 52">
                 <circle cx="26" cy="26" r="23" fill="none" stroke="rgba(255,255,255,0.03)" strokeWidth="2" />
                 <circle
                   cx="26" cy="26" r="23" fill="none" stroke="#60A5FA" strokeWidth="2" strokeLinecap="round"
@@ -196,9 +190,7 @@ export default function BottomBar() {
               className={`w-11 h-12 flex items-center justify-center text-white relative z-10 transition-all duration-200 ${
                 isSessionActive
                   ? 'bg-blue-600 shadow-lg shadow-blue-500/30'
-                  : hexOpen
-                    ? 'bg-gradient-to-br from-primary to-secondary shadow-lg shadow-primary/30'
-                    : 'bg-gradient-to-br from-primary/80 to-secondary/80 shadow-md'
+                  : 'bg-gradient-to-br from-primary to-secondary shadow-lg shadow-primary/30'
               }`}
               whileTap={{ scale: 0.92 }}
             >

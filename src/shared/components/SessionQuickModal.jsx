@@ -150,6 +150,7 @@ export function SessionQuickModal() {
   // Estado de abertura agora vem de uma store global (não mais props) —
   // é isso que garante que o modal sobrevive à navegação entre páginas.
   const open = useSessionModalStore(s => s.open);
+  const openCount = useSessionModalStore(s => s.openCount);
   const rawClose = useSessionModalStore(s => s.closeModal);
   const onClose = () => {
     // Always clear HexMenu UI state when modal closes
@@ -267,7 +268,7 @@ export function SessionQuickModal() {
       setResult(null);
     }
     if (open) setMinimized(false);
-  }, [open]);
+  }, [open, openCount]);
 
   // toca/pausa o som ambiente em sincronia com a sessão
   useEffect(() => {

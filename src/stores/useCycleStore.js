@@ -218,7 +218,7 @@ export const useCycleStore = create(
           ),
         })),
 
-generateWeeklyPlan: (cycleId, configuredHours) =>
+generateWeeklyPlan: (cycleId, blockSize) =>
         set(state => ({
           cycles: state.cycles.map(c => {
             if (c.id !== cycleId) return c;
@@ -228,70 +228,37 @@ generateWeeklyPlan: (cycleId, configuredHours) =>
             const items = c.items || [];
             if (items.length === 0) return c;
 
-            // Usar horas configuradas se fornecidas, senão usar horasPorRodada
-            const hoursConfig = configuredHours || {};
-            const enriched = items.map(item => ({
-              ...item,
-              hours: hoursConfig[item.subjectId] || (item.horasPorRodada || 1),
-            }));
+            const block = blockSize || 1; // horas por bloco (padrão 1h)
 
-            // Ordenar por horas (maior primeiro)
-            const sorted = [...enriched].sort((a, b) => b.hours - a.hours);
+            // Expandir cada matéria em N blocos do tamanho escolhido
+            // Ex: matéria com 2h e bloco de 0.5h → 4 blocos de 0.5h
+            const allBlocks = [];
+            items.forEach(item => {
+              const totalHours = item.horasPorRodada || 1;
+              const numBlocks = Math.max(1, Math.round(totalHours / block));
+              for (let i = 0; i < numBlocks; i++) {
+                allBlocks.push({
+                  subjectId: item.subjectId,
+                  subjectName: item.subjectName || item.subjectId || '—',
+                  hours: block,
+                  color: item.subjectColor || '#8B5CF6',
+                });
+              }
+            });
 
-            // Inicializar dias
+            // Distribuir blocos pelos dias (round-robin no dia menos carregado)
             const plan = {};
             days.forEach(d => { plan[d] = []; });
             const dayLoad = {};
             days.forEach(d => { dayLoad[d] = 0; });
 
-            // Se há horas configuradas, distribuir proporcionalmente
-            if (configuredHours && Object.keys(configuredHours).length > 0) {
-              // Calcular total de horas configuradas vs total de items
-              const totalConfigured = Object.values(configuredHours).reduce((a, b) => a + b, 0);
-              const totalItemHours = items.reduce((a, item) => a + (item.horasPorRodada || 1), 0);
-              const ratio = totalConfigured > 0 ? totalConfigured / totalItemHours : 1;
+            allBlocks.forEach(block => {
+              const lightest = days.reduce((a, b) => dayLoad[a] <= dayLoad[b] ? a : b);
+              plan[lightest].push(block);
+              dayLoad[lightest] += block.hours;
+            });
 
-              // Distribuir itens pelos dias, aplicando a razão e arredondando
-              sorted.forEach(item => {
-                const lightest = days.reduce((a, b) => dayLoad[a] <= dayLoad[b] ? a : b);
-                const roundedHours = Math.round(item.hours * ratio);
-                plan[lightest].push({
-                  subjectId: item.subjectId,
-                  subjectName: item.subjectName || item.subj?.name || '—',
-                  hours: roundedHours,
-                  color: item.subjectColor || '#8B5CF6',
-                });
-                dayLoad[lightest] += roundedHours;
-              });
-
-              // Ajustar para garantir que totalizem o configurado
-              const currentTotal = Object.values(plan).flat().reduce((a) => a + (a.hours || 0), 0);
-              const difference = Object.values(configuredHours).reduce((a, b) => a + b, 0) - currentTotal;
-
-              // Se houver diferença, ajustar o último bloco do último dia
-              if (difference !== 0) {
-                const lastDay = days[days.length - 1];
-                const lastBlocks = plan[lastDay] || [];
-                if (lastBlocks.length > 0) {
-                  lastBlocks[lastBlocks.length - 1].hours += difference;
-                }
-              }
-            } else {
-              // Distribuição gulosa original (sem horas configuradas)
-              const MAX_HOURS = 5;
-              sorted.forEach(item => {
-                const lightest = days.reduce((a, b) => dayLoad[a] <= dayLoad[b] ? a : b);
-                plan[lightest].push({
-                  subjectId: item.subjectId,
-                  subjectName: item.subjectName || item.subj?.name || '—',
-                  hours: item.hours,
-                  color: item.subjectColor || '#8B5CF6',
-                });
-                dayLoad[lightest] += item.hours;
-              });
-            }
-
-            return c;
+            return { ...c, weeklyPlan: plan };
           }),
         })),
 
@@ -315,8 +282,15 @@ moveBlock: (cycleId, fromDay, toDay, subjectId, subjectName) =>
             plan[fromDay] = fromBlocks;
             plan[toDay] = toBlocks;
 
-            return c;
+            return { ...c, weeklyPlan: plan };
           }),
+        })),
+
+clearWeeklyPlan: (cycleId) =>
+        set(state => ({
+          cycles: state.cycles.map(c =>
+            c.id === cycleId ? { ...c, weeklyPlan: null } : c
+          ),
         })),
 
       // Retorna o próximo item a estudar:

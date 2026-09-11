@@ -90,7 +90,7 @@ function HexFAB({ isOpen, setIsOpen }) {
     <>
       {/* Backdrop — click outside to close */}
       <AnimatePresence>
-        {!isSessionActive && isOpen && (
+        {isOpen && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -101,7 +101,7 @@ function HexFAB({ isOpen, setIsOpen }) {
         )}
       </AnimatePresence>
 
-    <div className="flex fixed bottom-4 right-4 z-[98] flex-col items-center select-none group">
+    <div className="hidden lg:flex fixed bottom-4 right-4 z-[98] flex-col items-center select-none group">
       {/* Session Tooltip - visible on desktop, hidden on very small mobile */}
       {isSessionActive && (
         <div className="absolute bottom-12 bg-background/90 backdrop-blur-xl border border-white/10 px-4 py-2 rounded-full shadow-2xl flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-all duration-300 pointer-events-none transform translate-y-2 group-hover:translate-y-0 z-[100] whitespace-nowrap max-w-xs">
@@ -118,7 +118,7 @@ function HexFAB({ isOpen, setIsOpen }) {
 
       {/* Radial Menu Items - shows on mobile AND desktop */}
       <AnimatePresence>
-        {!isSessionActive && isOpen && (
+        {isOpen && (
           <motion.div
             variants={containerVariants}
             initial="hidden"
@@ -224,9 +224,5 @@ function HexFAB({ isOpen, setIsOpen }) {
 
 export default function HexMenu() {
   const [hexOpen, setHexOpen] = useState(false);
-  return (
-    <div className="flex fixed bottom-4 right-4 z-[99] items-center">
-      <HexFAB isOpen={hexOpen} setIsOpen={setHexOpen} />
-    </div>
-  );
+  return <HexFAB isOpen={hexOpen} setIsOpen={setHexOpen} />;
 }
